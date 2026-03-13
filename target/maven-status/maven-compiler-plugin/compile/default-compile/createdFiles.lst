@@ -1,0 +1,4 @@
+com\platformers\PlatformersApplication.class
+com\platformers\model\Project.class
+com\platformers\service\ProjectService.class
+com\platformers\controller\MainController.class
