@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PLATFORMERS — We Build Digital Products</title>
+  <link rel="stylesheet" th:href="@{/css/main.css(v=3)}">
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <a th:href="@{/}" class="nav-logo">
+    <div class="dot"></div>
+    Platformers
+  </a>
+  <ul class="nav-links">
+    <li><a href="#services">Services</a></li>
+    <li><a th:href="@{/portfolio}">Work</a></li>
+    <li><a href="#process">Process</a></li>
+    <li><a href="#techstack">Stack</a></li>
+  </ul>
+  <button class="nav-cta" onclick="window.location.href='mailto:hello@platformers.kr'">Contact Us</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-canvas-wrapper">
+    <canvas id="heroCanvas"></canvas>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-tag">Seoul-Based Development Studio</div>
+    <h1 class="hero-title">
+      PLAT<span class="accent-word">FORM</span><span class="line2">ERS</span>
+    </h1>
+    <p class="hero-sub">
+      디지털 제품을 만드는 개발 스튜디오.<br>
+      아이디어를 현실로 구현합니다.
+    </p>
+    <div class="hero-buttons">
+      <a href="#portfolio" class="btn-primary">View Our Work</a>
+      <a href="#cta" class="btn-secondary">Start a Project</a>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">50<span>+</span></div>
+      <div class="stat-label">Projects</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">3<span>yr</span></div>
+      <div class="stat-label">Experience</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">98<span>%</span></div>
+      <div class="stat-label">Satisfaction</div>
+    </div>
+  </div>
+
+  <div class="scroll-hint" id="scrollHint">
+    <div class="scroll-mouse">
+      <div class="scroll-wheel"></div>
+    </div>
+    <span class="scroll-text">Scroll</span>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<section id="marquee">
+  <div class="marquee-label">Trusted by Korea's Finest</div>
+  <div style="overflow:hidden;">
+    <div class="marquee-track" id="marqueeTrack">
+      <div class="marquee-item">카카오</div>
+      <div class="marquee-item">네이버</div>
+      <div class="marquee-item">쿠팡</div>
+      <div class="marquee-item">토스</div>
+      <div class="marquee-item">당근마켓</div>
+      <div class="marquee-item">배달의민족</div>
+      <div class="marquee-item">무신사</div>
+      <div class="marquee-item">하이브</div>
+      <div class="marquee-item">현대</div>
+      <div class="marquee-item">삼성SDS</div>
+      <div class="marquee-item">카카오</div>
+      <div class="marquee-item">네이버</div>
+      <div class="marquee-item">쿠팡</div>
+      <div class="marquee-item">토스</div>
+      <div class="marquee-item">당근마켓</div>
+      <div class="marquee-item">배달의민족</div>
+      <div class="marquee-item">무신사</div>
+      <div class="marquee-item">하이브</div>
+      <div class="marquee-item">현대</div>
+      <div class="marquee-item">삼성SDS</div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-tag">What We Do</div>
+      <h2 class="section-title">Our<br>Services</h2>
+    </div>
+  </div>
+
+  <div class="service-grid reveal">
+    <div class="service-card">
+      <div class="service-num">01</div>
+      <div class="service-icon">⬡</div>
+      <div class="service-name">웹 / 앱 개발</div>
+      <p class="service-desc">반응형 웹사이트부터 복잡한 웹앱까지. 최신 기술 스택으로 빠르고 안정적인 제품을 만듭니다.</p>
+      <div class="service-tags">
+        <span class="service-tag">React</span>
+        <span class="service-tag">Next.js</span>
+        <span class="service-tag">TypeScript</span>
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">02</div>
+      <div class="service-icon">◈</div>
+      <div class="service-name">UI/UX 디자인</div>
+      <p class="service-desc">사용자 중심의 인터페이스 설계. 아름다우면서도 직관적인 경험을 디자인합니다.</p>
+      <div class="service-tags">
+        <span class="service-tag">Figma</span>
+        <span class="service-tag">Prototyping</span>
+        <span class="service-tag">Design System</span>
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="service-num">03</div>
+      <div class="service-icon">⬢</div>
+      <div class="service-name">백엔드 / API</div>
+      <p class="service-desc">견고한 서버 인프라와 API 설계. 확장 가능한 아키텍처로 비즈니스 성장을 지원합니다.</p>
+      <div class="service-tags">
+        <span class="service-tag">Node.js</span>
+        <span class="service-tag">Python</span>
+        <span class="service-tag">AWS</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PORTFOLIO (홈 내 섹션) -->
+<section id="portfolio" class="home-portfolio">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-tag">Selected Work</div>
+      <h2 class="section-title">Our<br>Projects</h2>
+    </div>
+  </div>
+
+  <div class="portfolio-grid">
+    <div class="project-card reveal">
+      <div class="project-visual">
+        <div class="project-mockup">
+          <div class="mockup-1" style="width:100%;height:100%;">
+            <div class="mockup-1-sidebar">
+              <div class="mockup-sidebar-item active"></div>
+              <div class="mockup-sidebar-item"></div>
+              <div class="mockup-sidebar-item"></div>
+              <div class="mockup-sidebar-item"></div>
+              <div class="mockup-sidebar-item"></div>
+              <div class="mockup-sidebar-item"></div>
+            </div>
+            <div class="mockup-1-main">
+              <div class="mockup-chart-area">
+                <div class="chart-bar" style="height:40%"></div>
+                <div class="chart-bar" style="height:65%"></div>
+                <div class="chart-bar" style="height:50%"></div>
+                <div class="chart-bar" style="height:80%"></div>
+                <div class="chart-bar" style="height:60%"></div>
+                <div class="chart-bar" style="height:90%"></div>
+                <div class="chart-bar" style="height:70%"></div>
+                <div class="chart-bar" style="height:85%"></div>
+              </div>
+              <div class="mockup-stat-row">
+                <div class="mockup-stat"></div>
+                <div class="mockup-stat"></div>
+                <div class="mockup-stat"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="project-overlay">
+          <div class="project-overlay-btn">View Project →</div>
+        </div>
+      </div>
+      <div class="project-info">
+        <div>
+          <div class="project-category">SaaS Dashboard · 2024</div>
+          <div class="project-name">Analytics Platform</div>
+        </div>
+        <div class="project-arrow">↗</div>
+      </div>
+    </div>
+
+    <div class="project-card reveal">
+      <div class="project-visual">
+        <div class="project-mockup">
+          <div class="mockup-2" style="width:100%;height:100%;">
+            <div class="mockup-2-nav">
+              <div class="mockup-2-logo"></div>
+              <div class="mockup-2-navlinks">
+                <div class="mockup-2-navlink"></div>
+                <div class="mockup-2-navlink"></div>
+                <div class="mockup-2-navlink"></div>
+              </div>
+            </div>
+            <div class="mockup-2-hero">
+              <div class="mockup-2-headline"></div>
+              <div class="mockup-2-sub"></div>
+              <div class="mockup-2-btn"></div>
+            </div>
+          </div>
+        </div>
+        <div class="project-overlay">
+          <div class="project-overlay-btn">View Project →</div>
+        </div>
+      </div>
+      <div class="project-info">
+        <div>
+          <div class="project-category">E-Commerce · 2024</div>
+          <div class="project-name">Brand Website</div>
+        </div>
+        <div class="project-arrow">↗</div>
+      </div>
+    </div>
+
+    <div class="project-card reveal">
+      <div class="project-visual">
+        <div class="project-mockup">
+          <div class="mockup-3" style="width:100%;height:100%;">
+            <div class="mockup-3-card">
+              <div class="mockup-3-title"></div>
+              <div class="mockup-3-text w80"></div>
+              <div class="mockup-3-text w60"></div>
+              <div class="mockup-3-text w80"></div>
+            </div>
+            <div class="mockup-3-card">
+              <div class="mockup-3-title"></div>
+              <div class="mockup-3-text w60"></div>
+              <div class="mockup-3-text w80"></div>
+            </div>
+            <div class="mockup-3-card">
+              <div class="mockup-3-title"></div>
+              <div class="mockup-3-text w80"></div>
+              <div class="mockup-3-text w60"></div>
+            </div>
+            <div class="mockup-3-card">
+              <div class="mockup-3-title"></div>
+              <div class="mockup-3-text w60"></div>
+              <div class="mockup-3-text w80"></div>
+              <div class="mockup-3-text w60"></div>
+            </div>
+          </div>
+        </div>
+        <div class="project-overlay">
+          <div class="project-overlay-btn">View Project →</div>
+        </div>
+      </div>
+      <div class="project-info">
+        <div>
+          <div class="project-category">Admin Tool · 2023</div>
+          <div class="project-name">CMS Platform</div>
+        </div>
+        <div class="project-arrow">↗</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section id="techstack">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-tag">Technology</div>
+      <h2 class="section-title">Our<br>Stack</h2>
+    </div>
+  </div>
+
+  <div class="tech-grid reveal">
+    <div class="tech-item"><div class="tech-icon">⚛</div><div class="tech-name">React</div></div>
+    <div class="tech-item"><div class="tech-icon">▲</div><div class="tech-name">Next.js</div></div>
+    <div class="tech-item"><div class="tech-icon">🔷</div><div class="tech-name">TypeScript</div></div>
+    <div class="tech-item"><div class="tech-icon">🐍</div><div class="tech-name">Python</div></div>
+    <div class="tech-item"><div class="tech-icon">🟩</div><div class="tech-name">Node.js</div></div>
+    <div class="tech-item"><div class="tech-icon">☁</div><div class="tech-name">AWS</div></div>
+    <div class="tech-item"><div class="tech-icon">🐳</div><div class="tech-name">Docker</div></div>
+    <div class="tech-item"><div class="tech-icon">🔴</div><div class="tech-name">Redis</div></div>
+    <div class="tech-item"><div class="tech-icon">🐘</div><div class="tech-name">PostgreSQL</div></div>
+    <div class="tech-item"><div class="tech-icon">🍃</div><div class="tech-name">MongoDB</div></div>
+    <div class="tech-item"><div class="tech-icon">🎨</div><div class="tech-name">Figma</div></div>
+    <div class="tech-item"><div class="tech-icon">🚀</div><div class="tech-name">Vercel</div></div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="process">
+  <div class="section-header reveal">
+    <div>
+      <div class="section-tag">How We Work</div>
+      <h2 class="section-title">Our<br>Process</h2>
+    </div>
+  </div>
+
+  <div class="process-list">
+    <div class="process-item reveal">
+      <div class="process-num">01</div>
+      <div class="process-title">Discovery & Planning</div>
+      <p class="process-desc">요구사항 분석과 기술 스택 결정. 프로젝트 범위와 일정을 명확히 정의합니다.</p>
+    </div>
+    <div class="process-item reveal">
+      <div class="process-num">02</div>
+      <div class="process-title">Design & Prototype</div>
+      <p class="process-desc">와이어프레임부터 고화질 프로토타입까지. 개발 전 시각적 방향을 확정합니다.</p>
+    </div>
+    <div class="process-item reveal">
+      <div class="process-num">03</div>
+      <div class="process-title">Development</div>
+      <p class="process-desc">애자일 방식으로 스프린트 단위 개발. 매주 진행 상황을 공유합니다.</p>
+    </div>
+    <div class="process-item reveal">
+      <div class="process-num">04</div>
+      <div class="process-title">Launch & Support</div>
+      <p class="process-desc">QA 테스트와 배포 후 지속적인 유지보수. 제품이 성장할 수 있도록 함께합니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-glow"></div>
+  <h2 class="cta-title reveal">
+    Let's<br>
+    <span class="highlight">Build</span><br>
+    Together
+  </h2>
+  <p class="cta-sub reveal">
+    아이디어가 있으신가요? 함께 만들어봐요.<br>
+    첫 미팅은 무료입니다.
+  </p>
+  <div class="cta-buttons reveal">
+    <a href="mailto:hello@platformers.kr" class="btn-primary">Get In Touch</a>
+    <a href="#portfolio" class="btn-secondary">View Portfolio</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Platformers<span style="color:var(--accent2)">.</span></div>
+  <ul class="footer-links">
+    <li><a href="#services">Services</a></li>
+    <li><a th:href="@{/portfolio}">Work</a></li>
+    <li><a href="#process">Process</a></li>
+    <li><a href="mailto:hello@platformers.kr">Contact</a></li>
+  </ul>
+  <div class="footer-copy">© 2025 Platformers. All rights reserved.</div>
+</footer>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

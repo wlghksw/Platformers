@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Platformers - Portfolio</title>
+  <link rel="stylesheet" th:href="@{/css/main.css(v=2)}">
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <a th:href="@{/}" class="nav-logo">
+    <div class="dot"></div>
+    Platformers
+  </a>
+  <ul class="nav-links">
+    <li><a th:href="@{'/#services'}">Services</a></li>
+    <li><a th:href="@{/portfolio}">Work</a></li>
+    <li><a th:href="@{'/#process'}">Process</a></li>
+    <li><a th:href="@{'/#techstack'}">Stack</a></li>
+  </ul>
+  <button class="nav-cta" onclick="window.location.href='mailto:hello@platformers.kr'">Contact Us</button>
+</nav>
+
+<main style="padding-top:120px;">
+  <!-- FILTERS -->
+  <section id="marquee">
+    <div class="marquee-label">Filter by Category</div>
+    <div class="category-nav">
+      <div class="filter-buttons">
+        <button th:each="category : ${categories}"
+                class="filter-btn"
+                th:classappend="${category == '전체'} ? ' active' : ''"
+                th:attr="data-category=${category == '전체'} ? 'all' : ${category}"
+                th:text="${category}">
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PORTFOLIO GRID (디자인 유지) -->
+  <section id="portfolio">
+    <div class="section-header reveal">
+      <div>
+        <div class="section-tag">Selected Work</div>
+        <h2 class="section-title">All<br>Projects</h2>
+      </div>
+    </div>
+
+    <div class="portfolio-grid" id="portfolioGrid">
+      <div th:each="project : ${projects}"
+           class="project-card reveal portfolio-item"
+           th:attr="data-category=${project.category}">
+        <div class="project-visual"
+             th:style="'background-image:url(' + ${project.thumbnail} + ');background-size:cover;background-position:center;'">
+          <div class="project-overlay">
+            <a th:href="${project.url}" target="_blank" class="project-overlay-btn">View Project →</a>
+          </div>
+        </div>
+        <div class="project-info">
+          <div>
+            <div class="project-category" th:text="${project.category}">Category</div>
+            <div class="project-name" th:text="${project.title}">Project Title</div>
+          </div>
+          <a th:href="${project.url}" target="_blank" class="project-arrow">↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Platformers<span style="color:var(--accent2)">.</span></div>
+  <ul class="footer-links">
+    <li><a th:href="@{'/#services'}">Services</a></li>
+    <li><a th:href="@{/portfolio}">Work</a></li>
+    <li><a th:href="@{'/#process'}">Process</a></li>
+    <li><a href="mailto:hello@platformers.kr">Contact</a></li>
+  </ul>
+  <div class="footer-copy">© 2025 Platformers. All rights reserved.</div>
+</footer>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>
