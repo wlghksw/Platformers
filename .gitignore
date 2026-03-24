@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+venv/
+ENV/
+
+# Node
+node_modules/
+package-lock.json
+
+# Project Output
+output/
+briefing_*.pdf
+
+# IDE
+.vscode/
+.idea/
+.gemini/
