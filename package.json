@@ -1,0 +1,10 @@
+{
+  "name": "ai-market-briefing",
+  "version": "1.0.0",
+  "description": "AI Market Briefing Pipeline",
+  "main": "main.py",
+  "dependencies": {
+    "marked": "^15.0.0",
+    "puppeteer": "^24.0.0"
+  }
+}
