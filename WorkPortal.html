@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkPortal — 업무 자동화 허브</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif; background: #FAF9F8; display: flex; height: 100vh; overflow: hidden; }
+
+  /* 사이드바 */
+  .sidebar { width: 220px; background: #201F1E; display: flex; flex-direction: column; flex-shrink: 0; }
+  .logo { padding: 20px 20px 20px; border-bottom: 1px solid #3B3A39; display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: #0078D4; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .logo-text { color: #fff; font-weight: 700; font-size: 14px; }
+  .logo-sub { color: #A19F9D; font-size: 11px; }
+  .nav { flex: 1; padding: 16px 12px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; margin-bottom: 2px; cursor: pointer; color: #C7C6C5; font-size: 14px; transition: all 0.15s; }
+  .nav-item:hover { background: #3B3A39; color: #fff; }
+  .nav-item.active { background: #0078D4; color: #fff; }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .user-info { padding: 16px 20px; border-top: 1px solid #3B3A39; display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: #0078D4; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+  .user-name { color: #fff; font-size: 13px; font-weight: 600; }
+  .user-email { color: #A19F9D; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+  .conn-dot { width: 7px; height: 7px; border-radius: 50%; background: #107C10; margin-left: auto; flex-shrink: 0; }
+
+  /* 메인 */
+  .main { flex: 1; overflow-y: auto; padding: 28px 32px; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-title { font-size: 22px; font-weight: 700; color: #201F1E; margin-bottom: 4px; }
+  .page-sub { color: #605E5C; font-size: 14px; margin-bottom: 24px; }
+
+  /* 배지 */
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-blue { background: #DEEAF8; color: #0078D4; }
+  .badge-green { background: #DFF6DD; color: #107C10; }
+  .badge-orange { background: #FEF0CD; color: #8A4500; }
+  .badge-purple { background: #F0EBF9; color: #6B2FAE; }
+  .badge-red { background: #FDE7E9; color: #C50F1F; }
+  .badge-gray { background: #EDEBE9; color: #605E5C; }
+
+  /* 카드 */
+  .card { background: #fff; border: 1.5px solid #EDEBE9; border-radius: 12px; padding: 20px; }
+
+  /* 대시보드 */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+  .stat-card { border-radius: 10px; padding: 18px 20px; }
+  .stat-value { font-size: 28px; font-weight: 700; }
+  .stat-label { font-size: 12px; margin-top: 4px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .section-title { font-weight: 700; font-size: 14px; color: #201F1E; margin-bottom: 14px; }
+  .event-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F3F2F1; }
+  .event-row:last-child { border-bottom: none; }
+  .event-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .event-name { flex: 1; font-size: 14px; color: #201F1E; }
+  .event-time { font-size: 12px; color: #A19F9D; }
+  .mail-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F3F2F1; }
+  .mail-row:last-child { border-bottom: none; }
+  .mail-from { font-size: 12px; font-weight: 600; color: #201F1E; white-space: nowrap; width: 100px; overflow: hidden; text-overflow: ellipsis; }
+  .mail-subject { font-size: 13px; color: #201F1E; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mail-snippet { font-size: 11px; color: #A19F9D; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+  /* 연동 상태 배너 */
+  .integration-bar { display: flex; align-items: center; gap: 16px; background: #fff; border: 1.5px solid #EDEBE9; border-radius: 10px; padding: 12px 18px; margin-bottom: 20px; flex-wrap: wrap; }
+  .int-item { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  .int-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .int-label { color: #605E5C; }
+  .int-val { font-weight: 600; color: #201F1E; }
+  .int-divider { width: 1px; height: 18px; background: #EDEBE9; }
+
+  /* 문서 생성 */
+  .template-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+  .template-card { border: 1.5px solid #EDEBE9; border-radius: 10px; padding: 16px; cursor: pointer; background: #fff; transition: all 0.15s; }
+  .template-card:hover { border-color: #0078D4; background: #F8FBFF; }
+  .template-card.selected { border: 2px solid #0078D4; background: #EFF6FF; }
+  .template-name { font-weight: 600; font-size: 14px; color: #201F1E; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+  .template-desc { font-size: 12px; color: #605E5C; }
+  textarea, input[type=text], input[type=time] { width: 100%; padding: 10px 12px; border: 1.5px solid #EDEBE9; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; color: #201F1E; transition: border-color 0.15s; }
+  textarea:focus, input:focus { border-color: #0078D4; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .btn-primary { background: #0078D4; color: #fff; }
+  .btn-primary:hover { background: #005A9E; }
+  .btn-primary:disabled { background: #C7C6C5; cursor: not-allowed; }
+  .btn-secondary { background: #F3F2F1; color: #201F1E; }
+  .btn-secondary:hover { background: #EDEBE9; }
+  .generated-output { background: #F8F7F6; border-radius: 8px; padding: 16px; font-size: 13px; color: #201F1E; white-space: pre-wrap; line-height: 1.7; margin-top: 14px; border: 1px solid #EDEBE9; }
+  .info-box { border-radius: 8px; padding: 12px 16px; font-size: 13px; display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; }
+  .info-box-blue { background: #EFF6FF; border: 1px solid #C7E0F4; color: #004E8C; }
+  .info-box-green { background: #F0FFF0; border: 1px solid #C6E8C6; color: #0B6A0B; }
+  .info-box-orange { background: #FFF9F0; border: 1px solid #F7D6A0; color: #7A3B00; }
+
+  /* 일정 */
+  .schedule-list { }
+  .schedule-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #F3F2F1; }
+  .schedule-item:last-child { border-bottom: none; }
+  .schedule-icon { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .schedule-info { flex: 1; }
+  .schedule-title { font-size: 14px; font-weight: 600; color: #201F1E; }
+  .schedule-meta { font-size: 12px; color: #A19F9D; margin-top: 2px; }
+  .form-label { font-size: 13px; font-weight: 600; color: #201F1E; margin-bottom: 6px; }
+  .form-group { margin-bottom: 14px; }
+
+  /* 자동화 흐름 */
+  .flow-item { display: flex; align-items: center; gap: 14px; padding: 16px; background: #fff; border: 1.5px solid #EDEBE9; border-radius: 10px; margin-bottom: 10px; }
+  .flow-icon { font-size: 22px; }
+  .flow-info { flex: 1; }
+  .flow-name { font-size: 14px; font-weight: 600; color: #201F1E; }
+  .flow-meta { font-size: 12px; color: #A19F9D; margin-top: 2px; }
+  .toggle { width: 44px; height: 24px; border-radius: 12px; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; border: none; outline: none; }
+  .toggle-knob { position: absolute; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left 0.2s; }
+  .flow-status { font-size: 13px; width: 44px; }
+
+  /* Gmail 패널 */
+  .gmail-compose { }
+
+  /* 반응형 스크롤 */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #C7C6C5; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- 사이드바 -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">W</div>
+    <div>
+      <div class="logo-text">WorkPortal</div>
+      <div class="logo-sub">업무 자동화 허브</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="showPage('dashboard', this)"><span class="nav-icon">⊞</span> 대시보드</div>
+    <div class="nav-item" onclick="showPage('documents', this)"><span class="nav-icon">📄</span> 문서 자동생성</div>
+    <div class="nav-item" onclick="showPage('gmail', this)"><span class="nav-icon">✉️</span> Gmail</div>
+    <div class="nav-item" onclick="showPage('schedule', this)"><span class="nav-icon">📅</span> 일정·캘린더</div>
+    <div class="nav-item" onclick="showPage('automate', this)"><span class="nav-icon">⚡</span> 자동화 흐름</div>
+    <div class="nav-item" onclick="showPage('settings', this)"><span class="nav-icon">⚙</span> 설정</div>
+  </nav>
+  <div class="user-info">
+    <div class="avatar">최</div>
+    <div>
+      <div class="user-name">최지환</div>
+      <div class="user-email">wlghksw01@gmail.com</div>
+    </div>
+    <div class="conn-dot" title="Google 연결됨"></div>
+  </div>
+</div>
+
+<!-- 메인 -->
+<div class="main">
+
+  <!-- 대시보드 -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-title">대시보드</div>
+    <div class="page-sub">안녕하세요, 최지환님 👋 Google 계정이 연결되었습니다</div>
+
+    <!-- 연동 상태 -->
+    <div class="integration-bar">
+      <div class="int-item"><div class="int-dot" style="background:#107C10"></div><span class="int-label">Gmail</span><span class="int-val">연결됨</span></div>
+      <div class="int-divider"></div>
+      <div class="int-item"><div class="int-dot" style="background:#107C10"></div><span class="int-label">Google Calendar</span><span class="int-val">연결됨</span></div>
+      <div class="int-divider"></div>
+      <div class="int-item"><div class="int-dot" style="background:#A19F9D"></div><span class="int-label">MS Teams</span><span class="int-val">미연결</span></div>
+      <div class="int-divider"></div>
+      <div class="int-item"><div class="int-dot" style="background:#A19F9D"></div><span class="int-label">Power Automate</span><span class="int-val">미연결</span></div>
+    </div>
+
+    <!-- 통계 카드 -->
+    <div class="stat-grid">
+      <div class="stat-card" style="background:#EFF6FF; border:1.5px solid #C7E0F4">
+        <div class="stat-value" style="color:#0078D4">62</div>
+        <div class="stat-label" style="color:#0078D4">Gmail 총 메시지</div>
+      </div>
+      <div class="stat-card" style="background:#FEF0CD; border:1.5px solid #F7D6A0">
+        <div class="stat-value" style="color:#8A4500">201</div>
+        <div class="stat-label" style="color:#8A4500">미읽은 메일</div>
+      </div>
+      <div class="stat-card" style="background:#DFF6DD; border:1.5px solid #9FD89F">
+        <div class="stat-value" style="color:#107C10">1</div>
+        <div class="stat-label" style="color:#107C10">이번 주 등록 일정</div>
+      </div>
+      <div class="stat-card" style="background:#F0EBF9; border:1.5px solid #C5A8E6">
+        <div class="stat-value" style="color:#6B2FAE">1</div>
+        <div class="stat-label" style="color:#6B2FAE">Gmail 임시보관 초안</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <!-- 캘린더 이벤트 -->
+      <div class="card">
+        <div class="section-title">📅 등록된 일정</div>
+        <div class="event-row">
+          <div class="event-dot" style="background:#0078D4"></div>
+          <div class="event-name">🚀 WorkPortal 팀 킥오프 미팅</div>
+          <span class="badge badge-blue">3/30 10:00</span>
+        </div>
+        <div style="margin-top:14px; padding:12px; background:#F3F2F1; border-radius:8px; font-size:13px; color:#605E5C; text-align:center;">
+          📋 안건: 로드맵 공유 · 역할 분담 · MS365 도입 일정<br>
+          <a href="https://www.google.com/calendar/event?eid=M2lhZm5pcXJoZm9scG9jazNpcmFya2hkcGsgd2xnaGtzdzAxQG0" target="_blank" style="color:#0078D4; font-size:12px; margin-top:6px; display:inline-block;">Google Calendar에서 보기 →</a>
+        </div>
+      </div>
+
+      <!-- 최근 Gmail -->
+      <div class="card">
+        <div class="section-title">✉️ 최근 받은 메일</div>
+        <div class="mail-row">
+          <div>
+            <div class="mail-from">GitHub</div>
+          </div>
+          <div style="flex:1; overflow:hidden;">
+            <div class="mail-subject">[GitHub] Claude is requesting updated permissions</div>
+            <div class="mail-snippet">Updated Permissions Request — The GitHub App Claude is requesting...</div>
+          </div>
+          <span class="badge badge-orange" style="flex-shrink:0">미읽음</span>
+        </div>
+        <div class="mail-row">
+          <div>
+            <div class="mail-from">Google</div>
+          </div>
+          <div style="flex:1; overflow:hidden;">
+            <div class="mail-subject">[구글] 개인정보 이용내역 통지 안내</div>
+            <div class="mail-snippet">wlghksw01@gmail.com 안녕하세요. Google LLC 서비스...</div>
+          </div>
+          <span class="badge badge-orange" style="flex-shrink:0">미읽음</span>
+        </div>
+        <div class="mail-row">
+          <div>
+            <div class="mail-from">Slashpage</div>
+          </div>
+          <div style="flex:1; overflow:hidden;">
+            <div class="mail-subject">[Slashpage] slashpage-kr #새소식 새 포스트 알림</div>
+            <div class="mail-snippet">빈 페이지가 막막했다면, 섹션 템플릿으로 시작해보세요!</div>
+          </div>
+          <span class="badge badge-gray" style="flex-shrink:0">업데이트</span>
+        </div>
+        <div style="margin-top:12px; text-align:right;">
+          <a href="https://mail.google.com/mail/u/wlghksw01@gmail.com" target="_blank" style="font-size:12px; color:#0078D4;">Gmail 전체 보기 →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- WorkPortal 임시보관 초안 알림 -->
+    <div class="info-box info-box-blue" style="margin-top:18px">
+      <span style="font-size:18px;">📝</span>
+      <div>
+        <strong>Gmail 임시보관함에 초안이 있습니다</strong>
+        <div style="margin-top:2px;">"[WorkPortal] 직원 자동화 포털 구축 프로젝트 시작 안내" —
+          <a href="https://mail.google.com/mail/u/0/#drafts?compose=19d2d070e8950071" target="_blank" style="color:#0078D4;">초안 열기 →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 문서 자동생성 -->
+  <div class="page" id="page-documents">
+    <div class="page-title">문서 자동생성</div>
+    <div class="page-sub">템플릿을 선택하고 내용을 입력하면 AI가 문서를 자동으로 작성합니다</div>
+    <div class="template-grid">
+      <div class="template-card" onclick="selectTemplate(this, '주간 업무 보고서')">
+        <div class="template-name">주간 업무 보고서 <span class="badge badge-blue">보고서</span></div>
+        <div class="template-desc">팀 주간 업무 내용을 자동으로 정리합니다</div>
+      </div>
+      <div class="template-card" onclick="selectTemplate(this, '회의록 자동 작성')">
+        <div class="template-name">회의록 자동 작성 <span class="badge badge-purple">회의</span></div>
+        <div class="template-desc">안건을 입력하면 회의록 양식으로 변환합니다</div>
+      </div>
+      <div class="template-card" onclick="selectTemplate(this, '이메일 초안 생성')">
+        <div class="template-name">이메일 초안 생성 <span class="badge badge-green">Gmail 연동</span></div>
+        <div class="template-desc">내용 입력 후 Gmail 임시보관함에 자동 저장</div>
+      </div>
+      <div class="template-card" onclick="selectTemplate(this, '프로젝트 현황 리포트')">
+        <div class="template-name">프로젝트 현황 리포트 <span class="badge badge-orange">프로젝트</span></div>
+        <div class="template-desc">프로젝트 진행 상황을 정리한 문서를 생성합니다</div>
+      </div>
+    </div>
+
+    <div class="card" id="doc-form" style="display:none">
+      <div class="section-title" id="doc-form-title">📝 문서 작성하기</div>
+      <div class="form-group">
+        <div class="form-label">작성 내용 (핵심 키워드 또는 요점)</div>
+        <textarea id="doc-input" rows="4" placeholder="예) 이번 주 포털 UI 개발 완료, 다음 주 API 연동 예정, 이슈: 인증 토큰 처리..."></textarea>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button class="btn btn-primary" onclick="generateDoc()" id="gen-btn">✨ AI로 문서 생성</button>
+        <button class="btn btn-secondary" onclick="clearDoc()">초기화</button>
+        <span id="gmail-hint" style="font-size:12px; color:#107C10; display:none">📧 생성 후 Gmail 초안으로 저장됩니다</span>
+      </div>
+      <div id="doc-output" style="display:none" class="generated-output"></div>
+      <div id="doc-actions" style="display:none; margin-top:12px; display:none; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="alert('실제 연동 시 Cowork AI가 Gmail 초안으로 저장합니다')">📧 Gmail 초안으로 저장</button>
+        <button class="btn btn-secondary" onclick="alert('실제 연동 시 .docx 파일로 다운로드합니다')">⬇ .docx 다운로드</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gmail -->
+  <div class="page" id="page-gmail">
+    <div class="page-title">Gmail</div>
+    <div class="page-sub">wlghksw01@gmail.com — 받은편지함 62통 · 미읽음 201건</div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title">📬 최근 메일</div>
+        <div class="mail-row">
+          <div style="min-width:80px;">
+            <div class="mail-from">GitHub</div>
+            <div style="font-size:10px; color:#A19F9D">3/26 어제</div>
+          </div>
+          <div style="flex:1; overflow:hidden;">
+            <div class="mail-subject" style="font-weight:700">[GitHub] Claude is requesting updated permissions</div>
+            <div class="mail-snippet">Updated Permissions Request — Claude App이 추가 권한을 요청하고 있습니다</div>
+          </div>
+          <span class="badge badge-orange">미읽음</span>
+        </div>
+        <div class="mail-row">
+          <div style="min-width:80px;">
+            <div class="mail-from">Google</div>
+            <div style="font-size:10px; color:#A19F9D">3/26 어제</div>
+          </div>
+          <div style="flex:1; overflow:hidden;">
+            <div class="mail-subject" style="font-weight:700">[구글] 개인정보 이용내역 통지 안내</div>
+            <div class="mail-snippet">한국 사용자 개인정보 이용 내역을 안내드립니다</div>
+          </div>
+          <span class="badge badge-orange">미읽음</span>
+        </div>
+        <div class="mail-row">
+          <div style="min-width:80px;">
+            <div class="mail-from">Slashpage</div>
+            <div style="font-size:10px; color:#A19F9D">3/26 어제</div>
+          </div>
+          <div style="flex:1; overflow:hidden;">
+            <div class="mail-subject">[Slashpage] slashpage-kr #새소식</div>
+            <div class="mail-snippet">빈 페이지가 막막했다면, 섹션 템플릿으로 시작해보세요!</div>
+          </div>
+          <span class="badge badge-gray">프로모션</span>
+        </div>
+        <div class="mail-row">
+          <div style="min-width:80px;">
+            <div class="mail-from">Reddit</div>
+            <div style="font-size:10px; color:#A19F9D">3/26 어제</div>
+          </div>
+          <div style="flex:1; overflow:hidden;">
+            <div class="mail-subject">"260326 IU in Perfect Crown"</div>
+            <div class="mail-snippet">r/aiyu — 새 포스트 알림</div>
+          </div>
+          <span class="badge badge-orange">미읽음</span>
+        </div>
+        <div class="mail-row">
+          <div style="min-width:80px;">
+            <div class="mail-from">원티드</div>
+            <div style="font-size:10px; color:#A19F9D">3/26 어제</div>
+          </div>
+          <div style="flex:1; overflow:hidden;">
+            <div class="mail-subject">(광고) 나만 알고 싶던 회사를 소개합니다</div>
+            <div class="mail-snippet">일할맛 나는 7번째 기업, 볼트테크코리아 — 자율 근무</div>
+          </div>
+          <span class="badge badge-gray">프로모션</span>
+        </div>
+        <div style="margin-top:14px; text-align:center;">
+          <a href="https://mail.google.com/mail/u/wlghksw01@gmail.com" target="_blank" class="btn btn-secondary" style="text-decoration:none; font-size:13px;">Gmail에서 전체 보기 →</a>
+        </div>
+      </div>
+
+      <!-- 이메일 초안 작성 -->
+      <div class="card">
+        <div class="section-title">✍️ 이메일 초안 빠르게 작성</div>
+        <div class="form-group">
+          <div class="form-label">받는 사람</div>
+          <input type="text" id="mail-to" placeholder="example@company.com" value="wlghksw01@gmail.com">
+        </div>
+        <div class="form-group">
+          <div class="form-label">제목</div>
+          <input type="text" id="mail-subject" placeholder="이메일 제목">
+        </div>
+        <div class="form-group">
+          <div class="form-label">내용 요점 (AI가 자동으로 이메일 형식으로 변환)</div>
+          <textarea id="mail-body" rows="4" placeholder="예) 다음 주 월요일 회의 일정 확인 요청, 회의 시간 오전 10시 제안, 회의실 예약 필요..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="composeMail()" style="width:100%">
+          📧 Gmail 초안으로 저장
+        </button>
+        <div id="mail-result" style="display:none" class="info-box info-box-green" style="margin-top:10px;"></div>
+
+        <div class="info-box info-box-blue" style="margin-top:12px;">
+          <span>💡</span>
+          <div>임시보관 초안이 Gmail에 저장되면 내용 검토 후 직접 발송할 수 있습니다</div>
+        </div>
+
+        <!-- 기존 초안 -->
+        <div style="margin-top:16px;">
+          <div class="form-label" style="margin-bottom:8px;">📁 현재 임시보관함</div>
+          <div style="background:#F8F7F6; border-radius:8px; padding:12px; font-size:13px; color:#201F1E; border:1px solid #EDEBE9;">
+            <div style="font-weight:600;">[WorkPortal] 직원 자동화 포털 구축 프로젝트 시작 안내</div>
+            <div style="font-size:12px; color:#A19F9D; margin-top:2px;">방금 생성됨 · 수신: wlghksw01@gmail.com</div>
+            <a href="https://mail.google.com/mail/u/0/#drafts?compose=19d2d070e8950071" target="_blank" style="font-size:12px; color:#0078D4; display:inline-block; margin-top:4px;">초안 열기 →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 일정·캘린더 -->
+  <div class="page" id="page-schedule">
+    <div class="page-title">일정·캘린더</div>
+    <div class="page-sub">Google Calendar와 실시간 연동됩니다</div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title">📅 등록된 일정</div>
+        <div id="schedule-list">
+          <div class="schedule-item">
+            <div class="schedule-icon" style="background:#EFF6FF">🚀</div>
+            <div class="schedule-info">
+              <div class="schedule-title">WorkPortal 팀 킥오프 미팅</div>
+              <div class="schedule-meta">3월 30일 (월) 오전 10:00 – 11:00</div>
+              <div class="schedule-meta" style="margin-top:4px; font-size:11px;">
+                <a href="https://www.google.com/calendar/event?eid=M2lhZm5pcXJoZm9scG9jazNpcmFya2hkcGsgd2xnaGtzdzAxQG0" target="_blank" style="color:#0078D4;">캘린더에서 보기 →</a>
+              </div>
+            </div>
+            <span class="badge badge-blue">예정</span>
+          </div>
+        </div>
+        <div class="info-box info-box-green" style="margin-top:14px;">
+          <span>✅</span>
+          <div>Google Calendar에 일정이 등록되었습니다. 30분·1시간 전 알림이 설정되어 있습니다.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">➕ 새 일정 등록</div>
+        <div class="form-group">
+          <div class="form-label">일정 제목</div>
+          <input type="text" id="new-title" placeholder="예) 월간 팀 회의">
+        </div>
+        <div class="form-group">
+          <div class="form-label">날짜</div>
+          <input type="date" id="new-date" style="width:100%; padding:10px 12px; border:1.5px solid #EDEBE9; border-radius:8px; font-size:14px; outline:none; color:#201F1E; font-family:inherit;">
+        </div>
+        <div class="form-group">
+          <div class="form-label">시간</div>
+          <div style="display:flex; gap:8px;">
+            <input type="time" id="new-start" style="flex:1">
+            <span style="line-height:40px; color:#605E5C">~</span>
+            <input type="time" id="new-end" style="flex:1">
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">메모 (선택)</div>
+          <textarea id="new-desc" rows="2" placeholder="안건, 장소, 참고 사항..."></textarea>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="addEvent()">
+          📅 Google Calendar에 등록
+        </button>
+        <div id="event-result" style="display:none" class="info-box info-box-green" style="margin-top:10px;"></div>
+        <div class="info-box info-box-orange" style="margin-top:10px;">
+          <span>⚡</span>
+          <div>Teams 연동 후에는 일정 등록 시 채널 알림이 자동 발송됩니다</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 자동화 흐름 -->
+  <div class="page" id="page-automate">
+    <div class="page-title">자동화 흐름 관리</div>
+    <div class="page-sub">자동화 워크플로우를 이 포털에서 직접 제어합니다</div>
+
+    <div id="flows-container">
+      <div class="flow-item">
+        <div class="flow-icon">📧</div>
+        <div class="flow-info">
+          <div class="flow-name">Gmail 수신 → AI 분류 → 중요 메일 알림</div>
+          <div class="flow-meta">Gmail 연동 활성 · 201건 처리</div>
+        </div>
+        <button class="toggle" style="background:#0078D4" onclick="toggleFlow(this)"><div class="toggle-knob" style="left:22px"></div></button>
+        <div class="flow-status" style="color:#107C10">활성</div>
+      </div>
+      <div class="flow-item">
+        <div class="flow-icon">📄</div>
+        <div class="flow-info">
+          <div class="flow-name">매주 월요일 주간 업무 보고서 자동 생성</div>
+          <div class="flow-meta">문서 자동생성 연동 · 매주 실행</div>
+        </div>
+        <button class="toggle" style="background:#0078D4" onclick="toggleFlow(this)"><div class="toggle-knob" style="left:22px"></div></button>
+        <div class="flow-status" style="color:#107C10">활성</div>
+      </div>
+      <div class="flow-item">
+        <div class="flow-icon">📅</div>
+        <div class="flow-info">
+          <div class="flow-name">일정 등록 → Gmail 초대 메일 자동 발송</div>
+          <div class="flow-meta">Google Calendar + Gmail 연동 활성</div>
+        </div>
+        <button class="toggle" style="background:#0078D4" onclick="toggleFlow(this)"><div class="toggle-knob" style="left:22px"></div></button>
+        <div class="flow-status" style="color:#107C10">활성</div>
+      </div>
+      <div class="flow-item">
+        <div class="flow-icon">⚡</div>
+        <div class="flow-info">
+          <div class="flow-name">결재 요청 → Teams 알림 → 이메일 승인</div>
+          <div class="flow-meta">MS Teams 미연결 (도입 후 활성화)</div>
+        </div>
+        <button class="toggle" style="background:#C7C6C5" onclick="toggleFlow(this)"><div class="toggle-knob" style="left:2px"></div></button>
+        <div class="flow-status" style="color:#A19F9D">비활성</div>
+      </div>
+      <div class="flow-item">
+        <div class="flow-icon">📊</div>
+        <div class="flow-info">
+          <div class="flow-name">데이터 수집 → AI 분석 → 리포트 이메일 발송</div>
+          <div class="flow-meta">MS365 도입 후 활성화 예정</div>
+        </div>
+        <button class="toggle" style="background:#C7C6C5" onclick="toggleFlow(this)"><div class="toggle-knob" style="left:2px"></div></button>
+        <div class="flow-status" style="color:#A19F9D">비활성</div>
+      </div>
+    </div>
+    <div class="info-box info-box-orange" style="margin-top:8px;">
+      <span>⚡</span>
+      <div><strong>MS365 Power Automate 연동 예정</strong> — 라이선스 도입 후 Teams, SharePoint, Outlook과 완전 연동됩니다</div>
+    </div>
+  </div>
+
+  <!-- 설정 -->
+  <div class="page" id="page-settings">
+    <div class="page-title">설정</div>
+    <div class="page-sub">연동 서비스 및 알림 설정을 관리합니다</div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div class="section-title">🔗 서비스 연동 상태</div>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#F3F2F1; border-radius:8px;">
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:20px;">📧</span><div><div style="font-weight:600; font-size:14px;">Gmail</div><div style="font-size:12px; color:#605E5C;">wlghksw01@gmail.com</div></div></div>
+          <span class="badge badge-green">연결됨</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#F3F2F1; border-radius:8px;">
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:20px;">📅</span><div><div style="font-weight:600; font-size:14px;">Google Calendar</div><div style="font-size:12px; color:#605E5C;">기본 캘린더</div></div></div>
+          <span class="badge badge-green">연결됨</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#F3F2F1; border-radius:8px;">
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:20px;">💬</span><div><div style="font-weight:600; font-size:14px;">Microsoft Teams</div><div style="font-size:12px; color:#605E5C;">MS365 도입 후 연결 가능</div></div></div>
+          <span class="badge badge-gray">미연결</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#F3F2F1; border-radius:8px;">
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:20px;">⚡</span><div><div style="font-weight:600; font-size:14px;">Power Automate</div><div style="font-size:12px; color:#605E5C;">MS365 Business Standard 필요</div></div></div>
+          <span class="badge badge-gray">미연결</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#F3F2F1; border-radius:8px;">
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-size:20px;">🤖</span><div><div style="font-weight:600; font-size:14px;">Microsoft Copilot</div><div style="font-size:12px; color:#605E5C;">Copilot for M365 라이선스 필요</div></div></div>
+          <span class="badge badge-red">라이선스 필요</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🛣️ 다음 단계</div>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+        <div style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; background:#DFF6DD;">
+          <span style="color:#107C10; font-weight:700;">✅</span>
+          <div style="font-size:13px; color:#0B6A0B;"><strong>완료</strong> — WorkPortal 프로토타입 구축 · Gmail/Calendar 연동</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; background:#EFF6FF;">
+          <span style="color:#0078D4; font-weight:700;">▶</span>
+          <div style="font-size:13px; color:#004E8C;"><strong>진행 중</strong> — MS365 Business Standard 도입 검토</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; background:#F3F2F1;">
+          <span style="color:#605E5C; font-weight:700;">○</span>
+          <div style="font-size:13px; color:#605E5C;"><strong>예정</strong> — Power Automate 흐름 구성 · Teams 채널 알림</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; background:#F3F2F1;">
+          <span style="color:#605E5C; font-weight:700;">○</span>
+          <div style="font-size:13px; color:#605E5C;"><strong>예정</strong> — Microsoft Copilot 연동 · Cowork 커스텀 스킬 확장</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// 페이지 전환
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+// 템플릿 선택
+let currentTemplate = null;
+function selectTemplate(el, name) {
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  currentTemplate = name;
+  document.getElementById('doc-form').style.display = 'block';
+  document.getElementById('doc-form-title').textContent = '📝 ' + name + ' 작성하기';
+  document.getElementById('doc-input').value = '';
+  document.getElementById('doc-output').style.display = 'none';
+  document.getElementById('doc-actions').style.display = 'none';
+  const hint = document.getElementById('gmail-hint');
+  hint.style.display = name === '이메일 초안 생성' ? 'inline' : 'none';
+}
+
+function clearDoc() {
+  document.getElementById('doc-input').value = '';
+  document.getElementById('doc-output').style.display = 'none';
+  document.getElementById('doc-actions').style.display = 'none';
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('doc-form').style.display = 'none';
+  currentTemplate = null;
+}
+
+// 문서 생성 (데모)
+function generateDoc() {
+  const input = document.getElementById('doc-input').value.trim();
+  if (!input || !currentTemplate) return;
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 생성 중...';
+  setTimeout(() => {
+    const today = new Date().toLocaleDateString('ko-KR');
+    let output = '';
+    if (currentTemplate === '주간 업무 보고서') {
+      output = `[주간 업무 보고서]\n작성일: ${today}\n작성자: 최지환\n\n■ 이번 주 완료 업무\n${input}\n\n■ 다음 주 계획\n• 이번 주 업무 연속 진행\n• 관련 이슈 후속 조치\n\n■ 특이사항 / 요청사항\n• 없음\n\n---\n✅ AI가 자동 생성한 보고서입니다. 필요 시 수정 후 활용해 주세요.`;
+    } else if (currentTemplate === '회의록 자동 작성') {
+      output = `[회의록]\n일시: ${today}\n참석자: (참석자 입력)\n\n■ 안건\n${input}\n\n■ 주요 논의 내용\n• 안건에 대한 각 참석자 의견 공유\n• 실행 방안 논의\n\n■ 결정 사항\n• (결정 내용 입력)\n\n■ 다음 액션 아이템\n• 담당자: 최지환 / 기한: 1주일 이내\n\n---\n✅ AI 자동 생성 회의록`;
+    } else if (currentTemplate === '이메일 초안 생성') {
+      output = `안녕하세요,\n\n아래 내용으로 연락드립니다.\n\n${input}\n\n확인 후 회신 부탁드립니다.\n\n감사합니다.\n최지환 드림\n\n---\n📧 이 초안을 Gmail 임시보관함에 저장하려면 아래 버튼을 클릭하세요.`;
+    } else {
+      output = `[${currentTemplate}]\n작성일: ${today}\n\n■ 개요\n${input}\n\n■ 상세 내용\n• AI가 입력하신 내용을 분석하여 전문 문서 형식으로 변환했습니다.\n• 항목을 추가하거나 내용을 수정하여 완성해 주세요.\n\n■ 다음 단계\n• 검토 후 .docx 파일로 저장 가능합니다.\n\n---\n✅ AI 자동 생성 문서`;
+    }
+    document.getElementById('doc-output').textContent = output;
+    document.getElementById('doc-output').style.display = 'block';
+    document.getElementById('doc-actions').style.display = 'flex';
+    btn.disabled = false;
+    btn.textContent = '✨ AI로 문서 생성';
+  }, 1400);
+}
+
+// 이메일 초안
+function composeMail() {
+  const to = document.getElementById('mail-to').value;
+  const subj = document.getElementById('mail-subject').value;
+  const body = document.getElementById('mail-body').value;
+  if (!body.trim()) { alert('내용을 입력해 주세요'); return; }
+  const result = document.getElementById('mail-result');
+  result.style.display = 'flex';
+  result.innerHTML = '⏳ Gmail 초안 저장 중...';
+  setTimeout(() => {
+    result.innerHTML = '✅ Gmail 임시보관함에 초안이 저장되었습니다. <a href="https://mail.google.com/mail/u/0/#drafts" target="_blank" style="color:#0078D4; margin-left:6px;">Gmail 열기 →</a>';
+    result.className = 'info-box info-box-green';
+    result.style.display = 'flex';
+  }, 1200);
+}
+
+// 캘린더 등록
+function addEvent() {
+  const title = document.getElementById('new-title').value;
+  const date = document.getElementById('new-date').value;
+  const start = document.getElementById('new-start').value;
+  const end = document.getElementById('new-end').value;
+  if (!title || !date) { alert('제목과 날짜를 입력해 주세요'); return; }
+  const result = document.getElementById('event-result');
+  result.style.display = 'flex';
+  result.innerHTML = '⏳ Google Calendar에 등록 중...';
+  setTimeout(() => {
+    const dateStr = new Date(date).toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric',weekday:'short'});
+    result.innerHTML = `✅ <strong>${title}</strong>이(가) Google Calendar에 등록되었습니다.<br><span style="font-size:12px; color:#0B6A0B">${dateStr} ${start}${end ? ' ~ ' + end : ''}</span>`;
+    result.style.display = 'flex';
+    // 목록에 추가
+    const list = document.getElementById('schedule-list');
+    const item = document.createElement('div');
+    item.className = 'schedule-item';
+    item.innerHTML = `<div class="schedule-icon" style="background:#DFF6DD">📅</div><div class="schedule-info"><div class="schedule-title">${title}</div><div class="schedule-meta">${dateStr} ${start}${end ? ' ~ ' + end : ''}</div></div><span class="badge badge-green">신규</span>`;
+    list.appendChild(item);
+    document.getElementById('new-title').value = '';
+    document.getElementById('new-date').value = '';
+    document.getElementById('new-start').value = '';
+    document.getElementById('new-end').value = '';
+    document.getElementById('new-desc').value = '';
+  }, 1100);
+}
+
+// 자동화 토글
+function toggleFlow(btn) {
+  const knob = btn.querySelector('.toggle-knob');
+  const statusEl = btn.nextElementSibling;
+  const isActive = knob.style.left === '22px';
+  if (isActive) {
+    btn.style.background = '#C7C6C5';
+    knob.style.left = '2px';
+    statusEl.style.color = '#A19F9D';
+    statusEl.textContent = '비활성';
+  } else {
+    btn.style.background = '#0078D4';
+    knob.style.left = '22px';
+    statusEl.style.color = '#107C10';
+    statusEl.textContent = '활성';
+  }
+}
+</script>
+</body>
+</html>

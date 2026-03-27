@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkPortal — 실시간 연동</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI','Apple SD Gothic Neo',sans-serif; background:#FAF9F8; display:flex; height:100vh; overflow:hidden; }
+
+.sidebar { width:220px; background:#201F1E; display:flex; flex-direction:column; flex-shrink:0; }
+.logo { padding:18px 20px; border-bottom:1px solid #3B3A39; display:flex; align-items:center; gap:10px; }
+.logo-icon { width:32px; height:32px; border-radius:8px; background:#0078D4; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:#fff; }
+.logo-text { color:#fff; font-weight:700; font-size:14px; }
+.logo-sub  { color:#A19F9D; font-size:11px; }
+.nav { flex:1; padding:14px 12px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; margin-bottom:2px; cursor:pointer; color:#C7C6C5; font-size:14px; transition:all .15s; }
+.nav-item:hover { background:#3B3A39; color:#fff; }
+.nav-item.active { background:#0078D4; color:#fff; }
+.conn-bar { padding:12px 20px; border-top:1px solid #3B3A39; display:flex; flex-direction:column; gap:6px; }
+.conn-item { display:flex; align-items:center; gap:8px; font-size:11px; color:#A19F9D; }
+.conn-dot  { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.conn-dot.on  { background:#107C10; }
+.conn-dot.off { background:#C7C6C5; }
+
+.main { flex:1; overflow-y:auto; padding:28px 32px; }
+.page { display:none; }
+.page.active { display:block; }
+.page-title { font-size:22px; font-weight:700; color:#201F1E; margin-bottom:4px; }
+.page-sub   { color:#605E5C; font-size:14px; margin-bottom:22px; }
+
+.card { background:#fff; border:1.5px solid #EDEBE9; border-radius:12px; padding:20px; }
+.card + .card { margin-top:16px; }
+.section-title { font-weight:700; font-size:14px; color:#201F1E; margin-bottom:14px; }
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+.badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; }
+.badge-blue   { background:#DEEAF8; color:#0078D4; }
+.badge-green  { background:#DFF6DD; color:#107C10; }
+.badge-orange { background:#FEF0CD; color:#8A4500; }
+.badge-red    { background:#FDE7E9; color:#C50F1F; }
+.badge-gray   { background:#EDEBE9; color:#605E5C; }
+
+.btn { display:inline-flex; align-items:center; gap:6px; padding:9px 18px; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; }
+.btn-primary   { background:#0078D4; color:#fff; }
+.btn-primary:hover   { background:#005A9E; }
+.btn-primary:disabled { background:#C7C6C5; cursor:not-allowed; }
+.btn-secondary { background:#F3F2F1; color:#201F1E; }
+.btn-secondary:hover { background:#EDEBE9; }
+.btn-danger    { background:#C50F1F; color:#fff; }
+
+input, textarea, select { width:100%; padding:10px 12px; border:1.5px solid #EDEBE9; border-radius:8px; font-size:14px; font-family:inherit; outline:none; color:#201F1E; }
+input:focus, textarea:focus { border-color:#0078D4; }
+.form-group  { margin-bottom:12px; }
+.form-label  { font-size:13px; font-weight:600; color:#201F1E; margin-bottom:5px; display:block; }
+
+.list-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #F3F2F1; font-size:13px; }
+.list-row:last-child { border-bottom:none; }
+.list-main  { flex:1; color:#201F1E; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.list-sub   { font-size:11px; color:#A19F9D; margin-top:1px; }
+
+.info { padding:12px 14px; border-radius:8px; font-size:13px; display:flex; align-items:flex-start; gap:8px; margin-top:10px; }
+.info-blue   { background:#EFF6FF; border:1px solid #C7E0F4; color:#004E8C; }
+.info-green  { background:#F0FFF0; border:1px solid #C6E8C6; color:#0B6A0B; }
+.info-orange { background:#FFF9F0; border:1px solid #F7D6A0; color:#7A3B00; }
+
+/* 로딩 스피너 */
+.spin { display:inline-block; width:14px; height:14px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* 알림 토스트 */
+#toast { position:fixed; bottom:24px; right:24px; background:#201F1E; color:#fff; padding:12px 20px; border-radius:10px; font-size:14px; display:none; z-index:999; box-shadow:0 4px 20px rgba(0,0,0,.3); }
+
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-thumb { background:#C7C6C5; border-radius:3px; }
+</style>
+</head>
+<body>
+
+<!-- 사이드바 -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">W</div>
+    <div><div class="logo-text">WorkPortal</div><div class="logo-sub">Live 연동</div></div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="go('dashboard',this)">⊞ 대시보드</div>
+    <div class="nav-item" onclick="go('gmail',this)">✉️ Gmail</div>
+    <div class="nav-item" onclick="go('docs',this)">📄 문서 생성</div>
+    <div class="nav-item" onclick="go('calendar',this)">📅 캘린더</div>
+    <div class="nav-item" onclick="go('notion',this)">📋 Notion</div>
+    <div class="nav-item" onclick="go('settings',this)">⚙ 설정</div>
+  </nav>
+  <div class="conn-bar">
+    <div class="conn-item"><div class="conn-dot" id="dot-google"></div><span id="lbl-google">Google 확인 중…</span></div>
+    <div class="conn-item"><div class="conn-dot" id="dot-notion"></div><span id="lbl-notion">Notion 확인 중…</span></div>
+  </div>
+</div>
+
+<!-- 메인 -->
+<div class="main">
+
+  <!-- 대시보드 -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-title">대시보드</div>
+    <div class="page-sub">실시간 연동 현황</div>
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title">✉️ 최근 미읽음 메일</div>
+        <div id="dash-mails"><div style="color:#A19F9D;font-size:13px">불러오는 중…</div></div>
+      </div>
+      <div class="card">
+        <div class="section-title">📅 다가오는 일정</div>
+        <div id="dash-events"><div style="color:#A19F9D;font-size:13px">불러오는 중…</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">📁 Gmail 임시보관함</div>
+      <div id="dash-drafts"><div style="color:#A19F9D;font-size:13px">불러오는 중…</div></div>
+    </div>
+  </div>
+
+  <!-- Gmail -->
+  <div class="page" id="page-gmail">
+    <div class="page-title">Gmail</div>
+    <div class="page-sub">실시간 메일 조회 및 초안 작성</div>
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title">📬 미읽음 메일</div>
+        <div style="margin-bottom:10px;display:flex;gap:8px">
+          <input id="mail-search" placeholder="검색어 (기본: 미읽음)" style="flex:1">
+          <button class="btn btn-primary" onclick="loadMails()">검색</button>
+        </div>
+        <div id="mail-list"><div style="color:#A19F9D;font-size:13px">위 버튼으로 불러오기</div></div>
+      </div>
+      <div class="card">
+        <div class="section-title">✍️ 이메일 초안 작성</div>
+        <div class="form-group"><label class="form-label">받는 사람</label><input id="draft-to" placeholder="email@example.com"></div>
+        <div class="form-group"><label class="form-label">제목</label><input id="draft-subject" placeholder="이메일 제목"></div>
+        <div class="form-group"><label class="form-label">내용</label><textarea id="draft-body" rows="5" placeholder="이메일 내용을 입력하세요"></textarea></div>
+        <button class="btn btn-primary" style="width:100%" onclick="createDraft()">
+          <span id="draft-btn-text">📧 Gmail 초안으로 저장</span>
+        </button>
+        <div id="draft-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 문서 생성 -->
+  <div class="page" id="page-docs">
+    <div class="page-title">문서 자동생성</div>
+    <div class="page-sub">템플릿 선택 후 내용 입력 → 생성 즉시 Gmail 초안으로 저장 가능</div>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="section-title">📋 템플릿 선택</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="template-btn" onclick="selectTpl(this,'주간 업무 보고서')">📊 주간 업무 보고서</div>
+            <div class="template-btn" onclick="selectTpl(this,'회의록')">🤝 회의록</div>
+            <div class="template-btn" onclick="selectTpl(this,'이메일 초안')">✉️ 이메일 초안</div>
+            <div class="template-btn" onclick="selectTpl(this,'프로젝트 리포트')">📁 프로젝트 리포트</div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <div class="form-group"><label class="form-label">내용 입력</label>
+            <textarea id="doc-input" rows="6" placeholder="핵심 내용이나 키워드를 입력하세요…"></textarea></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" id="doc-gen-btn" onclick="generateDoc()">✨ 문서 생성</button>
+            <button class="btn btn-secondary" onclick="clearDoc()">초기화</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title" id="doc-output-title">📄 생성 결과</div>
+        <pre id="doc-output" style="font-size:13px;white-space:pre-wrap;line-height:1.7;color:#201F1E;min-height:200px"></pre>
+        <div id="doc-actions" style="display:none;margin-top:12px;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="sendDocToGmail()">📧 Gmail 초안으로 저장</button>
+          <button class="btn btn-secondary" onclick="copyDoc()">📋 복사</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 캘린더 -->
+  <div class="page" id="page-calendar">
+    <div class="page-title">Google Calendar</div>
+    <div class="page-sub">실시간 일정 조회 및 등록</div>
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title">📅 다가오는 일정</div>
+        <button class="btn btn-secondary" style="margin-bottom:12px;font-size:13px" onclick="loadEvents()">🔄 새로고침</button>
+        <div id="event-list"><div style="color:#A19F9D;font-size:13px">불러오는 중…</div></div>
+      </div>
+      <div class="card">
+        <div class="section-title">➕ 새 일정 등록</div>
+        <div class="form-group"><label class="form-label">일정 제목</label><input id="ev-title" placeholder="예) 팀 주간 회의"></div>
+        <div class="form-group"><label class="form-label">날짜</label>
+          <input type="date" id="ev-date"></div>
+        <div class="form-group"><label class="form-label">시작 시간</label>
+          <input type="time" id="ev-start"></div>
+        <div class="form-group"><label class="form-label">종료 시간</label>
+          <input type="time" id="ev-end"></div>
+        <div class="form-group"><label class="form-label">메모 (선택)</label>
+          <textarea id="ev-desc" rows="2" placeholder="안건, 장소 등"></textarea></div>
+        <button class="btn btn-primary" style="width:100%" onclick="createEvent()" id="ev-btn">
+          📅 Google Calendar에 등록
+        </button>
+        <div id="ev-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notion -->
+  <div class="page" id="page-notion">
+    <div class="page-title">Notion</div>
+    <div class="page-sub">팀장 자동화 허브와 연동</div>
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title">🔍 Notion 검색</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input id="notion-q" placeholder="검색어" style="flex:1">
+          <button class="btn btn-primary" onclick="searchNotion()">검색</button>
+        </div>
+        <div id="notion-results"><div style="color:#A19F9D;font-size:13px">검색어를 입력하세요</div></div>
+      </div>
+      <div class="card">
+        <div class="section-title">📋 허브 바로가기</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a href="https://www.notion.so/330254a160d681a49a2bf65edf6a3855" target="_blank"
+             style="display:flex;align-items:center;gap:10px;padding:12px;background:#F8F7F6;border-radius:8px;text-decoration:none;color:#201F1E;font-size:14px;font-weight:600;">
+            🤖 팀장 자동화 허브 →
+          </a>
+          <a href="https://www.notion.so/e10afd020acb4c92a2d53dd3a313406e" target="_blank"
+             style="display:flex;align-items:center;gap:10px;padding:12px;background:#F8F7F6;border-radius:8px;text-decoration:none;color:#201F1E;font-size:14px;font-weight:600;">
+            📧 받은 메일 요약 DB →
+          </a>
+          <a href="https://www.notion.so/3c23cf1cb92d4e80ab026135bc5acbe5" target="_blank"
+             style="display:flex;align-items:center;gap:10px;padding:12px;background:#F8F7F6;border-radius:8px;text-decoration:none;color:#201F1E;font-size:14px;font-weight:600;">
+            📅 일정 기록 DB →
+          </a>
+        </div>
+        <div class="info info-blue" style="margin-top:14px">
+          <span>💡</span>
+          <div>매일 오전 8시에 Cowork이 자동으로 Gmail과 Calendar 내용을 위 DB에 기록합니다</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 설정 -->
+  <div class="page" id="page-settings">
+    <div class="page-title">설정</div>
+    <div class="page-sub">Google 및 Notion 연동 관리</div>
+    <div class="card">
+      <div class="section-title">🔗 Google 연동</div>
+      <div id="google-status" style="margin-bottom:14px;font-size:14px;color:#605E5C">확인 중…</div>
+      <button class="btn btn-primary" onclick="startOAuth()" id="oauth-btn">🔑 Google 로그인</button>
+      <div class="info info-blue" style="margin-top:12px">
+        <span>📌</span>
+        <div>서버 폴더에 <strong>credentials.json</strong> 파일이 있어야 합니다.<br>
+        설정 방법: <strong>README_설정가이드.md</strong> 참고</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">📋 Notion 연동</div>
+      <div class="form-group">
+        <label class="form-label">Notion Integration Token</label>
+        <input id="notion-token-input" type="password" placeholder="secret_…">
+      </div>
+      <button class="btn btn-primary" onclick="saveNotionToken()">저장</button>
+      <div class="info info-orange" style="margin-top:12px">
+        <span>🔑</span>
+        <div>Notion → 설정 → 연동 → 새 연동 만들기에서 토큰을 발급받으세요</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<style>
+.template-btn { padding:12px 16px; background:#fff; border:1.5px solid #EDEBE9; border-radius:8px; cursor:pointer; font-size:14px; color:#201F1E; font-weight:600; transition:all .15s; }
+.template-btn:hover { border-color:#0078D4; background:#F8FBFF; }
+.template-btn.selected { border:2px solid #0078D4; background:#EFF6FF; color:#0078D4; }
+</style>
+
+<script>
+const API = 'http://localhost:8787';
+let selectedTpl = null;
+
+// ── 유틸 ────────────────────────────────────────────────
+function toast(msg, ok=true) {
+  const t = document.getElementById('toast');
+  t.textContent = (ok ? '✅ ' : '❌ ') + msg;
+  t.style.display = 'block';
+  t.style.background = ok ? '#107C10' : '#C50F1F';
+  setTimeout(() => t.style.display='none', 3000);
+}
+
+async function api(path, method='GET', body=null) {
+  try {
+    const opts = { method, headers:{'Content-Type':'application/json'} };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(API + path, opts);
+    return await res.json();
+  } catch(e) {
+    return { error: '서버에 연결할 수 없습니다. server.py가 실행 중인지 확인하세요.' };
+  }
+}
+
+function go(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='dashboard') loadDashboard();
+  if(id==='calendar')  loadEvents();
+}
+
+// ── 연동 상태 확인 ────────────────────────────────────────
+async function checkStatus() {
+  const s = await api('/api/status');
+  const gDot = document.getElementById('dot-google');
+  const nDot = document.getElementById('dot-notion');
+
+  if (s.error) {
+    gDot.className = 'conn-dot off';
+    nDot.className = 'conn-dot off';
+    document.getElementById('lbl-google').textContent = '서버 미실행';
+    document.getElementById('lbl-notion').textContent = '서버 미실행';
+    return;
+  }
+
+  gDot.className = 'conn-dot ' + (s.google ? 'on' : 'off');
+  nDot.className = 'conn-dot ' + (s.notion ? 'on' : 'off');
+  document.getElementById('lbl-google').textContent = s.google ? 'Google 연결됨' : 'Google 미연결';
+  document.getElementById('lbl-notion').textContent = s.notion ? 'Notion 연결됨' : 'Notion 미연결';
+
+  // 설정 페이지 업데이트
+  document.getElementById('google-status').textContent = s.google
+    ? '✅ Google 계정 연결됨'
+    : '⚠️ 연결 필요 — 아래 버튼을 클릭하세요';
+  document.getElementById('oauth-btn').textContent = s.google
+    ? '🔄 Google 재인증' : '🔑 Google 로그인';
+}
+
+// ── 대시보드 ─────────────────────────────────────────────
+async function loadDashboard() {
+  loadDashMails();
+  loadDashEvents();
+  loadDashDrafts();
+}
+
+async function loadDashMails() {
+  const el = document.getElementById('dash-mails');
+  const d = await api('/api/gmail/messages?q=is:unread+newer_than:3d+-category:promotions');
+  if (d.error || !d.messages) {
+    el.innerHTML = `<div style="color:#A19F9D;font-size:13px">${d.error || '메일 없음'}</div>`;
+    return;
+  }
+  const msgs = d.messages.slice(0,5);
+  el.innerHTML = msgs.map(m => `
+    <div class="list-row">
+      <div style="flex:1">
+        <div class="list-main">${m.snippet ? m.snippet.substring(0,60)+'…' : '(내용 없음)'}</div>
+      </div>
+      <span class="badge badge-orange">미읽음</span>
+    </div>`).join('') || '<div style="color:#605E5C;font-size:13px">미읽음 메일 없음</div>';
+}
+
+async function loadDashEvents() {
+  const el = document.getElementById('dash-events');
+  const d = await api('/api/calendar/events');
+  if (d.error || !d.items) {
+    el.innerHTML = `<div style="color:#A19F9D;font-size:13px">${d.error || '일정 없음'}</div>`;
+    return;
+  }
+  el.innerHTML = d.items.slice(0,4).map(e => {
+    const dt = e.start?.dateTime || e.start?.date || '';
+    const time = dt ? new Date(dt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div class="list-row">
+      <div style="flex:1">
+        <div class="list-main">${e.summary || '(제목 없음)'}</div>
+        <div class="list-sub">${time}</div>
+      </div>
+      <span class="badge badge-blue">예정</span>
+    </div>`;
+  }).join('') || '<div style="color:#605E5C;font-size:13px">예정 일정 없음</div>';
+}
+
+async function loadDashDrafts() {
+  const el = document.getElementById('dash-drafts');
+  const d = await api('/api/gmail/drafts');
+  if (d.error || !d.drafts) {
+    el.innerHTML = `<div style="color:#A19F9D;font-size:13px">${d.error || '초안 없음'}</div>`;
+    return;
+  }
+  el.innerHTML = d.drafts.slice(0,3).map(draft => {
+    const h = draft.message?.headers || {};
+    const subject = Array.isArray(h) ? (h.find(x=>x.name==='Subject')?.value || '(제목 없음)') : '(제목 없음)';
+    return `<div class="list-row">
+      <div style="flex:1"><div class="list-main">${subject}</div></div>
+      <a href="https://mail.google.com/mail/u/0/#drafts" target="_blank"
+         style="font-size:12px;color:#0078D4">열기 →</a>
+    </div>`;
+  }).join('');
+}
+
+// ── Gmail ────────────────────────────────────────────────
+async function loadMails() {
+  const q = document.getElementById('mail-search').value || 'is:unread newer_than:3d';
+  const el = document.getElementById('mail-list');
+  el.innerHTML = '<div style="color:#A19F9D;font-size:13px">불러오는 중…</div>';
+  const d = await api(`/api/gmail/messages?q=${encodeURIComponent(q)}`);
+  if (d.error) { el.innerHTML = `<div style="color:#C50F1F;font-size:13px">${d.error}</div>`; return; }
+  if (!d.messages?.length) { el.innerHTML = '<div style="color:#605E5C;font-size:13px">결과 없음</div>'; return; }
+  el.innerHTML = d.messages.map(m =>
+    `<div class="list-row">
+      <div style="flex:1">
+        <div class="list-main">${m.snippet?.substring(0,70) || '(내용 없음)'}…</div>
+        <div class="list-sub">ID: ${m.id}</div>
+      </div>
+    </div>`).join('');
+}
+
+async function createDraft() {
+  const btn = document.getElementById('draft-btn-text');
+  const to = document.getElementById('draft-to').value;
+  const subject = document.getElementById('draft-subject').value;
+  const body = document.getElementById('draft-body').value;
+  if (!to || !subject || !body) { toast('받는 사람, 제목, 내용을 모두 입력해주세요', false); return; }
+
+  btn.innerHTML = '<span class="spin"></span> 저장 중…';
+  const d = await api('/api/gmail/draft', 'POST', { to, subject, body });
+  btn.textContent = '📧 Gmail 초안으로 저장';
+
+  if (d.error) { toast(d.error, false); return; }
+  toast('Gmail 임시보관함에 저장됐습니다!');
+  document.getElementById('draft-result').innerHTML =
+    `<div class="info info-green" style="margin-top:10px">
+      ✅ 초안 저장 완료 —
+      <a href="https://mail.google.com/mail/u/0/#drafts" target="_blank" style="color:#0078D4">Gmail에서 확인 →</a>
+    </div>`;
+}
+
+// ── 문서 생성 ─────────────────────────────────────────────
+function selectTpl(el, name) {
+  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTpl = name;
+}
+
+async function generateDoc() {
+  if (!selectedTpl) { toast('템플릿을 먼저 선택하세요', false); return; }
+  const content = document.getElementById('doc-input').value.trim();
+  if (!content) { toast('내용을 입력하세요', false); return; }
+  const btn = document.getElementById('doc-gen-btn');
+  btn.innerHTML = '<span class="spin"></span> 생성 중…';
+  const d = await api('/api/docs/generate', 'POST', { template: selectedTpl, content });
+  btn.textContent = '✨ 문서 생성';
+  if (d.error) { toast(d.error, false); return; }
+  document.getElementById('doc-output').textContent = d.result;
+  document.getElementById('doc-output-title').textContent = `📄 ${selectedTpl}`;
+  document.getElementById('doc-actions').style.display = 'flex';
+}
+
+function clearDoc() {
+  selectedTpl = null;
+  document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('doc-input').value = '';
+  document.getElementById('doc-output').textContent = '';
+  document.getElementById('doc-actions').style.display = 'none';
+}
+
+async function sendDocToGmail() {
+  const content = document.getElementById('doc-output').textContent;
+  if (!content) return;
+  const d = await api('/api/gmail/draft', 'POST', {
+    to: 'wlghksw01@gmail.com',
+    subject: `[WorkPortal] ${selectedTpl} — ${new Date().toLocaleDateString('ko-KR')}`,
+    body: content
+  });
+  if (d.error) { toast(d.error, false); return; }
+  toast('Gmail 임시보관함에 저장됐습니다!');
+}
+
+function copyDoc() {
+  const t = document.getElementById('doc-output').textContent;
+  navigator.clipboard.writeText(t).then(() => toast('클립보드에 복사됐습니다'));
+}
+
+// ── 캘린더 ───────────────────────────────────────────────
+async function loadEvents() {
+  const el = document.getElementById('event-list');
+  el.innerHTML = '<div style="color:#A19F9D;font-size:13px">불러오는 중…</div>';
+  const d = await api('/api/calendar/events');
+  if (d.error || !d.items) {
+    el.innerHTML = `<div style="color:#A19F9D;font-size:13px">${d.error || '예정 일정 없음'}</div>`;
+    return;
+  }
+  el.innerHTML = d.items.slice(0,6).map(e => {
+    const dt = e.start?.dateTime || e.start?.date || '';
+    const time = dt ? new Date(dt).toLocaleString('ko-KR',{month:'short',day:'numeric',weekday:'short',hour:'2-digit',minute:'2-digit'}) : '종일';
+    return `<div class="list-row">
+      <div style="flex:1">
+        <div class="list-main">${e.summary || '(제목 없음)'}</div>
+        <div class="list-sub">${time}</div>
+      </div>
+    </div>`;
+  }).join('') || '<div style="color:#605E5C;font-size:13px">예정 일정 없음</div>';
+}
+
+async function createEvent() {
+  const title = document.getElementById('ev-title').value;
+  const date  = document.getElementById('ev-date').value;
+  const start = document.getElementById('ev-start').value;
+  const end   = document.getElementById('ev-end').value;
+  if (!title || !date || !start) { toast('제목, 날짜, 시작 시간은 필수입니다', false); return; }
+
+  const startDT = `${date}T${start}:00+09:00`;
+  const endDT   = end ? `${date}T${end}:00+09:00` : `${date}T${start.replace(/(\d+):(\d+)/, (_,h,m)=>`${String(+h+1).padStart(2,'0')}:${m}`)}:00+09:00`;
+
+  const btn = document.getElementById('ev-btn');
+  btn.innerHTML = '<span class="spin"></span> 등록 중…';
+  const d = await api('/api/calendar/event', 'POST', {
+    title, start: startDT, end: endDT,
+    description: document.getElementById('ev-desc').value
+  });
+  btn.textContent = '📅 Google Calendar에 등록';
+
+  if (d.error) { toast(d.error, false); return; }
+  toast(`"${title}" 일정이 등록됐습니다!`);
+  document.getElementById('ev-result').innerHTML =
+    `<div class="info info-green" style="margin-top:10px">✅ 등록 완료 —
+      <a href="${d.htmlLink || 'https://calendar.google.com'}" target="_blank" style="color:#0078D4">캘린더에서 보기 →</a>
+    </div>`;
+  loadEvents();
+}
+
+// ── Notion ───────────────────────────────────────────────
+async function searchNotion() {
+  const q = document.getElementById('notion-q').value;
+  const el = document.getElementById('notion-results');
+  if (!q) return;
+  el.innerHTML = '<div style="color:#A19F9D;font-size:13px">검색 중…</div>';
+  const d = await api(`/api/notion/search?q=${encodeURIComponent(q)}`);
+  if (d.error) { el.innerHTML = `<div style="color:#C50F1F;font-size:13px">${d.error}</div>`; return; }
+  const results = d.results || [];
+  el.innerHTML = results.slice(0,5).map(r =>
+    `<div class="list-row">
+      <div style="flex:1">
+        <div class="list-main">${r.properties?.title?.title?.[0]?.plain_text || r.title || '(제목 없음)'}</div>
+        <div class="list-sub">${r.object || 'page'}</div>
+      </div>
+      <a href="${r.url}" target="_blank" style="font-size:12px;color:#0078D4">열기 →</a>
+    </div>`).join('') || '<div style="color:#605E5C;font-size:13px">결과 없음</div>';
+}
+
+// ── 설정 ─────────────────────────────────────────────────
+async function startOAuth() {
+  window.open(`${API}/oauth/start`, '_blank', 'width=600,height=700');
+  setTimeout(checkStatus, 3000);
+}
+
+async function saveNotionToken() {
+  const token = document.getElementById('notion-token-input').value.trim();
+  if (!token) { toast('토큰을 입력하세요', false); return; }
+  const d = await api('/api/notion/token', 'POST', { token });
+  if (d.ok) { toast('Notion 토큰이 저장됐습니다!'); checkStatus(); }
+  else toast(d.error || '저장 실패', false);
+}
+
+// ── 초기화 ────────────────────────────────────────────────
+checkStatus();
+loadDashboard();
+</script>
+</body>
+</html>
