@@ -1,6 +1,6 @@
 # WorkPortal 설정 가이드
 
-> 처음 한 번만 설정하면 이후는 `bash start.sh` 한 번으로 실행됩니다.
+> 처음 한 번만 설정하면 이후는 저장소 루트에서 `bash start.sh` 한 번으로 실행됩니다.
 
 ---
 
@@ -37,7 +37,7 @@
 
 ### 1-5. credentials.json 다운로드
 1. 생성된 클라이언트 ID 오른쪽 **다운로드(⬇)** 버튼 클릭
-2. 다운로드된 파일을 **이 폴더(WorkPortal 폴더)에 복사**
+2. 다운로드된 파일을 **`02_projects/workportal/` 폴더에 복사**
 3. 파일 이름을 정확히 `credentials.json` 으로 변경
 
 ---
@@ -61,17 +61,19 @@
 
 ### 방법 A. 터미널 실행 (권장)
 ```bash
-# WorkPortal 폴더에서
+# 저장소 루트(Claude-Cowork 등)에서
 bash start.sh
 ```
 
-### 방법 B. Python 직접 실행
+### 방법 B. 이 폴더에서 Python 직접 실행
 ```bash
+cd 02_projects/workportal
 python3 server.py
 ```
 
 ### 방법 C. 더블클릭 (macOS)
-- `start.sh` 파일 우클릭 → **터미널에서 열기**
+- 저장소 루트의 `start.sh` 우클릭 → **터미널에서 열기**  
+  또는 `02_projects/workportal/start.sh` 를 동일하게 실행
 
 ---
 
@@ -89,13 +91,20 @@ python3 server.py
 ## 파일 구조
 
 ```
-Claude-Cowork/
-├── start.sh              ← 실행 스크립트 (여기서 시작)
-├── server.py             ← 백엔드 서버 (Python 표준 라이브러리만 사용)
-├── index.html            ← 웹 포털 UI (메인)
-├── credentials.json      ← Google OAuth 키 (직접 생성 필요)
-├── .tokens.json          ← 인증 토큰 자동 저장 (자동 생성)
-└── README_설정가이드.md   ← 이 파일
+(저장소 루트)/
+├── start.sh                    ← 루트 실행 진입점 → workportal 로 위임
+├── 00_context/                 ← Cowork 컨텍스트·규칙
+├── 01_inbox/                   ← 입력 자료
+├── 02_projects/
+│   └── workportal/
+│       ├── start.sh            ← 서버 실행 (python3 server.py)
+│       ├── server.py           ← 백엔드
+│       ├── index.html          ← 메인 UI
+│       ├── credentials.json    ← Google OAuth (직접 배치, Git 제외)
+│       ├── .tokens.json        ← 토큰 자동 저장 (Git 제외)
+│       └── README_설정가이드.md ← 이 파일
+├── 03_output/                  ← 산출물 (예: 구축 계획서 docx)
+└── 04_skills/                  ← 커스텀 스킬
 ```
 
 ---

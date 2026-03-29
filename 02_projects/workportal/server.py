@@ -156,6 +156,24 @@ def handle_api(path, method, body, query):
         save_tokens(tokens)
         return {"ok": True}
 
+    # Claude API 키 저장
+    if path == "/api/settings/claude-key" and method == "POST":
+        key = body.get("key", "").strip()
+        tokens = load_tokens()
+        tokens["anthropic_api_key"] = key
+        save_tokens(tokens)
+        return {"ok": True}
+
+    # Claude API 키 상태
+    if path == "/api/settings/claude-key" and method == "GET":
+        tokens = load_tokens()
+        key = tokens.get("anthropic_api_key", "")
+        return {"configured": bool(key), "masked": ("sk-ant-..." + key[-4:]) if key else None}
+
+    # AI 답장 생성
+    if path == "/api/gmail/generate-reply" and method == "POST":
+        return _generate_ai_reply(body)
+
     # ── Gmail ──────────────────────────────────────────────
     if path == "/api/gmail/messages":
         q = query.get("q", ["is:unread newer_than:3d -category:promotions"])[0]
@@ -177,6 +195,10 @@ def handle_api(path, method, body, query):
     if path == "/api/gmail/profile" and method == "GET":
         return google_api("/gmail/v1/users/me/profile")
 
+    if path == "/api/gmail/unread-summary" and method == "GET":
+        unread_only = query.get("unread_only", ["true"])[0].lower() != "false"
+        return _get_unread_summary(unread_only=unread_only)
+
     if path == "/api/gmail/draft" and method == "POST":
         to = body.get("to", "")
         subject = body.get("subject", "")
@@ -184,6 +206,14 @@ def handle_api(path, method, body, query):
         raw = _build_email(to, subject, content)
         return google_api("/gmail/v1/users/me/drafts", method="POST",
                           body={"message": {"raw": raw}})
+
+    if path == "/api/gmail/send" and method == "POST":
+        to = body.get("to", "")
+        subject = body.get("subject", "")
+        content = body.get("body", "")
+        raw = _build_email(to, subject, content)
+        return google_api("/gmail/v1/users/me/messages/send", method="POST",
+                          body={"raw": raw})
 
     # ── Calendar ───────────────────────────────────────────
     if path == "/api/calendar/events" and method == "GET":
@@ -200,6 +230,7 @@ def handle_api(path, method, body, query):
         event = {
             "summary": body.get("title", ""),
             "description": body.get("description", ""),
+            "location": body.get("location", ""),
             "start": {"dateTime": body.get("start"), "timeZone": "Asia/Seoul"},
             "end":   {"dateTime": body.get("end"),   "timeZone": "Asia/Seoul"},
             "reminders": {"useDefault": False,
@@ -207,6 +238,9 @@ def handle_api(path, method, body, query):
         }
         return google_api("/calendar/v3/calendars/primary/events",
                           method="POST", body=event)
+
+    if path == "/api/calendar/parse-text" and method == "POST":
+        return _parse_calendar_text(body.get("text", ""))
 
     # ── Notion ─────────────────────────────────────────────
     if path == "/api/notion/search" and method == "GET":
@@ -227,9 +261,240 @@ def handle_api(path, method, body, query):
 
     return {"error": "not_found"}
 
+def _generate_ai_reply(body):
+    tokens = load_tokens()
+    api_key = tokens.get("anthropic_api_key", "")
+    if not api_key:
+        return {"error": "anthropic_key_not_configured"}
+
+    sender_name  = body.get("sender_name", "")
+    sender_email = body.get("sender_email", "")
+    subject      = body.get("subject", "")
+    email_body   = body.get("body", "")
+    my_name      = body.get("my_name", "최지환")
+    reply_type   = body.get("reply_type", "")  # 수락 / 거절 / 검토중 / ""
+
+    type_instructions = {
+        "수락": "- 상대방의 요청/제안을 수락하는 긍정적 답장\n- 구체적인 수락 의사와 다음 단계 언급\n- 감사 인사 포함",
+        "거절": "- 상대방의 요청/제안을 정중하게 거절하는 답장\n- 거절 이유를 간략히 언급 (너무 직접적이지 않게)\n- 향후 기회에 대한 여지 남기기",
+        "검토중": "- 즉각 결정 어렵다는 답장\n- 검토 후 연락하겠다는 의사 표현\n- 예상 회신 기한 언급 (예: '이번 주 내로')",
+    }
+    type_guide = type_instructions.get(reply_type, "- 상대방 메일의 핵심 내용에 직접 응답\n- 회의/미팅 요청 → 일정 조율 의향 표시\n- 결재/승인 요청 → 검토 후 처리 의사 표현")
+
+    prompt = f"""당신은 한국 직장인 {my_name}입니다. 아래 수신된 이메일에 대한 전문적이고 자연스러운 한국어 답장을 작성해주세요.
+
+[수신 메일 정보]
+발신자: {sender_name} ({sender_email})
+제목: {subject}
+내용:
+{email_body}
+
+[답장 유형: {'자동 판단' if not reply_type else reply_type}]
+[답장 작성 규칙]
+- 첫 인사는 "안녕하세요, {sender_name}님" 으로 시작
+{type_guide}
+- 마무리는 "감사합니다.\n{my_name} 드림"으로 끝내기
+- 본문만 작성 (제목, 추가 설명 없이)
+- 200자 내외로 간결하게"""
+
+    req_body = json.dumps({
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 500,
+        "messages": [{"role": "user", "content": prompt}]
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        "https://api.anthropic.com/v1/messages",
+        data=req_body,
+        headers={
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        },
+        method="POST"
+    )
+    ctx = ssl.create_default_context()
+    try:
+        with urllib.request.urlopen(req, context=ctx, timeout=15) as res:
+            data = json.loads(res.read())
+            reply_text = data["content"][0]["text"]
+            return {"reply": reply_text}
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", errors="ignore")
+        return {"error": f"API 오류 {e.code}", "detail": detail}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def _parse_calendar_text(text):
+    import re
+    tokens = load_tokens()
+    api_key = tokens.get("anthropic_api_key", "")
+    if not api_key:
+        return {"error": "anthropic_key_not_configured"}
+
+    from datetime import date
+    today = date.today().strftime("%Y-%m-%d")
+
+    prompt = f"""아래 텍스트에서 일정/미팅 정보를 추출해서 JSON으로 반환하세요.
+오늘 날짜: {today}
+
+텍스트:
+{text}
+
+반드시 아래 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
+{{
+  "title": "일정 제목",
+  "date": "YYYY-MM-DD",
+  "start_time": "HH:MM",
+  "end_time": "HH:MM",
+  "location": "장소 (없으면 빈 문자열)",
+  "description": "안건/내용 요약 (한국어, 핵심만)",
+  "confidence": "high/medium/low"
+}}
+
+규칙:
+- 차주 월요일 = 다음주 월요일 날짜 계산
+- 오전 10시 전 → 09:00, 오후 2시 후 → 14:00 기본값
+- 회의 시간 2시간이면 start_time + 2시간 = end_time
+- description에는 주요 안건을 번호 목록으로 요약"""
+
+    req_body = json.dumps({
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 600,
+        "messages": [{"role": "user", "content": prompt}]
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        "https://api.anthropic.com/v1/messages",
+        data=req_body,
+        headers={
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        },
+        method="POST"
+    )
+    ctx = ssl.create_default_context()
+    try:
+        with urllib.request.urlopen(req, context=ctx, timeout=15) as res:
+            data = json.loads(res.read())
+            raw = data["content"][0]["text"].strip()
+            json_match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if json_match:
+                parsed = json.loads(json_match.group())
+                return {"ok": True, "event": parsed}
+            return {"error": "파싱 실패", "raw": raw}
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", errors="ignore")
+        return {"error": f"API 오류 {e.code}", "detail": detail}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def _get_unread_summary(unread_only=True):
+    import base64, re
+    from email.header import decode_header
+
+    def decode_str(s):
+        if not s:
+            return ""
+        parts = decode_header(s)
+        result = ""
+        for part, enc in parts:
+            if isinstance(part, bytes):
+                result += part.decode(enc or "utf-8", errors="ignore")
+            else:
+                result += str(part)
+        return result
+
+    def extract_body(payload):
+        """재귀적으로 텍스트 파트 추출"""
+        mime = payload.get("mimeType", "")
+        if mime == "text/plain":
+            data = payload.get("body", {}).get("data", "")
+            if data:
+                return base64.urlsafe_b64decode(data + "==").decode("utf-8", errors="ignore")
+        elif mime == "text/html":
+            data = payload.get("body", {}).get("data", "")
+            if data:
+                html = base64.urlsafe_b64decode(data + "==").decode("utf-8", errors="ignore")
+                return re.sub(r"<[^>]+>", " ", html).strip()
+        for part in payload.get("parts", []):
+            result = extract_body(part)
+            if result:
+                return result
+        return ""
+
+    def classify(subject, body):
+        text = (subject + " " + body).lower()
+        urgent_kw = ["긴급", "urgent", "즉시", "today", "오늘", "deadline", "마감", "결재", "승인 요청"]
+        action_kw = ["확인 부탁", "검토", "요청", "reply", "답장", "회신", "미팅", "회의", "please"]
+        if any(k in text for k in urgent_kw):
+            return "긴급"
+        if any(k in text for k in action_kw):
+            return "중요"
+        return "정보"
+
+    # 1. 메일 목록
+    q = "is:unread -category:promotions" if unread_only else "-category:promotions"
+    list_res = google_api("/gmail/v1/users/me/messages",
+                          params={"q": q, "maxResults": 15})
+    msgs = list_res.get("messages", [])
+    if not msgs:
+        return {"emails": []}
+
+    results = []
+    for m in msgs[:8]:
+        msg_id = m["id"]
+        full = google_api(f"/gmail/v1/users/me/messages/{msg_id}",
+                          params={"format": "full"})
+        if "error" in full:
+            continue
+
+        headers = {h["name"].lower(): h["value"]
+                   for h in full.get("payload", {}).get("headers", [])}
+        subject = decode_str(headers.get("subject", "(제목 없음)"))
+        from_raw = decode_str(headers.get("from", ""))
+        date_raw = headers.get("date", "")
+        snippet = full.get("snippet", "")
+
+        # 발신자 이름/이메일 분리
+        m2 = re.match(r"^(.+?)\s*<(.+?)>$", from_raw)
+        if m2:
+            sender_name = m2.group(1).strip().strip('"')
+            sender_email = m2.group(2)
+        else:
+            sender_name = from_raw
+            sender_email = from_raw
+
+        # 본문 추출 (최대 400자)
+        body_text = extract_body(full.get("payload", {}))
+        if not body_text:
+            body_text = snippet
+        body_text = re.sub(r"\s+", " ", body_text).strip()[:400]
+
+        importance = classify(subject, body_text)
+
+        results.append({
+            "id": msg_id,
+            "subject": subject,
+            "sender_name": sender_name,
+            "sender_email": sender_email,
+            "date": date_raw,
+            "snippet": snippet[:150],
+            "body": body_text,
+            "importance": importance,
+        })
+
+    return {"emails": results}
+
+
 def _build_email(to, subject, body_text):
     import base64
-    msg = f"From: me\r\nTo: {to}\r\nSubject: {subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n{body_text}"
+    # 한글 제목 RFC 2047 인코딩 (깨짐 방지)
+    encoded_subject = "=?UTF-8?B?" + base64.b64encode(subject.encode("utf-8")).decode("ascii") + "?="
+    msg = f"From: me\r\nTo: {to}\r\nSubject: {encoded_subject}\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Transfer-Encoding: base64\r\n\r\n{base64.b64encode(body_text.encode('utf-8')).decode('ascii')}"
     return base64.urlsafe_b64encode(msg.encode("utf-8")).decode("utf-8")
 
 def _generate_doc(template, content, today):

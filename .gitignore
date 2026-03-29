@@ -1,5 +1,5 @@
 .DS_Store
-credentials.json
-.tokens.json
-__pycache__/
+**/credentials.json
+**/.tokens.json
+**/__pycache__/
 
