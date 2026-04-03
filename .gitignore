@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+env/
+venv/
+.env
+
+# Node
+node_modules/
+dist/
+.next/
+
+# Data
+data/input/*
+!data/input/.gitkeep
+data/output/*
+!data/output/.gitkeep
+data/history.json
+data/temp/*
+!data/temp/.gitkeep
+
+# IDEs
+.idea/
+.vscode/
+*.swp
