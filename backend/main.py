@@ -11,8 +11,9 @@ from typing import List
 from io import BytesIO
 from PIL import Image
 from mimetypes import guess_type
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import anthropic
 
@@ -41,16 +42,16 @@ OUTPUT_DIR = os.path.join(BASE_DIR, "data", "output")
 os.makedirs(INPUT_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+app.mount("/output", StaticFiles(directory=OUTPUT_DIR), name="output")
+
 HISTORY_FILE = os.path.join(BASE_DIR, "data", "history.json")
 if not os.path.exists(HISTORY_FILE):
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump([], f)
 
 class ProcessRequest(BaseModel):
-    project_name: str
     analysis_link: str = ""
-    core_material: str = ""
-    expected_effect: str = ""
+    card_link: str = ""
     reference_links: str = ""
     extra_hashtags: str = ""
     api_key: str
@@ -140,6 +141,24 @@ async def upload_files(files: List[UploadFile] = File(...)):
         saved_files.append(file.filename)
     return {"status": "success", "files": saved_files}
 
+import uuid
+@app.post("/upload_single_image")
+async def upload_single_image(file: UploadFile = File(...), base_filename: str = Form(None)):
+    if not base_filename:
+        base_filename = f"blog_{int(time.time())}"
+        
+    ext = os.path.splitext(file.filename)[1].lower()
+    if not ext:
+        ext = ".png"
+        
+    img_filename = f"{base_filename}_inline_{uuid.uuid4().hex[:6]}{ext}"
+    out_path = os.path.join(OUTPUT_DIR, img_filename)
+    
+    with open(out_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    return {"status": "success", "filename": img_filename}
+
 @app.post("/generate")
 async def generate_blog(request: ProcessRequest):
     start_time = time.time()
@@ -149,7 +168,9 @@ async def generate_blog(request: ProcessRequest):
     import requests
     from bs4 import BeautifulSoup
     
-    all_text = f"프로젝트/강좌명: {request.project_name}\n\n"
+    scraped_images = []
+    fetched_title = "제목 미상"
+    all_text = ""
     
     if request.analysis_link and request.analysis_link.strip().startswith('http'):
         try:
@@ -157,6 +178,13 @@ async def generate_blog(request: ProcessRequest):
             res = requests.get(request.analysis_link.strip(), headers=headers, timeout=10)
             if res.status_code == 200:
                 soup = BeautifulSoup(res.text, 'html.parser')
+                
+                h1_tag = soup.find('h1', class_='entry-title')
+                if h1_tag:
+                    fetched_title = h1_tag.get_text(separator=" ", strip=True)
+                
+                all_text += f"프로젝트/강좌명: {fetched_title}\n\n"
+
                 # 네이버 블로그 스마트에디터 iframe 대응
                 if 'blog.naver.com' in request.analysis_link and 'PostView' not in request.analysis_link:
                     iframe = soup.find('iframe', id='mainFrame')
@@ -165,6 +193,54 @@ async def generate_blog(request: ProcessRequest):
                         res = requests.get(real_url, headers=headers, timeout=10)
                         soup = BeautifulSoup(res.text, 'html.parser')
                 
+                # 이미지 추출 로직 (본문 내 의미있는 사진 필터링)
+                import uuid
+                p_tags = soup.find_all('p', style=lambda value: value and 'text-align: center' in value.lower())
+                img_tags = []
+                for p in p_tags:
+                    img_tags.extend(p.find_all('img'))
+                for img in img_tags:
+                    if len(scraped_images) >= 15:
+                        break
+                    src = img.get('data-lazy-src') or img.get('src')
+                    if not src or not src.startswith('http'):
+                        continue
+                    img_class = img.get('class', [])
+                    if isinstance(img_class, list):
+                        img_class_str = " ".join(img_class).lower()
+                    else:
+                        img_class_str = str(img_class).lower()
+                    
+                    try:
+                        img_width = int(img.get('width', 0))
+                    except:
+                        img_width = 0
+
+                    is_valid_image = False
+                    # 1. 네이버 블로그 도메인/속성
+                    if 'postfiles.pstatic.net' in src or 'blogfiles.naver.net' in src or 'se-image-resource' in img_class_str:
+                        is_valid_image = True
+                    # 2. 워드프레스 및 범용 HTML 속성
+                    elif 'wp-image' in img_class_str or 'size-full' in img_class_str or 'aligncenter' in img_class_str:
+                        is_valid_image = True
+                    # 3. 크기가 명시된 사진
+                    elif img_width >= 250:
+                        is_valid_image = True
+
+                    if is_valid_image:
+                        try:
+                            img_res = requests.get(src, headers=headers, timeout=5)
+                            if img_res.status_code == 200 and len(img_res.content) > 15000: # 15KB 이상 진짜 사진만
+                                ext = os.path.splitext(src.split('?')[0])[1].lower()
+                                if ext not in ['.jpg', '.jpeg', '.png', '.gif']: 
+                                    ext = ".jpg"
+                                img_filename = f"{base_filename}_scraped_{uuid.uuid4().hex[:6]}{ext}"
+                                out_path = os.path.join(OUTPUT_DIR, img_filename)
+                                with open(out_path, "wb") as f:
+                                    f.write(img_res.content)
+                                scraped_images.append(img_filename)
+                        except Exception:
+                            pass
                 # 불필요한 스크립트/스타일 제거
                 for script in soup(["script", "style", "nav", "footer", "iframe"]):
                     script.extract()
@@ -176,67 +252,64 @@ async def generate_blog(request: ProcessRequest):
             all_text += f"\n\n(웹사이트 크롤링 오류: {str(e)})\n\n"
     image_contents = []
     used_images = []
-    
-    files = glob.glob(os.path.join(INPUT_DIR, "*"))
-    
-    if not files:
-        all_text += "(참고 파일 없음)\n"
-    
-    for f in files:
-        ext = os.path.splitext(f)[1].lower()
-        try:
-            if ext == ".pptx":
-                all_text += f"\n--- PPT 내용 ({os.path.basename(f)}) ---\n"
-                all_text += extract_text_from_pptx(f)
-            elif ext == ".docx":
-                all_text += f"\n--- Word 내용 ({os.path.basename(f)}) ---\n"
-                all_text += extract_text_from_docx(f)
-            elif ext == ".pdf":
-                all_text += f"\n--- PDF 내용 ({os.path.basename(f)}) ---\n"
-                all_text += extract_text_from_pdf(f)
-            elif ext in [".png", ".jpg", ".jpeg"]:
-                base64_image, mime_type = encode_image(f)
-                image_contents.append({
-                    "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": mime_type,
-                        "data": base64_image,
-                    },
-                })
-                # 이미지를 출력 폴더로 복사하고 프롬프트용 목록에 추가
-                orig_name = os.path.basename(f)
-                new_image_name = f"{base_filename}_{orig_name}"
-                dest_path = os.path.join(OUTPUT_DIR, new_image_name)
-                shutil.copy(f, dest_path)
-                used_images.append(new_image_name)
 
+    if hasattr(request, 'card_link') and request.card_link and request.card_link.strip().startswith("http"):
+        _card_link = request.card_link.strip()
+        _card_filename = f"{base_filename}_card_screenshot.png"
+        _card_save_path = os.path.join(OUTPUT_DIR, _card_filename)
+
+        def _capture_card():
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                pg = browser.new_page()
+                pg.goto(_card_link, timeout=15000)
+                card = pg.wait_for_selector('.wpgb-card-inner', timeout=8000)
+                if card:
+                    card.screenshot(path=_card_save_path)
+                browser.close()
+
+        try:
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(_capture_card)
+                future.result(timeout=30)
+            if os.path.exists(_card_save_path):
+                used_images.append(_card_filename)
+                print(f"[Card Capture] 성공: {_card_filename}")
+            else:
+                print("[Card Capture] 파일 저장 실패")
         except Exception as e:
-            print(f"Error parsing {f}: {e}")
+            print(f"[Card Capture] 오류: {str(e)}")
+            all_text += f"\n\n(카드 링크 캡처 오류: {str(e)})\n\n"
+
 
     client = anthropic.Anthropic(api_key=request.api_key)
     
     image_instruction = ""
-    if used_images:
-        image_instruction = "\n### 업로드된 이미지 활용\n다음 이미지(사진) 파일들이 정보로 제공되었습니다: " + ", ".join(used_images) + "\n이 이미지들을 글의 흐름에 맞추어 본문 중간 적절한 위치에 마크다운 문법으로 넣어주세요. (예: `![이미지 설명](./" + used_images[0] + ")` 형식으로 이미지별로 최소 1장 이상)\n"
 
     text_prompt = f"""
 # 지시어: 아래 정보를 바탕으로 네이버 블로그 스마트에디터 완벽 복제용 JSON 데이터를 생성해줘.
 
-**[매우 중요한 기본 규칙 - 이모지 절대 금지]**
+**[매우 중요한 기본 규칙 - 이모지 절대 금지 & 이미지 문구 절대 금지]**
 - 절대로 어떠한 형태의 이모지나 이모티콘(🔥, 😊, 🚀, 👍 등)도 사용하지 마세요.
+- 절대로 본문(body_paragraphs) 내에 `[IMAGE_X]` 와 같은 이미지 배치 기호를 넣지 마세요. 사용자가 알아서 배치합니다.
+- 외부 사이트 크롤링 텍스트에 포함된 쓸모없는 네이버 블로그 문구(예: "존재하지 않는 이미지입니다.", "AI 활용 설정", "사진 설명을 입력하세요.")를 절대로 결과물에 포함하지 마세요. 철저히 지우고 핵심 내용만 추출하세요.
 
 ## [입력 데이터]
-- 제목 키워드: {request.project_name}
-- 핵심 소재: {request.core_material}
-- 기대 효과: {request.expected_effect}
+- 제목 키워드: {fetched_title}
 - 참고 링크: {request.reference_links}
 - 분석할 원본 링크: {request.analysis_link}
 - 필수 해시태그: #에듀올랩 #크레용스쿨 #홈스쿨 #이러닝강좌 {request.extra_hashtags}
 
-## [강력 지시사항: 스크래핑된 외부 문서 적극 분석]
-하단 **[참고할 첨부파일 기반 추출 내용]** 섹션에 사용자가 제공한 **[웹사이트 크롤링 원문 텍스트]**가 포함되어 있다면, **반드시 그 내용을 1순위로 정독하고 요약**하여 해당 글의 방대한 지식, 특징, 상품 설명 등을 바탕으로 본문(`body_paragraphs`)과 인사이트(`quote_hook`)를 풍부하고 섬세하게 작성하세요. 
-내용이 충분히 길고 유익하다면, 사용자가 수동으로 입력한 빈약한 핵심 소재 항목들을 대체하여 스크래핑된 지식 내용만으로 고품질 블로그 글을 쓰셔도 무방합니다.
+## [강력 지시사항: 스크래핑된 외부 문서 핵심 요약 및 엄격한 규칙]
+하단 **[참고할 첨부파일 기반 추출 내용]** 섹션에 사용자가 제공한 **[웹사이트 크롤링 원문 텍스트]**가 포함되어 있다면, **반드시 그 내용을 1순위로 정독하고 가장 중요한 핵심 정보만 요약하여 간결하게** 작성하세요. 불필요하게 살을 붙이지 말고 가독성이 좋도록 짧고 명확한 문장을 사용하세요.
+
+**[본문 작성 필수 규칙]**
+1. 강의의 핵심 소재나 도구가 있다면 이에 대한 간단한 설명 문구를 추가하세요.
+2. 강의를 통해서 배울 수 있는 것이 무엇인지에 대한 확실한 설명을 포함하세요.
+3. 단, **위 1, 2번 규칙에 대한 내용은 반드시 '웹사이트 크롤링 원문 텍스트'에서만 근거를 찾아 작성해야 하며, 원문에 해당 내용이 존재하지 않는다면 절대로 임의로 지어내어 추가하지 마세요.**
+4. **`main_title` 필드는 반드시 샘플 포맷 그대로 작성해야 합니다. 특히 앞부분의 'Home스쿨'은 절대로 '홈스쿨'이나 다른 한글로 바꾸지 마세요. 영문 'Home'과 한글 '스쿨'의 조합 형태 그대로 유지해야 합니다.**
 
 ## [출력 형식 (오직 JSON 데이터만 출력할 것)]
 반드시 아래 JSON 포맷에 맞추어 코드 블록(```json) 안에 응답하세요. 다른 설명은 일절 생략하세요.
@@ -244,17 +317,12 @@ async def generate_blog(request: ProcessRequest):
 ```json
 {{
   "category": "사회/경제, 전문강좌 (혹은 성격에 맞는 분야)",
-  "main_title": "{request.project_name} - [강좌성격] | [후킹]! 등 제목 형태",
-  "info_left_1": "초등학생(예상 타겟)",
-  "info_right_1": "사회/경제",
-  "info_left_2": "1강의 50분/20차시 (임의 분량)",
-  "info_right_2": "전문강좌",
+  "main_title": "Home스쿨 | {fetched_title} -크레용스쿨 이러닝 강좌 소개",
   "quote_hook": "부모님의 시선을 끄는 캐치프레이즈 인용구를 작성하세요.\\n마치 세계의 이야기와 랜드마크를 재미있게~ 처럼 작성합니다.",
   "body_paragraphs": [
-    "'{request.project_name}' 는 초등학생을 위한 강좌입니다. (도입 첫 문장 등 자연스러운 시작)",
-    "학생들은 자연스럽게 문화, 역사를 학습 가능합니다.",
-    "[IMAGE_2]",
-    "본문은 1~2문장 단위로 짤막하게 나뉘어서 배열에 요소로 들어가게 됩니다."
+    "{fetched_title} 는 초등학생을 위한 강좌입니다. (도입 첫 문장 등 자연스러운 시작)",
+    "학생들은 자연스럽게 강좌의 핵심 내용과 도구의 사용법을 학습 가능합니다.",
+    "본문 배열(body_paragraphs)은 무조건 최대 7문단(요소 7개) 이하로 구성하세요. 핵심 위주의 간결한 문장이어야 합니다. 절대로 이미지 마커는 넣지 마세요."
   ],
   "highlight_keywords": [
     "문화, 역사", "소근육 발달", "이해도가 더 높아집니다", "공간 지각 능력과 창의력"
@@ -304,8 +372,13 @@ async def generate_blog(request: ProcessRequest):
             print("JSON parsing error:", e)
     else:
         print("Regex failed to find JSON format.")
+
+    # main_title 강제 덮어씌우기 (AI가 번역/변형하지 못하도록)
+    json_data["main_title"] = f"Home스쿨 | {fetched_title} -크레용스쿨 이러닝 강좌 소개"
+    # 본문 h1용 원본 강좌명 별도 저장
+    json_data["original_title"] = fetched_title
         
-    return {"status": "success", "json_data": json_data, "used_images": used_images, "base_filename": base_filename, "start_time": start_time}
+    return {"status": "success", "json_data": json_data, "used_images": used_images, "scraped_images": scraped_images, "base_filename": base_filename, "start_time": start_time}
 
 @app.post("/render_html")
 async def render_html(request: RenderRequest):
@@ -366,6 +439,14 @@ async def render_html(request: RenderRequest):
         </div>
         '''
 
+    card_screenshot_path = ""
+    for used in used_images:
+        if used.endswith("_card_screenshot.png"):
+            card_screenshot_path = used
+            break
+
+    card_image_html = f'<div style="text-align: center; margin: 40px 0;"><img src="http://localhost:8000/output/{card_screenshot_path}" style="max-width:100%; border-radius:12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width:640px;"/></div>' if card_screenshot_path else ''
+
     # Assemble Full Naver Clone HTML Envelope
     html_template = f"""
     <!DOCTYPE html>
@@ -374,36 +455,23 @@ async def render_html(request: RenderRequest):
     <body style="margin: 0; padding: 0; background-color: #f9f9f9;">
     <div style="background-color: white; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Dotum', sans-serif; max-width: 800px; margin: 40px auto; padding: 60px 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
         
+        <div style="font-size: 16px; font-weight: bold; margin-bottom: 30px; color: #333; padding: 15px; background-color: #e9ecef; border-radius: 8px; border-left: 4px solid #ff9900;">
+            📝 블로그 작성 시 제목입력칸용 복사 내용: <br/>{json_data.get('main_title', '')}
+        </div>
+
         <!-- header area -->
         <div style="text-align: center; margin-bottom: 40px;">
             <span style="color: #ff9900; font-weight: bold; font-size: 16px;">{json_data.get('category', '')}</span>
-            <h1 style="font-size: 32px; font-weight: bold; margin: 20px 0; color: #222; word-break: keep-all; line-height: 1.4;">{json_data.get('main_title', '')}</h1>
+            <h1 style="font-size: 32px; font-weight: bold; margin: 20px 0; color: #222; word-break: keep-all; line-height: 1.4;">{json_data.get('original_title', json_data.get('main_title', ''))}</h1>
             <div style="margin: 40px auto 30px auto; border-top: 1px solid #777; width: 60%; position: relative;">
                 <div style="position: absolute; top: -7px; left: 50%; width: 12px; height: 12px; background: white; border: 1px solid #555; transform: translateX(-50%) rotate(45deg);"></div>
             </div>
         </div>
         
         <!-- first image (if explicitly chosen, else default to first uploaded) -->
-        <div style="text-align: center; margin-bottom: 30px;">
-            {'<img src="./' + used_images[0] + '" style="max-width: 100%; border-radius: 12px;"/>' if used_images else '<div style="padding:40px; background:#eee; border-radius:12px; color:#999;">[IMAGE_1]</div>'}
-        </div>
-        
-        <!-- info tags -->
-        <div style="margin-bottom: 60px; max-width: 600px; margin-left: auto; margin-right: auto;">
-            <span style="display: inline-block; background-color: #ffb800; color: white; padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 15px;">이러닝 교안강의</span>
-            <h2 style="font-size: 22px; margin: 20px 0; color:#333;">{json_data.get('main_title', '')}</h2>
-            
-            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 16px; color: #666;">
-                <tr>
-                    <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">{json_data.get('info_left_1', '')}</td>
-                    <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; text-align: right;"><span style="background-color: #ffe8b3; padding: 5px 14px; border-radius: 12px; color: #333; font-weight: 500;">{json_data.get('info_right_1', '')}</span></td>
-                </tr>
-                <tr>
-                    <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">{json_data.get('info_left_2', '')}</td>
-                    <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; text-align: right;"><span style="background-color: #e2e2e2; padding: 5px 14px; border-radius: 12px; color: #333; font-weight: 500;">{json_data.get('info_right_2', '')}</span></td>
-                </tr>
-            </table>
-        </div>
+      
+        <!-- captured card screenshot -->
+        {card_image_html}
 
         <!-- quote hook -->
         <div style="text-align: center; margin: 70px 0;">
