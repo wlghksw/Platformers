@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Prompt 300 — 프롬프트 검색</title>
+  <meta name="description" content="300개 AI 프롬프트를 카테고리·키워드로 빠르게 검색하세요.">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+  <style>
+    /* ── 프롬프트 전용 추가 스타일 ── */
+    .cat-btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .cat-filter-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 16px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-full);
+      background: white;
+      font-family: var(--font-main);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      color: var(--color-text);
+    }
+
+    .cat-filter-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+      background: var(--color-primary-lt);
+    }
+
+    .cat-filter-btn.active {
+      border-color: var(--color-primary);
+      background: var(--color-primary);
+      color: white;
+    }
+
+    /* 프롬프트 카드 */
+    .prompt-card {
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      cursor: pointer;
+      transition: all var(--transition);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: fadeInUp 250ms ease both;
+      position: relative;
+    }
+
+    .prompt-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, var(--color-primary-lt), transparent 60%);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    .prompt-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--color-primary-mlt);
+    }
+
+    .prompt-card:hover::before {
+      opacity: 1;
+    }
+
+    .prompt-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--color-text-l);
+      font-family: 'Inter', sans-serif;
+      letter-spacing: .05em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .prompt-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-text-h);
+      line-height: 1.3;
+      position: relative;
+      z-index: 1;
+    }
+
+    .prompt-preview {
+      font-size: 13px;
+      color: var(--color-text-m);
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    .prompt-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 1;
+      margin-top: 4px;
+    }
+
+    .prompt-cat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--color-primary-lt);
+      color: var(--color-primary);
+    }
+
+    .prompt-copy-hint {
+      font-size: 11px;
+      color: var(--color-text-l);
+    }
+
+    /* 모달 프롬프트 전용 */
+    .prompt-full-text {
+      font-size: 15px;
+      color: var(--color-text);
+      line-height: 1.8;
+      padding: 20px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .placeholder-tag {
+      display: inline-block;
+      background: #FFF7ED;
+      border: 1px solid #FED7AA;
+      color: #C2410C;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 20px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-full);
+      font-family: var(--font-main);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .copy-btn:hover {
+      background: var(--color-primary-h);
+    }
+
+    .copy-btn.copied {
+      background: var(--color-success);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-m);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .nav-link:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+      background: var(--color-primary-lt);
+    }
+
+    /* 메인레이아웃 오버라이드 - 사이드바 없이 */
+    .prompt-layout {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .prompt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .prompt-grid.list-view {
+      grid-template-columns: 1fr;
+    }
+
+    @media (max-width: 600px) {
+      .prompt-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cat-btn-group {
+        gap: 6px;
+      }
+    }
+
+    /* ── 주의 팝업 ── */
+    .notice-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 280ms ease;
+      pointer-events: none;
+    }
+
+    .notice-backdrop.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .notice-box {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, .18), 0 4px 16px rgba(0, 0, 0, .08);
+      max-width: 560px;
+      width: 100%;
+      overflow: hidden;
+      transform: translateY(16px) scale(0.97);
+      transition: transform 300ms cubic-bezier(.22, 1, .36, 1);
+    }
+
+    .notice-backdrop.active .notice-box {
+      transform: translateY(0) scale(1);
+    }
+
+    .notice-header {
+      background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+      padding: 20px 24px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .notice-icon {
+      font-size: 28px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .notice-header-text {
+      flex: 1;
+    }
+
+    .notice-header-text h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      margin: 0 0 3px;
+      line-height: 1.3;
+    }
+
+    .notice-header-text p {
+      font-size: 12px;
+      color: rgba(255, 255, 255, .85);
+      margin: 0;
+    }
+
+    .notice-body {
+      padding: 18px 24px;
+    }
+
+    .notice-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .notice-prompt-text {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.75;
+      color: #334155;
+      white-space: pre-line;
+      max-height: 220px;
+      overflow-y: auto;
+      font-family: inherit;
+      scrollbar-width: thin;
+    }
+
+    .notice-footer {
+      padding: 14px 24px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .notice-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 20px;
+      background: #FF6B35;
+      color: white;
+      border: none;
+      border-radius: 99px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 200ms;
+    }
+
+    .notice-copy-btn:hover {
+      background: #e85e2c;
+    }
+
+    .notice-copy-btn.copied {
+      background: #22c55e;
+    }
+
+    .notice-skip-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 9px 16px;
+      background: transparent;
+      color: #64748b;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 99px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 200ms;
+    }
+
+    .notice-skip-btn:hover {
+      border-color: #94a3b8;
+      color: #334155;
+    }
+
+    .notice-close-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: color 180ms, background 180ms;
+      line-height: 1;
+    }
+
+    .notice-close-btn:hover {
+      color: #334155;
+      background: #f1f5f9;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- =================== NOTICE POPUP =================== -->
+  <div class="notice-backdrop" id="notice-backdrop" role="dialog" aria-modal="true" aria-labelledby="notice-title">
+    <div class="notice-box" id="notice-box">
+
+      <div class="notice-header">
+        <div class="notice-icon">⚠️</div>
+        <div class="notice-header-text">
+          <h2 id="notice-title">주의! AI에게 꼭 먼저 이 프롬프트를 사용하세요</h2>
+          <p>아래 내용을 복사하여 AI 메모리에 먼저 업데이트하세요</p>
+        </div>
+      </div>
+
+      <div class="notice-body">
+        <div class="notice-label">📋 AI 메모리 업데이트 프롬프트</div>
+        <div class="notice-prompt-text" id="notice-prompt-text">아래 내용을 메모리 업데이트해줘, 앞으로 모든 질문이나 주제에 모두 적용해
+
+          - 아래의 규칙을 엄격히 준수하여 답변해 주세요.
+
+          1) 충분한 근거가 없거나 정보가 불확실한 경우, 절대 임의로 지어내지 말고 "알 수 없습니다" 또는 "잘 모르겠습니다"라고 명시해 주세요.
+          2) 답변하기 전, 단계별로 가능한 정보를 검증하고, 모호하거나 출처가 불분명한 부분은 "확실하지 않음"이라고 표시하세요.
+          3) 최종적으로 확실한 정보만 사용하여 간결한 답변을 완성하세요. 만약 추측이 불가피할 경우, "추측입니다"라고 밝혀 주세요.
+          4) 사용자의 문의가 모호하거나 추가 정보가 필요하다면, 먼저 사용자의 맥락이나 세부 정보를 더 요청하세요.
+          5) 확인되지 않은 사실을 확신에 차서 단정 짓지 말고, 필요한 경우 근거를 함께 제시하세요.
+          6) 각 답변마다 출처나 근거가 있는 경우 해당 정보를 명시하고, 가능하면 관련 링크나 참고 자료를 간단히 요약해 알려 주세요.</div>
+      </div>
+
+      <div class="notice-footer">
+        <button class="notice-copy-btn" id="notice-copy-btn">📋 복사하기</button>
+        <button class="notice-skip-btn" id="notice-skip-btn">🙈 오늘 하루 보지 않기</button>
+        <button class="notice-close-btn" id="notice-close-btn" aria-label="닫기">✕</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =================== HEADER =================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="logo" href="index.html" id="logo-home">
+        <div class="logo-icon">⚡</div>
+        <span class="logo-text">Connector<span> Finder</span></span>
+      </a>
+
+      <div class="header-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="main-search" placeholder="프롬프트 제목, 키워드 검색..." autocomplete="off" spellcheck="false">
+        <button class="search-clear" id="search-clear" title="검색어 지우기">✕</button>
+      </div>
+
+      <div class="header-stats">
+        <div class="stat-item">
+          <span class="stat-num" id="stat-total">300</span>
+          <span class="stat-label">전체 프롬프트</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num" id="stat-results">300</span>
+          <span class="stat-label">검색 결과</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =================== MAIN =================== -->
+  <div class="prompt-layout">
+
+    <!-- 페이지 타이틀 + 네비게이션 -->
+    <div
+      style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h1 style="font-size:22px;font-weight:700;color:var(--color-text-h);margin-bottom:4px;">🤖 AI Prompt 300</h1>
+        <p style="font-size:14px;color:var(--color-text-m);">코딩·AI·리서치·자동화·콘텐츠·생산성 — 300개 프롬프트 검색</p>
+      </div>
+      <a class="nav-link" href="index.html">⚡ 커넥터 검색으로</a>
+    </div>
+
+    <!-- 카테고리 필터 -->
+    <div class="cat-btn-group" id="cat-btn-group">
+      <button class="cat-filter-btn active" data-cat="all">📋 전체 <span id="cnt-all"></span></button>
+      <button class="cat-filter-btn" data-cat="코딩">💻 코딩</button>
+      <button class="cat-filter-btn" data-cat="AI 워크플로우">🤖 AI 워크플로우</button>
+      <button class="cat-filter-btn" data-cat="리서치">🔍 리서치</button>
+      <button class="cat-filter-btn" data-cat="자동화">⚙️ 자동화</button>
+      <button class="cat-filter-btn" data-cat="콘텐츠">✍️ 콘텐츠</button>
+      <button class="cat-filter-btn" data-cat="생산성">📈 생산성</button>
+    </div>
+
+    <!-- 결과 헤더 -->
+    <div class="results-header" style="margin-bottom:16px;">
+      <div class="results-count">
+        <strong id="result-count">300</strong>개의 프롬프트
+        <span id="search-query-label" style="color:var(--color-text-l);font-size:13px;"></span>
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn active" id="view-grid" title="그리드 보기">⊞</button>
+        <button class="view-btn" id="view-list" title="리스트 보기">☰</button>
+      </div>
+    </div>
+
+    <!-- 카드 컨테이너 -->
+    <div class="prompt-grid" id="cards-container"></div>
+
+  </div>
+
+  <!-- =================== MODAL =================== -->
+  <div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span class="prompt-cat-badge" id="modal-cat-badge"></span>
+            <span style="font-size:12px;color:var(--color-text-l);font-family:'Inter',sans-serif;"
+              id="modal-num"></span>
+          </div>
+          <div style="font-size:18px;font-weight:700;color:var(--color-text-h);line-height:1.3;" id="modal-title"></div>
+        </div>
+        <button class="modal-close" id="modal-close" aria-label="닫기">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- 프롬프트 전문 -->
+        <div>
+          <div class="modal-section-title">📝 프롬프트 전문</div>
+          <div class="prompt-full-text" id="modal-prompt"></div>
+        </div>
+
+        <!-- 액션 버튼 -->
+        <div class="modal-actions">
+          <button class="copy-btn" id="copy-btn">📋 프롬프트 복사</button>
+          <span style="font-size:12px;color:var(--color-text-l);">[ ] 안의 내용을 상황에 맞게 채워서 사용하세요</span>
+        </div>
+
+        <!-- Recommended Connectors -->
+        <div id="modal-connector-section" class="recommendation-section" style="display:none">
+          <div class="modal-section-title">🔌 연동 추천 커넥터</div>
+          <div class="recommendation-grid" id="modal-connectors"></div>
+        </div>
+
+        <!-- 같은 카테고리 프롬프트 -->
+        <div id="modal-related-section" class="modal-related">
+          <div class="modal-section-title">🔗 비슷한 프롬프트</div>
+          <div class="related-cards" id="modal-related"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>AI Prompt 300 · 코딩 / AI 워크플로우 / 리서치 / 자동화 / 콘텐츠 / 생산성 · 총 300개</p>
+  </footer>
+
+  <!-- =================== SCRIPT =================== -->
+  <script src="assets/js/ai_prompt_data.js"></script>
+  <script src="assets/js/connector_data.js"></script>
+  <script>
+    // ============================================================
+    //  STATE
+    // ============================================================
+    const state = {
+      query: '',
+      category: 'all',
+      viewMode: 'grid',
+      results: [],
+      openId: null,
+    };
+
+    // ============================================================
+    //  FUSE.JS
+    // ============================================================
+    const fuse = new Fuse(PROMPTS, {
+      keys: [
+        { name: 'title', weight: 0.4 },
+        { name: 'prompt', weight: 0.4 },
+        { name: 'tags', weight: 0.2 },
+        { name: 'category', weight: 0.1 },
+      ],
+      threshold: 0.4,
+      includeScore: true,
+      ignoreLocation: true,
+      minMatchCharLength: 1,
+    });
+
+    // 커넥터 검색용 Fuse
+    const connectorFuse = new Fuse(CONNECTORS, {
+      keys: ['nameKo', 'nameEn', 'description', 'triggers', 'actions', 'searchTags'],
+      threshold: 0.4
+    });
+
+    // ============================================================
+    //  HELPERS
+    // ============================================================
+    function escapeHtml(s) {
+      if (!s) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function highlight(text, q) {
+      if (!q || q.length < 1) return escapeHtml(text);
+      const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return escapeHtml(text).replace(new RegExp(`(${esc})`, 'gi'), '<mark>$1</mark>');
+    }
+
+    // 프롬프트 텍스트에서 [플레이스홀더] 강조
+    function formatPrompt(text) {
+      return escapeHtml(text).replace(/\[([^\]]+)\]/g,
+        '<span class="placeholder-tag">[$1]</span>');
+    }
+
+    // ============================================================
+    //  SEARCH
+    // ============================================================
+    function search() {
+      let pool = [];
+
+      if (state.query.trim().length > 0) {
+        pool = fuse.search(state.query).map(r => ({ ...r.item, _score: r.score }));
+      } else {
+        pool = PROMPTS.map(p => ({ ...p, _score: 0 }));
+      }
+
+      if (state.category !== 'all') {
+        pool = pool.filter(p => p.category === state.category);
+      }
+
+      state.results = pool;
+      render();
+    }
+
+    // ============================================================
+    //  RENDER
+    // ============================================================
+    function render() {
+      const container = document.getElementById('cards-container');
+      const q = state.query;
+
+      document.getElementById('result-count').textContent = state.results.length.toLocaleString();
+      document.getElementById('stat-results').textContent = state.results.length.toLocaleString();
+
+      const label = document.getElementById('search-query-label');
+      label.textContent = q ? `— "${q}" 검색 결과` : '';
+
+      if (state.results.length === 0) {
+        container.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-title">검색 결과가 없습니다</div>
+        <div class="empty-desc">다른 키워드나 카테고리를 시도해 보세요.</div>
+        <button class="empty-reset" onclick="resetAll()">전체 초기화</button>
+      </div>`;
+        return;
+      }
+
+      container.innerHTML = '';
+
+      state.results.forEach((p, idx) => {
+        const card = document.createElement('div');
+        card.className = 'prompt-card';
+        card.style.animationDelay = `${Math.min(idx, 30) * 15}ms`;
+        card.setAttribute('data-id', p.id);
+
+        card.innerHTML = `
+      <div class="prompt-num">#${p.id} · ${p.categoryEmoji} ${p.category}</div>
+      <div class="prompt-title">${highlight(p.title, q)}</div>
+      <div class="prompt-preview">${highlight(p.prompt, q)}</div>
+      <div class="prompt-footer">
+        <span class="prompt-cat-badge">${p.categoryEmoji} ${p.category}</span>
+        <span class="prompt-copy-hint">클릭해서 상세 보기</span>
+      </div>
+    `;
+
+        card.addEventListener('click', () => openModal(p.id));
+        container.appendChild(card);
+      });
+    }
+
+    // ============================================================
+    //  MODAL
+    // ============================================================
+    function openModal(id) {
+      const p = PROMPTS.find(x => x.id === id);
+      if (!p) return;
+      state.openId = id;
+
+      document.getElementById('modal-cat-badge').textContent = `${p.categoryEmoji} ${p.category}`;
+      document.getElementById('modal-num').textContent = `#${p.id} · ${p.categoryRange}`;
+      document.getElementById('modal-title').textContent = p.title;
+      document.getElementById('modal-prompt').innerHTML = formatPrompt(p.prompt);
+
+      // 복사 버튼 리셋
+      const copyBtn = document.getElementById('copy-btn');
+      copyBtn.textContent = '📋 프롬프트 복사';
+      copyBtn.className = 'copy-btn';
+
+      // 같은 카테고리 (자신 제외, 최대 6개)
+      const related = PROMPTS.filter(x => x.category === p.category && x.id !== p.id).slice(0, 6);
+      const relSec = document.getElementById('modal-related-section');
+      const relWrap = document.getElementById('modal-related');
+      if (related.length > 0) {
+        relWrap.innerHTML = related.map(r => `
+      <div class="related-card" data-id="${r.id}">
+        <div class="related-card-ko">#${r.id} ${escapeHtml(r.title)}</div>
+        <div class="related-card-en" style="font-size:11px;color:var(--color-text-l);margin-top:2px;">${escapeHtml(r.category)}</div>
+      </div>`).join('');
+        relWrap.querySelectorAll('.related-card').forEach(el => {
+          el.addEventListener('click', () => openModal(parseInt(el.dataset.id)));
+        });
+        relSec.style.display = '';
+      } else {
+        relSec.style.display = 'none';
+      }
+
+      // 커넥터 추천 로직
+      const connectorSearchQuery = `${p.title} ${p.category} ${p.tags.join(' ')}`;
+      const recommendedConnectors = connectorFuse.search(connectorSearchQuery).slice(0, 4);
+      const connSec = document.getElementById('modal-connector-section');
+      const connWrap = document.getElementById('modal-connectors');
+
+      if (recommendedConnectors.length > 0) {
+        connWrap.innerHTML = recommendedConnectors.map(r => `
+          <div class="recommendation-card" onclick="location.href='index.html?id=${r.item.id}'">
+            <div class="rec-type">${escapeHtml(r.item.category)}</div>
+            <div class="rec-title">${escapeHtml(r.item.nameKo)}</div>
+            <div class="rec-meta">${escapeHtml(r.item.tier)}</div>
+          </div>
+        `).join('');
+        connSec.style.display = 'block';
+      } else {
+        connSec.style.display = 'none';
+      }
+
+      document.getElementById('modal-backdrop').classList.add('active');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('modal').scrollTop = 0;
+    }
+
+    function closeModal() {
+      document.getElementById('modal-backdrop').classList.remove('active');
+      document.body.style.overflow = '';
+      state.openId = null;
+    }
+
+    // ============================================================
+    //  COPY
+    // ============================================================
+    document.getElementById('copy-btn').addEventListener('click', () => {
+      const p = PROMPTS.find(x => x.id === state.openId);
+      if (!p) return;
+      navigator.clipboard.writeText(p.prompt).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = '✅ 복사 완료!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = '📋 프롬프트 복사';
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(() => {
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = p.prompt;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = '✅ 복사 완료!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = '📋 프롬프트 복사';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    });
+
+    // ============================================================
+    //  UI EVENTS
+    // ============================================================
+
+    // 검색
+    const searchInput = document.getElementById('main-search');
+    const clearBtn = document.getElementById('search-clear');
+    let searchTimer = null;
+
+    searchInput.addEventListener('input', e => {
+      state.query = e.target.value;
+      clearBtn.style.display = state.query ? 'block' : 'none';
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(search, 180);
+    });
+
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      state.query = '';
+      clearBtn.style.display = 'none';
+      search();
+    });
+
+    // 카테고리 버튼
+    document.getElementById('cat-btn-group').querySelectorAll('.cat-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.category = btn.dataset.cat;
+        search();
+      });
+    });
+
+    // 뷰 토글
+    document.getElementById('view-grid').addEventListener('click', () => {
+      state.viewMode = 'grid';
+      document.getElementById('cards-container').classList.remove('list-view');
+      document.getElementById('view-grid').classList.add('active');
+      document.getElementById('view-list').classList.remove('active');
+    });
+    document.getElementById('view-list').addEventListener('click', () => {
+      state.viewMode = 'list';
+      document.getElementById('cards-container').classList.add('list-view');
+      document.getElementById('view-list').classList.add('active');
+      document.getElementById('view-grid').classList.remove('active');
+    });
+
+    // 모달 닫기
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('modal-backdrop').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal-backdrop')) closeModal();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // 전체 초기화
+    function resetAll() {
+      searchInput.value = '';
+      state.query = '';
+      state.category = 'all';
+      clearBtn.style.display = 'none';
+      document.querySelectorAll('.cat-filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-cat="all"]').classList.add('active');
+      search();
+    }
+
+    document.getElementById('logo-home').addEventListener('click', () => { });
+
+    // ============================================================
+    //  NOTICE POPUP
+    // ============================================================
+    (function () {
+      const STORAGE_KEY = 'ai_notice_hide_until';
+      const backdrop = document.getElementById('notice-backdrop');
+      const copyBtn = document.getElementById('notice-copy-btn');
+      const skipBtn = document.getElementById('notice-skip-btn');
+      const closeBtn = document.getElementById('notice-close-btn');
+      const promptText = document.getElementById('notice-prompt-text').textContent.trim();
+
+      function shouldShow() {
+        const hideUntil = localStorage.getItem(STORAGE_KEY);
+        if (!hideUntil) return true;
+        return new Date().toDateString() !== new Date(hideUntil).toDateString();
+      }
+
+      function openNotice() {
+        backdrop.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeNotice() {
+        backdrop.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      function doCopy() {
+        const copy = (text) => {
+          if (navigator.clipboard) {
+            return navigator.clipboard.writeText(text);
+          }
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          return Promise.resolve();
+        };
+        copy(promptText).then(() => {
+          copyBtn.textContent = '✅ 복사 완료!';
+          copyBtn.classList.add('copied');
+          setTimeout(() => {
+            copyBtn.textContent = '📋 복사하기';
+            copyBtn.classList.remove('copied');
+          }, 2200);
+        });
+      }
+
+      // 이벤트
+      copyBtn.addEventListener('click', doCopy);
+
+      skipBtn.addEventListener('click', () => {
+        localStorage.setItem(STORAGE_KEY, new Date().toISOString());
+        closeNotice();
+      });
+
+      closeBtn.addEventListener('click', closeNotice);
+
+      backdrop.addEventListener('click', e => {
+        if (e.target === backdrop) closeNotice();
+      });
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && backdrop.classList.contains('active')) closeNotice();
+      });
+
+      // 페이지 로드 시 표시 여부 판단
+      if (shouldShow()) {
+        // 약간 딜레이 후 등장 (페이지 렌더링 완료 후)
+        setTimeout(openNotice, 350);
+      }
+    })();
+
+    // ============================================================
+    //  INIT
+    // ============================================================
+    document.getElementById('stat-total').textContent = PROMPTS.length.toLocaleString();
+    // URL 파라미터 체크 (id가 있으면 모달 열기)
+    const urlParams = new URLSearchParams(window.location.search);
+    const directId = urlParams.get('id');
+    if (directId) {
+      setTimeout(() => openModal(parseInt(directId)), 500);
+    }
+  </script>
+</body>
+
+</html>

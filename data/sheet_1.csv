@@ -1,0 +1,315 @@
+번호,카테고리,커넥터명 (영문),커넥터명 (한국어),등급,주요 트리거,주요 액션,"에듀올랩
+적용가능성",설명
+1,Microsoft 365,Office 365 Outlook,아웃룩 이메일,Standard,"새 이메일 수신, 이메일 플래그, 캘린더 이벤트","이메일 전송, 이벤트 생성, 연락처 관리, 일정 조회",높음,이메일·캘린더·연락처 통합 관리
+2,Microsoft 365,Microsoft Teams,MS 팀즈,Standard,"새 메시지, 채널 멘션, 회의 시작","메시지 전송, 채널 생성, 회의 예약, 탭 추가",높음,팀 협업·채팅·회의 자동화
+3,Microsoft 365,SharePoint,셰어포인트,Standard,"항목 생성/수정, 파일 업로드, 목록 변경","항목 생성·수정·삭제, 파일 업로드, 권한 관리",높음,문서·리스트·라이브러리 관리
+4,Microsoft 365,OneDrive for Business,비즈니스 원드라이브,Standard,"파일 생성/수정, 폴더 변경","파일 업로드·다운로드·삭제·이동, 링크 공유",높음,비즈니스 클라우드 파일 저장소
+5,Microsoft 365,Microsoft Forms,MS 폼즈,Standard,새 응답 제출,"양식 생성, 응답 조회, 응답 상세 가져오기",높음,설문·양식 자동화 처리
+6,Microsoft 365,Excel Online (Business),엑셀 온라인 비즈니스,Standard,행 추가/수정,"행 추가·수정·삭제·조회, 표 관리, 워크시트 조회",높음,비즈니스 엑셀 데이터 자동화
+7,Microsoft 365,Microsoft Planner,플래너,Standard,작업 생성/완료,"작업 생성·수정·삭제, 버킷 관리, 계획 조회",높음,팀 작업 계획 및 추적
+8,Microsoft 365,Office 365 Users,오피스365 사용자,Standard,-,"사용자 프로필 조회, 관리자 정보, 부서원 조회",높음,조직 사용자 정보 조회
+9,Microsoft 365,Approvals,승인,Standard,승인 요청 수신,"승인 요청 생성, 승인 결과 대기, 응답 처리",높음,문서·요청 승인 워크플로우
+10,Microsoft 365,Notifications,알림,Standard,-,모바일 푸시 알림 전송,높음,Power Automate 앱 푸시 알림
+11,Microsoft 365,Lists,리스트,Standard,항목 생성/수정,항목 생성·수정·삭제·조회,높음,Microsoft Lists 데이터 관리
+12,Microsoft Azure,Azure OpenAI,Azure OpenAI,Premium,-,"텍스트 생성, 이미지 생성, 임베딩, 채팅 완성",높음,GPT 기반 AI 자동화
+13,생산성,Notion,노션,Standard,페이지 생성/수정,"페이지 생성·수정·조회, DB 항목 관리",높음,노트·데이터베이스·지식 관리
+14,데이터·분석,Power BI,파워 BI,Premium,데이터 새로고침 완료,"데이터셋 새로고침, 보고서 내보내기, 행 추가",높음,비즈니스 인텔리전스·데이터 시각화
+15,Google Workspace,Google Classroom,구글 클래스룸,Standard,"과제 제출, 성적 게시","과제 관리, 성적 조회, 학생 관리",높음,교육 플랫폼 자동화 (에듀올랩 적합)
+16,양식·설문,Google Forms,구글 폼즈,Standard,새 응답,"양식 조회, 응답 데이터 조회",높음,무료 온라인 설문
+17,AI·ML,AI Builder,AI 빌더,Premium,-,"텍스트 분류, 개체 추출, 명함 인식, 양식 처리, 감정 분석",높음,Power Platform 내장 AI 모델
+18,AI·ML,Azure OpenAI,Azure OpenAI,Premium,-,"텍스트 생성, 채팅 완성, 임베딩, 이미지 생성",높음,Azure 기반 GPT AI 서비스
+19,AI·ML,OpenAI (ChatGPT),오픈AI,Premium,-,"텍스트 생성, 이미지 생성, 오디오 변환, 임베딩",높음,ChatGPT·DALL-E·Whisper API
+20,AI·ML,Microsoft Copilot Studio,코파일럿 스튜디오,Premium,봇 메시지 수신,"봇 응답 생성, 주제 관리",높음,Power Platform AI 봇 빌더
+21,AI·ML,Copilot for Microsoft 365,M365 코파일럿,Premium,-,"콘텐츠 생성, 요약, 번역, 데이터 분석",높음,Microsoft 365 통합 AI 도우미
+22,교육·LMS,Microsoft Teams Education,MS 팀즈 교육,Standard,"과제 제출, 성적 게시","과제 생성·채점, 수업 관리",높음,교육용 Teams (에듀올랩 핵심)
+23,교육·LMS,Google Classroom,구글 클래스룸,Standard,"과제 제출, 성적 게시",과제·공지·성적 관리,높음,Google 교육 플랫폼
+24,교육·LMS,Moodle (via API/webhook),무들,Premium,"코스 이벤트, 퀴즈 완료",코스·사용자·성적 관리,높음,오픈소스 LMS
+25,교육·LMS,Canvas (Instructure),캔버스,Premium,"과제 제출, 성적 변경",코스·과제·성적·사용자 관리,높음,K-12 및 대학 LMS
+26,교육·LMS,Kahoot!,카훗,Premium,-,"퀴즈 생성·공유, 결과 조회",높음,게임 기반 학습 도구
+27,통합·개발,HTTP,HTTP 웹 요청,Standard,HTTP 요청 수신,"HTTP GET/POST/PUT/DELETE, 헤더 설정",높음,모든 REST API 연동
+28,통합·개발,Webhook,웹훅,Standard,HTTP 요청 수신,웹훅 URL 생성 및 응답,높음,실시간 이벤트 수신
+29,통합·개발,Data Operations,데이터 처리,Standard,-,"데이터 필터·정렬·병합·변환, JSON 파싱",높음,Power Automate 내장 데이터 처리
+30,통합·개발,JSON (변수),JSON 처리,Standard,-,JSON 파싱·직렬화,높음,JSON 데이터 처리
+31,기타,Recurrence (일정 트리거),반복 트리거,Standard,지정 시간/주기 도래,-,높음,정기 자동화 스케줄 설정
+32,기타,Manually trigger a flow,수동 트리거,Standard,수동 실행,-,높음,버튼 클릭으로 플로우 실행
+33,기타,When a HTTP request is received,HTTP 트리거,Standard,HTTP 요청 수신,-,높음,외부 시스템에서 플로우 트리거
+34,기타,Control (조건·루프),흐름 제어,Standard,-,조건문·루프·범위·병렬 분기,높음,워크플로우 로직 제어
+35,기타,Date Time,날짜·시간 처리,Standard,-,날짜 변환·더하기·빼기·형식 지정,높음,날짜·시간 계산
+36,기타,Variables,변수 관리,Standard,-,변수 초기화·설정·증가·추가,높음,플로우 내 변수 처리
+37,기타,Scope,범위,Standard,-,"작업 그룹화, 오류 처리",높음,플로우 구조화
+38,기타,Power BI (관리),파워 BI 관리,Premium,보고서 갱신,데이터셋 갱신·보고서 관리,높음,BI 보고서 자동 갱신
+39,Microsoft 365,OneDrive,개인 원드라이브,Standard,파일 생성/수정,파일 업로드·다운로드·삭제,중간,개인 클라우드 파일 저장소
+40,Microsoft 365,Excel Online (OneDrive),엑셀 온라인 개인,Standard,행 추가/수정,행 추가·수정·삭제·조회,중간,개인 엑셀 데이터 관리
+41,Microsoft 365,Microsoft To Do,MS 투두,Standard,작업 생성/완료,"작업 생성·수정·삭제·조회, 목록 관리",중간,개인·팀 할일 목록 관리
+42,Microsoft 365,OneNote (Business),원노트 비즈니스,Standard,페이지 생성,"페이지 생성·조회, 섹션 관리, 노트북 조회",중간,비즈니스 노트 자동화
+43,Microsoft 365,Office 365 Groups,오피스365 그룹,Standard,그룹 이메일 수신,"그룹 생성·삭제, 멤버 관리, 이메일 전송",중간,Microsoft 365 그룹 관리
+44,Microsoft 365,Word Online (Business),워드 온라인,Premium,-,"문서 생성, 콘텐츠 변환, 문서에서 데이터 추출",중간,Word 문서 자동 생성·변환
+45,Microsoft 365,Shifts,시프트,Standard,"교대 변경, 요청 생성",교대 일정 조회·생성·승인,중간,일선 직원 교대 근무 관리
+46,Microsoft 365,Bookings,부킹스,Standard,예약 생성/취소,예약 조회·생성·업데이트,중간,약속·예약 일정 관리
+47,Microsoft Azure,Azure Blob Storage,Azure Blob 저장소,Premium,Blob 추가/수정,"Blob 생성·읽기·삭제·복사, 컨테이너 관리",중간,대용량 파일 클라우드 저장소
+48,Microsoft Azure,Azure SQL,Azure SQL 데이터베이스,Premium,행 삽입/수정,"행 삽입·조회·수정·삭제, 저장 프로시저 실행",중간,Azure 관리형 SQL 데이터베이스
+49,Microsoft Azure,Azure AD (Microsoft Entra ID),Azure 액티브 디렉터리,Premium,사용자 생성/수정,"사용자 관리, 그룹 관리, 앱 등록, 권한 부여",중간,클라우드 ID 및 액세스 관리
+50,Microsoft Azure,Azure Cognitive Services,Azure AI 서비스,Premium,-,"텍스트 분석, 번역, 이미지 분석, 음성 변환",중간,AI 기반 텍스트·이미지·음성 처리
+51,Dynamics 365,Dataverse,데이터버스,Premium,행 생성/수정/삭제,"행 CRUD, 관계 관리, 파일 관리, 배치 작업",중간,Power Platform 공통 데이터 플랫폼
+52,생산성,Trello,트렐로,Standard,"카드 생성/이동, 마감일 도래","카드 생성·수정·이동·삭제, 리스트 관리",중간,칸반 보드 프로젝트 관리
+53,생산성,Asana,아사나,Premium,"작업 생성/완료, 프로젝트 이벤트","작업 생성·수정·삭제, 프로젝트 관리, 댓글 추가",중간,팀 프로젝트·작업 관리
+54,생산성,Monday.com,먼데이닷컴,Premium,항목 생성/수정/상태변경,"항목 생성·수정·삭제, 보드 관리, 알림",중간,팀 작업·프로젝트 관리
+55,생산성,Airtable,에어테이블,Premium,레코드 생성/수정/삭제,"레코드 CRUD, 첨부파일 관리, 뷰 조회",중간,스프레드시트 기반 데이터베이스
+56,생산성,Smartsheet,스마트시트,Premium,"행 추가/수정, 시트 변경","행 CRUD, 첨부파일 관리, 보고서 생성",중간,엔터프라이즈 스프레드시트
+57,생산성,ClickUp,클릭업,Premium,작업 생성/수정/완료,"작업 CRUD, 댓글, 시간 추적, 문서 관리",중간,올인원 생산성 플랫폼
+58,커뮤니케이션,Gmail,지메일,Standard,"새 이메일 수신, 새 레이블","이메일 전송·회신·전달·삭제, 레이블 관리",중간,Google 이메일 자동화
+59,커뮤니케이션,Slack,슬랙,Standard,"새 메시지, 새 멘션, 파일 공유","메시지 전송, 채널 관리, 파일 업로드, 반응 추가",중간,팀 메시지 자동화
+60,커뮤니케이션,Twilio,트윌리오,Premium,"SMS 수신, 전화 수신","SMS 전송, 음성 전화, WhatsApp 메시지",중간,SMS·전화 자동화
+61,커뮤니케이션,SendGrid,센드그리드,Premium,-,"이메일 전송, 연락처 관리, 이메일 통계 조회",중간,대량 이메일 발송 서비스
+62,커뮤니케이션,SMTP,SMTP 메일서버,Premium,-,이메일 전송 (커스텀 메일 서버),중간,자체 메일 서버 이메일 발송
+63,파일 저장소,Google Drive,구글 드라이브,Standard,파일 생성/수정/삭제,"파일 업로드·다운로드·삭제·공유, 폴더 관리",중간,Google 클라우드 저장소
+64,파일 저장소,SFTP,SFTP 보안 서버,Premium,파일 추가/수정,파일 업로드·다운로드·삭제·조회,중간,SSH 기반 보안 파일 전송
+65,데이터·분석,SQL Server,SQL 서버,Premium,행 삽입/수정,"행 삽입·조회·수정·삭제, 저장 프로시저 실행",중간,Microsoft 관계형 데이터베이스
+66,데이터·분석,MySQL,MySQL,Premium,행 삽입/수정,"행 삽입·조회·수정·삭제, 쿼리 실행",중간,오픈소스 관계형 데이터베이스
+67,데이터·분석,Google Sheets,구글 스프레드시트,Standard,행 추가/수정,"행 추가·수정·삭제·조회, 시트 관리",중간,Google 온라인 스프레드시트
+68,Google Workspace,Google Calendar,구글 캘린더,Standard,이벤트 생성/수정/삭제,"이벤트 생성·수정·삭제·조회, 초대 발송",중간,Google 일정 관리 자동화
+69,양식·설문,SurveyMonkey,서베이몽키,Premium,새 응답,"설문 생성·조회, 응답 분석",중간,온라인 설문 조사 플랫폼
+70,양식·설문,Typeform,타입폼,Premium,새 응답,"양식 생성, 응답 조회·삭제",중간,대화형 양식·설문
+71,양식·설문,JotForm,조트폼,Premium,새 제출,양식·제출·결제 관리,중간,온라인 양식 빌더
+72,AI·ML,Azure Cognitive Services - Text Analytics,Azure 텍스트 분석,Premium,-,"감정 분석, 언어 감지, 핵심 구문 추출, 개체 인식",중간,텍스트 AI 분석 서비스
+73,AI·ML,Azure Cognitive Services - Vision,Azure 비전 AI,Premium,-,"이미지 분석, OCR, 얼굴 감지, 개체 탐지",중간,이미지 AI 분석
+74,AI·ML,Azure Cognitive Services - Speech,Azure 음성 AI,Premium,-,"음성→텍스트, 텍스트→음성, 화자 인식",중간,음성 AI 처리
+75,AI·ML,Azure Cognitive Services - Translator,Azure 번역기,Premium,-,"텍스트 번역, 언어 감지, 음역",중간,자동 다국어 번역
+76,전자서명·문서,DocuSign,도큐사인,Premium,봉투 완료/거절/취소,봉투 생성·발송·상태 조회·다운로드,중간,글로벌 1위 전자서명
+77,전자서명·문서,Adobe Sign (Acrobat Sign),어도비 사인,Premium,서명 완료/거절,계약서 생성·발송·상태 조회,중간,Adobe 전자서명 솔루션
+78,전자서명·문서,HelloSign (Dropbox Sign),헬로사인,Premium,서명 완료,서명 요청 생성·발송·상태 조회,중간,간편 전자서명
+79,전자서명·문서,Encodian,인코디안,Premium,-,PDF 변환·병합·분할·워터마크·OCR,중간,Office 365 문서 변환
+80,전자서명·문서,Adobe PDF Services,어도비 PDF 서비스,Premium,-,PDF 생성·변환·압축·OCR·암호화,중간,Adobe PDF 처리 API
+81,교육·LMS,Blackboard Learn,블랙보드,Premium,코스 이벤트,코스·사용자·성적 관리,중간,대학 LMS 플랫폼
+82,교육·LMS,Schoology,스쿨로지,Premium,과제 제출,코스·과제·성적 관리,중간,K-12 학습 관리
+83,교육·LMS,Nearpod,니어팟,Premium,-,"레슨 생성, 결과 조회",중간,인터랙티브 수업 도구
+84,교육·LMS,Padlet,패들렛,Premium,게시글 생성,보드·게시글 관리,중간,협업 디지털 게시판
+85,일정·시간,Google Calendar,구글 캘린더,Standard,이벤트 생성/수정,"이벤트 CRUD, 초대 발송, 가용성 조회",중간,Google 일정 관리
+86,일정·시간,Calendly,캘린들리,Premium,예약 생성/취소,예약 유형 조회·관리,중간,일정 예약 자동화
+87,기타,Desktop flows (RPA),데스크톱 플로우 (RPA),Premium,데스크톱 이벤트,"UI 자동화, 레거시 앱 제어",중간,Power Automate Desktop RPA
+88,기타,Power Apps Notification,파워앱스 알림,Standard,-,Power Apps 앱 내 푸시 알림,중간,Power Apps 연동 알림
+89,기타,Power Automate Management,파워 오토메이트 관리,Premium,-,플로우 관리·실행·모니터링,중간,Power Automate 자체 관리
+90,Microsoft 365,Yammer,야머,Standard,"새 메시지, 새 그룹","메시지 게시, 그룹 생성, 사용자 관리",낮음,기업 소셜 네트워크
+91,Microsoft 365,Microsoft Stream,MS 스트림,Standard,새 비디오 업로드,"비디오 조회, 채널 관리",낮음,기업 비디오 플랫폼
+92,Microsoft 365,PowerPoint Online (Business),파워포인트 온라인,Standard,-,"프레젠테이션 조회, 슬라이드 관리",낮음,파워포인트 파일 관리
+93,Microsoft 365,Microsoft Kaizala,카이잘라,Standard,"새 메시지, 새 액션","메시지 전송, 설문 발송, 그룹 관리",낮음,모바일 업무 커뮤니케이션
+94,Microsoft 365,Microsoft Viva Engage,비바 인게이지,Standard,새 메시지,"메시지 게시, 커뮤니티 관리",낮음,직원 소통 플랫폼 (구 Yammer)
+95,Microsoft 365,Loop,루프,Standard,워크스페이스 변경,"컴포넌트 생성, 워크스페이스 관리",낮음,협업 캔버스 도구
+96,Microsoft Azure,Azure Service Bus,Azure 서비스 버스,Premium,큐/토픽 메시지 수신,"메시지 전송, 큐 관리, 세션 처리",낮음,엔터프라이즈 메시지 큐
+97,Microsoft Azure,Azure Event Hubs,Azure 이벤트 허브,Premium,이벤트 수신,"이벤트 전송, 파티션 관리",낮음,대규모 이벤트 스트리밍
+98,Microsoft Azure,Azure Queue Storage,Azure 큐 저장소,Premium,새 메시지,메시지 추가·조회·삭제,낮음,클라우드 메시지 큐
+99,Microsoft Azure,Azure Cosmos DB,Azure 코스모스DB,Premium,문서 변경,"문서 생성·조회·수정·삭제, 쿼리 실행",낮음,글로벌 분산 NoSQL 데이터베이스
+100,Microsoft Azure,Azure Key Vault,Azure 키 자격증명 모음,Premium,-,"비밀 조회·생성·삭제, 키 관리",낮음,보안 키·비밀 중앙 관리
+101,Microsoft Azure,Azure Monitor Logs,Azure 모니터 로그,Premium,-,"로그 쿼리, 경고 생성, 작업 영역 관리",낮음,클라우드 리소스 모니터링·로깅
+102,Microsoft Azure,Azure DevOps,Azure DevOps,Standard,"빌드 완료, PR 생성, 작업 항목 변경","빌드 실행, PR 생성, 작업 항목 관리, 릴리스",낮음,DevOps 파이프라인 자동화
+103,Microsoft Azure,Azure Event Grid,Azure 이벤트 그리드,Premium,이벤트 발생,"이벤트 게시, 구독 관리",낮음,이벤트 기반 아키텍처
+104,Microsoft Azure,Azure File Storage,Azure 파일 저장소,Premium,파일 추가/수정,파일 업로드·다운로드·삭제,낮음,SMB 프로토콜 기반 파일 공유
+105,Microsoft Azure,Azure IoT Central,Azure IoT 센트럴,Premium,"장치 데이터, 규칙 발생","장치 명령, 데이터 내보내기",낮음,IoT 장치 연결·관리
+106,Microsoft Azure,Azure Table Storage,Azure 테이블 저장소,Premium,-,엔터티 삽입·조회·수정·삭제,낮음,NoSQL 키-값 저장소
+107,Microsoft Azure,Azure Resource Manager,Azure 리소스 관리자,Premium,-,"리소스 배포·관리, 리소스 그룹 조작",낮음,Azure 인프라 자동화
+108,Microsoft Azure,Azure Logic Apps,Azure 로직앱,Premium,로직앱 트리거,"워크플로우 실행, 로직앱 관리",낮음,Azure 기반 워크플로우 연동
+109,Microsoft Azure,Azure Automation,Azure 자동화,Premium,-,"Runbook 실행, 일정 관리, 인벤토리 조회",낮음,클라우드 운영 자동화
+110,Microsoft Azure,Azure Container Instance,Azure 컨테이너 인스턴스,Premium,-,컨테이너 시작·중지·삭제,낮음,서버리스 컨테이너 실행
+111,Microsoft Azure,Azure Data Factory,Azure 데이터 팩토리,Premium,-,"파이프라인 실행, 데이터 변환",낮음,데이터 통합·ETL 파이프라인
+112,Dynamics 365,Dynamics 365 Sales,다이나믹스365 영업,Premium,레코드 생성/수정,"레코드 CRUD, 거래 관리, 기회 관리",낮음,영업 CRM 자동화
+113,Dynamics 365,Dynamics 365 Customer Service,다이나믹스365 고객서비스,Premium,케이스 생성/수정,"케이스 관리, 고객 조회, SLA 관리",낮음,고객 서비스 자동화
+114,Dynamics 365,Dynamics 365 Marketing,다이나믹스365 마케팅,Premium,마케팅 이벤트,"캠페인 관리, 이메일 발송, 리드 관리",낮음,B2B 마케팅 자동화
+115,Dynamics 365,Dynamics 365 Finance,다이나믹스365 재무,Premium,원장 변경,"재무 데이터 조회·수정, 전표 관리",낮음,기업 재무 자동화
+116,Dynamics 365,Dynamics 365 Business Central,다이나믹스365 비즈니스 센트럴,Premium,레코드 변경,"고객·공급업체·품목 관리, 판매·구매 주문",낮음,중소기업 ERP 자동화
+117,Dynamics 365,Dynamics 365 Field Service,다이나믹스365 필드서비스,Premium,작업 주문 생성,"작업 주문 관리, 자원 예약, 인벤토리 관리",낮음,현장 서비스 자동화
+118,Dynamics 365,Dynamics 365 HR,다이나믹스365 인사,Premium,직원 변경,"직원 관리, 휴가 요청, 급여 정보",낮음,인사 관리 자동화
+119,Dynamics 365,Common Data Service (Legacy),공통 데이터 서비스,Premium,레코드 생성/수정,"레코드 CRUD, 파일 관리",낮음,Dataverse 구버전 커넥터
+120,생산성,Jira,지라,Premium,이슈 생성/수정/해결,"이슈 생성·수정·삭제·조회, 댓글, 스프린트 관리",낮음,소프트웨어 이슈 트래킹
+121,생산성,Wrike,라이크,Premium,작업 생성/완료,"작업·폴더·프로젝트 관리, 타임로그",낮음,프로젝트·작업 관리
+122,생산성,Todoist,투두이스트,Premium,작업 추가/완료,"작업 생성·수정·완료·삭제, 프로젝트 관리",낮음,개인·팀 할일 관리
+123,생산성,Basecamp,베이스캠프,Premium,"할일 생성, 메시지 게시","할일 관리, 메시지 보드, 일정 관리",낮음,팀 프로젝트 협업
+124,생산성,Evernote Business,에버노트 비즈니스,Premium,노트 생성/수정,"노트 생성·수정·조회·삭제, 노트북 관리",낮음,비즈니스 노트 관리
+125,생산성,Linear,리니어,Premium,이슈 생성/수정,"이슈 CRUD, 사이클 관리, 프로젝트 조회",낮음,소프트웨어 팀 이슈 트래킹
+126,생산성,Teamwork,팀워크,Premium,작업 생성/완료,"작업 관리, 시간 추적, 마일스톤 관리",낮음,프로젝트 관리 플랫폼
+127,생산성,Height,하이트,Premium,작업 변경,"작업 관리, 리스트 조회",낮음,팀 협업 프로젝트 관리
+128,생산성,Zoho Projects,조호 프로젝트,Premium,작업 생성/수정,"작업·프로젝트 관리, 타임로그",낮음,프로젝트 관리
+129,커뮤니케이션,Mailchimp,메일침프,Premium,구독자 추가/수정,"이메일 캠페인 관리, 구독자 관리, 통계 조회",낮음,이메일 마케팅 자동화
+130,커뮤니케이션,Zoom,줌,Premium,회의 시작/종료,"회의 예약·취소, 웨비나 관리, 참가자 조회",낮음,화상 회의 자동화
+131,커뮤니케이션,RingCentral,링센트럴,Premium,"SMS 수신, 전화 수신","SMS 전송, 음성 전화, 팩스 전송",낮음,클라우드 전화 시스템
+132,커뮤니케이션,Vonage,보나지,Premium,SMS 수신,"SMS 전송, 음성 통화",낮음,클라우드 커뮤니케이션
+133,커뮤니케이션,MessageBird,메시지버드,Premium,SMS 수신,SMS·WhatsApp·음성 전송,낮음,멀티채널 메시지 플랫폼
+134,커뮤니케이션,Infobip,인포빕,Premium,SMS 수신,SMS·이메일·WhatsApp 전송,낮음,글로벌 커뮤니케이션 플랫폼
+135,커뮤니케이션,Sinch,신치,Premium,SMS 수신,"SMS 전송, 음성 전화",낮음,클라우드 SMS 서비스
+136,커뮤니케이션,Pushover,푸시오버,Premium,-,모바일 푸시 알림 전송,낮음,모바일 알림 서비스
+137,커뮤니케이션,Telegram Bot,텔레그램 봇,Premium,새 메시지,"메시지 전송, 파일 전송",낮음,텔레그램 봇 자동화
+138,커뮤니케이션,LINE,라인,Premium,메시지 수신,메시지 전송,낮음,LINE 메시지 자동화
+139,커뮤니케이션,Kakaotalk (via webhook),카카오톡,Premium,메시지 수신,메시지 전송,낮음,카카오 채널 연동 (webhook)
+140,커뮤니케이션,Cisco Webex Teams,시스코 웹엑스,Premium,새 메시지,"메시지 전송, 공간 관리",낮음,Cisco 화상회의·협업
+141,커뮤니케이션,Google Meet (via Calendar),구글 미트,Standard,회의 생성,회의 예약·참가 링크 생성,낮음,Google 화상 회의
+142,커뮤니케이션,Freshdesk,프레시데스크,Premium,티켓 생성/수정,"티켓 CRUD, 에이전트 관리, 연락처 관리",낮음,고객 지원 헬프데스크
+143,커뮤니케이션,Zendesk,젠데스크,Premium,티켓 생성/수정,"티켓 CRUD, 사용자 관리, 매크로 실행",낮음,고객 서비스 플랫폼
+144,커뮤니케이션,Intercom,인터콤,Premium,"대화 생성, 이벤트 발생","메시지 전송, 사용자 관리, 태그 추가",낮음,고객 메시지·지원 플랫폼
+145,커뮤니케이션,Help Scout,헬프스카우트,Premium,대화 생성/수정,"대화 관리, 고객 관리, 노트 추가",낮음,이메일 기반 고객 지원
+146,커뮤니케이션,LiveChat,라이브챗,Premium,새 채팅 시작,"채팅 관리, 고객 데이터 조회",낮음,실시간 고객 채팅
+147,커뮤니케이션,Drift,드리프트,Premium,대화 생성,"대화 관리, 사용자 조회",낮음,B2B 대화형 마케팅
+148,커뮤니케이션,Crisp,크리스프,Premium,메시지 수신,"메시지 전송, 대화 관리",낮음,고객 메시지 플랫폼
+149,CRM·영업,Salesforce,세일즈포스,Premium,레코드 생성/수정/삭제,"레코드 CRUD, 보고서 실행, Apex 호출",낮음,글로벌 1위 CRM 플랫폼
+150,CRM·영업,HubSpot,허브스팟,Premium,연락처·거래 생성/수정,"연락처·회사·거래 CRUD, 이메일 발송, 작업 생성",낮음,인바운드 마케팅·CRM
+151,CRM·영업,Zoho CRM,조호 CRM,Premium,레코드 생성/수정,"레코드 CRUD, 이메일 전송, 보고서 조회",낮음,중소기업 CRM
+152,CRM·영업,Pipedrive,파이프드라이브,Premium,거래 생성/수정/단계변경,거래·연락처·활동 CRUD,낮음,영업 파이프라인 CRM
+153,CRM·영업,Freshsales,프레시세일즈,Premium,리드 생성/수정,리드·연락처·거래 관리,낮음,AI 기반 영업 CRM
+154,CRM·영업,Copper,카퍼,Premium,리드 생성/수정,리드·연락처·기회 CRUD,낮음,Google Workspace 통합 CRM
+155,CRM·영업,Insightly,인사이틀리,Premium,레코드 생성/수정,리드·연락처·프로젝트 관리,낮음,CRM + 프로젝트 관리
+156,CRM·영업,Nutshell,넛쉘,Premium,리드 생성/수정,리드·연락처·거래 CRUD,낮음,중소기업 영업 CRM
+157,CRM·영업,Agile CRM,애자일 CRM,Premium,연락처 생성/수정,"연락처·거래·작업 관리, 이메일 발송",낮음,올인원 중소기업 CRM
+158,CRM·영업,Streak,스트릭,Premium,박스 생성/수정,파이프라인·박스·연락처 관리,낮음,Gmail 내장 CRM
+159,파일 저장소,Dropbox,드롭박스,Premium,파일 생성/수정,파일 업로드·다운로드·삭제·이동·링크 공유,낮음,클라우드 파일 저장·공유
+160,파일 저장소,Box,박스,Premium,파일 업로드/수정,"파일·폴더 CRUD, 공유 링크, 협업 관리",낮음,기업 클라우드 콘텐츠 관리
+161,파일 저장소,Amazon S3,아마존 S3,Premium,객체 생성/삭제,"파일 업로드·다운로드·삭제, 버킷 관리",낮음,AWS 클라우드 오브젝트 저장소
+162,파일 저장소,FTP,FTP 서버,Premium,-,파일 업로드·다운로드·삭제·조회,낮음,FTP 서버 파일 관리
+163,파일 저장소,Egnyte,에그나이트,Premium,파일 생성/수정,"파일 CRUD, 권한 관리",낮음,기업 파일 공유·거버넌스
+164,파일 저장소,Citrix ShareFile,시트릭스 쉐어파일,Premium,파일 업로드,파일 업로드·다운로드·공유,낮음,기업 보안 파일 공유
+165,파일 저장소,Nextcloud,넥스트클라우드,Premium,파일 업로드,"파일 CRUD, 캘린더 관리",낮음,오픈소스 자체 호스팅 클라우드
+166,데이터·분석,PostgreSQL,포스트그레SQL,Premium,행 삽입/수정,"행 삽입·조회·수정·삭제, 쿼리 실행",낮음,오픈소스 고급 관계형 DB
+167,데이터·분석,Oracle Database,오라클 데이터베이스,Premium,행 삽입/수정,"행 삽입·조회·수정·삭제, 저장 프로시저",낮음,엔터프라이즈 관계형 DB
+168,데이터·분석,IBM DB2,IBM DB2,Premium,행 삽입/수정,행 삽입·조회·수정·삭제,낮음,IBM 엔터프라이즈 데이터베이스
+169,데이터·분석,Snowflake,스노우플레이크,Premium,데이터 로드,"쿼리 실행, 데이터 로드·조회",낮음,클라우드 데이터 웨어하우스
+170,데이터·분석,Google BigQuery,구글 빅쿼리,Premium,-,"쿼리 실행, 테이블 관리, 데이터 삽입",낮음,Google 클라우드 데이터 분석
+171,데이터·분석,Teradata,테라데이터,Premium,-,"쿼리 실행, 데이터 조회",낮음,엔터프라이즈 데이터 웨어하우스
+172,데이터·분석,MongoDB,몽고DB,Premium,문서 삽입,"문서 CRUD, 쿼리 실행, 집계",낮음,NoSQL 문서 데이터베이스
+173,데이터·분석,Redis,레디스,Premium,-,"키-값 CRUD, 리스트 관리",낮음,인메모리 캐시 데이터베이스
+174,데이터·분석,Elasticsearch,엘라스틱서치,Premium,문서 인덱싱,문서 인덱싱·검색·삭제,낮음,분산 검색·분석 엔진
+175,데이터·분석,Dynamics 365 Business Intelligence,다이나믹스 BI,Premium,-,"보고서 조회, KPI 관리",낮음,Dynamics 기반 BI
+176,데이터·분석,Apache Kafka (via Service Bus),아파치 카프카,Premium,메시지 수신,메시지 발행,낮음,분산 이벤트 스트리밍
+177,Google Workspace,Google Contacts,구글 연락처,Standard,연락처 생성/수정,연락처 생성·수정·삭제·조회,낮음,Google 주소록 관리
+178,Google Workspace,Google Tasks,구글 태스크,Standard,작업 완료,작업 생성·수정·완료·삭제,낮음,Google 할일 목록
+179,Google Workspace,Google Docs,구글 독스,Standard,문서 생성/수정,문서 생성·내용 추가·내보내기,낮음,Google 온라인 문서 작성
+180,Google Workspace,Google Slides,구글 슬라이드,Standard,-,프레젠테이션 생성·복사·내보내기,낮음,Google 온라인 프레젠테이션
+181,Google Workspace,Google Forms,구글 폼즈,Standard,새 응답,"양식 조회, 응답 조회",낮음,Google 설문 자동화
+182,Google Workspace,YouTube,유튜브,Standard,새 동영상 업로드,"동영상 업로드, 재생목록 관리, 댓글 관리",낮음,YouTube 채널 자동화
+183,Google Workspace,Google Analytics,구글 애널리틱스,Premium,데이터 업데이트,"보고서 데이터 조회, 목표 조회",낮음,웹 트래픽·분석 데이터
+184,Google Workspace,Google Search Console,구글 서치 콘솔,Premium,-,"검색 성능 조회, 색인 상태 확인",낮음,SEO 데이터 조회
+185,소셜 미디어,Twitter / X,트위터/X,Standard,"새 트윗, 멘션, DM","트윗 게시, 리트윗, 좋아요, DM 전송",낮음,X(트위터) 소셜 미디어 자동화
+186,소셜 미디어,LinkedIn,링크드인,Premium,"새 연결, 새 메시지","게시물 공유, 댓글 조회",낮음,비즈니스 소셜 네트워크
+187,소셜 미디어,Facebook,페이스북,Premium,"새 게시물, 새 리드","게시물 게시, 페이지 관리, 사진 업로드",낮음,Facebook 페이지 자동화
+188,소셜 미디어,Instagram Business,인스타그램 비즈니스,Premium,"새 게시물, 새 댓글","게시물 게시, 댓글 관리",낮음,Instagram 비즈니스 자동화
+189,소셜 미디어,Pinterest,핀터레스트,Premium,새 핀,"핀 생성, 보드 관리",낮음,Pinterest 비주얼 마케팅
+190,소셜 미디어,Buffer,버퍼,Premium,-,소셜 게시물 예약·발행,낮음,소셜 미디어 게시물 스케줄링
+191,소셜 미디어,Hootsuite,후트스위트,Premium,새 멘션,"게시물 예약, 소셜 모니터링",낮음,소셜 미디어 관리 플랫폼
+192,소셜 미디어,TikTok for Business,틱톡 비즈니스,Premium,새 동영상,"광고 관리, 비디오 업로드",낮음,TikTok 비즈니스 자동화
+193,HR·채용,Workday,워크데이,Premium,"직원 변경, 채용 단계 변경","직원 데이터 조회·수정, 채용 관리, 급여 조회",낮음,대기업 HR·재무 플랫폼
+194,HR·채용,BambooHR,밤부HR,Premium,"직원 입사/퇴사, 휴가 신청","직원 데이터 CRUD, 휴가 관리, 보고서 조회",낮음,중소기업 HR 플랫폼
+195,HR·채용,ADP Workforce Now,ADP 인력관리,Premium,직원 변경,직원·급여·근태 데이터 조회·수정,낮음,급여·HR 아웃소싱 플랫폼
+196,HR·채용,SAP SuccessFactors,SAP 서커스팩터스,Premium,"직원 변경, 목표 변경","직원 데이터 조회·수정, 성과 관리",낮음,대기업 HR 클라우드
+197,HR·채용,Greenhouse,그린하우스,Premium,지원자 단계 변경,지원자·채용공고·면접 관리,낮음,채용 관리 시스템 (ATS)
+198,HR·채용,Lever,레버,Premium,지원자 단계 변경,"지원자·기회 관리, 피드백 수집",낮음,채용 자동화 플랫폼
+199,HR·채용,Workable,워커블,Premium,지원자 생성/단계변경,채용공고·지원자·면접 관리,낮음,채용 플랫폼
+200,HR·채용,Teamtailor,팀테일러,Premium,지원자 생성,채용공고·지원자 관리,낮음,고용주 브랜딩 채용 플랫폼
+201,HR·채용,Bob (HiBob),하이밥,Premium,직원 변경,"직원 데이터 조회·수정, 휴가 관리",낮음,중견기업 HR 플랫폼
+202,HR·채용,Personio,퍼소니오,Premium,직원 생성/수정,직원·근태·급여 관리,낮음,유럽 중소기업 HR 플랫폼
+203,HR·채용,Rippling,리플링,Premium,직원 온보딩/오프보딩,직원·급여·IT 관리,낮음,HR + IT 통합 플랫폼
+204,ERP·재무,SAP ERP (via SAP connector),SAP ERP,Premium,"전표 생성, 발주 변경","마스터 데이터 CRUD, 트랜잭션 실행",낮음,글로벌 대기업 ERP
+205,ERP·재무,NetSuite,넷스위트,Premium,레코드 생성/수정,"레코드 CRUD, 보고서 실행, SuiteScript 호출",낮음,클라우드 ERP·회계
+206,ERP·재무,QuickBooks Online,퀵북스 온라인,Premium,"청구서 생성, 결제 수신","청구서·고객·결제 CRUD, 보고서 조회",낮음,중소기업 회계 소프트웨어
+207,ERP·재무,Xero,제로,Premium,청구서 생성/수정,"청구서·연락처·결제 CRUD, 은행 거래 조회",낮음,중소기업 온라인 회계
+208,ERP·재무,FreshBooks,프레시북스,Premium,"청구서 생성, 결제 수신",청구서·클라이언트·비용 관리,낮음,프리랜서·중소기업 회계
+209,ERP·재무,Wave,웨이브,Premium,고객 생성,청구서·고객·결제 관리,낮음,무료 중소기업 회계
+210,ERP·재무,Sage,세이지,Premium,거래 생성,고객·공급업체·거래 관리,낮음,기업 재무·회계 ERP
+211,ERP·재무,Stripe,스트라이프,Premium,"결제 완료, 구독 변경, 환불",결제·고객·구독·청구서 관리,낮음,온라인 결제 처리
+212,ERP·재무,PayPal,페이팔,Premium,"결제 완료, 환불","결제 조회·환불 처리, 청구서 발송",낮음,온라인 결제 플랫폼
+213,ERP·재무,Chargebee,차지비,Premium,구독 생성/수정/취소,구독·청구서·고객 관리,낮음,구독 결제 관리
+214,ERP·재무,Recurly,리커리,Premium,구독 생성/취소,구독·청구서·고객 관리,낮음,구독 빌링 플랫폼
+215,ERP·재무,Zuora,주오라,Premium,구독 변경,구독·청구·결제 관리,낮음,엔터프라이즈 구독 관리
+216,ERP·재무,Expensify,익스펜시파이,Premium,경비 보고서 제출,경비 보고서 생성·승인·조회,낮음,경비 관리 자동화
+217,ERP·재무,Concur,컨커,Premium,경비·출장 요청,경비 보고서·출장 요청 관리,낮음,기업 출장·경비 관리
+218,마케팅,Mailchimp,메일침프,Premium,"구독자 추가/수정, 캠페인 발송",구독자·캠페인·리스트 관리,낮음,이메일 마케팙 1위
+219,마케팅,Constant Contact,컨스턴트 컨택,Premium,구독자 추가,이메일 캠페인·연락처·리스트 관리,낮음,이메일 마케팅
+220,마케팅,Campaign Monitor,캠페인 모니터,Premium,구독자 추가,캠페인·구독자·리스트 관리,낮음,이메일 마케팅 도구
+221,마케팅,ActiveCampaign,액티브캠페인,Premium,"연락처 추가/수정, 거래 단계 변경",연락처·자동화·이메일·거래 관리,낮음,마케팅 자동화·CRM
+222,마케팅,Marketo,마케토,Premium,리드 생성/수정,리드·캠페인·이메일 관리,낮음,B2B 마케팅 자동화
+223,마케팅,Pardot (Salesforce Marketing Cloud),파도트,Premium,잠재고객 변경,잠재고객·이메일·목록 관리,낮음,B2B 자동화 마케팅
+224,마케팅,HubSpot Marketing,허브스팟 마케팅,Premium,연락처 생성/수정,이메일·랜딩페이지·양식 관리,낮음,인바운드 마케팅
+225,마케팅,Klaviyo,클라비요,Premium,"이벤트 발생, 메트릭 추적","이메일·SMS 발송, 프로필 관리",낮음,이커머스 이메일 마케팅
+226,마케팅,Brevo (Sendinblue),브레보,Premium,이메일 이벤트,"이메일·SMS 발송, 연락처 관리",낮음,멀티채널 마케팅
+227,마케팅,Drip,드립,Premium,이벤트 발생,이메일 캠페인·자동화·태그 관리,낮음,이커머스 마케팅 자동화
+228,마케팅,ConvertKit,컨버트킷,Premium,구독자 추가/수정,구독자·태그·자동화·이메일 관리,낮음,크리에이터 이메일 마케팅
+229,마케팅,GetResponse,겟리스폰스,Premium,연락처 추가,이메일·자동화·랜딩페이지 관리,낮음,이메일 마케팅 플랫폼
+230,전자상거래,Shopify,쇼피파이,Premium,"주문 생성/결제, 상품 추가, 고객 생성",주문·상품·고객·재고 관리,낮음,글로벌 이커머스 플랫폼
+231,전자상거래,WooCommerce,우커머스,Premium,"주문 생성/수정, 상품 변경",주문·상품·고객 관리,낮음,WordPress 이커머스
+232,전자상거래,BigCommerce,빅커머스,Premium,"주문 생성, 상품 변경",주문·상품·고객 관리,낮음,대규모 이커머스 플랫폼
+233,전자상거래,Magento (Adobe Commerce),마젠토,Premium,주문 생성,주문·상품·고객·재고 관리,낮음,오픈소스 이커머스
+234,전자상거래,Squarespace Commerce,스퀘어스페이스,Premium,주문 생성,주문·상품·재고 조회,낮음,웹사이트·이커머스 빌더
+235,전자상거래,Wix,윅스,Premium,주문 생성,상품·주문 관리,낮음,드래그앤드롭 웹사이트 빌더
+236,전자상거래,Amazon Seller Central,아마존 셀러,Premium,"주문 생성, 재고 변경",주문·재고·배송 관리,낮음,아마존 셀러 자동화
+237,전자상거래,eBay,이베이,Premium,"주문 생성, 경매 종료",상품 리스팅·주문 관리,낮음,eBay 셀러 자동화
+238,전자상거래,Etsy,엣시,Premium,주문 생성,주문·상품 관리,낮음,핸드메이드·빈티지 이커머스
+239,개발자 도구,GitHub,깃허브,Standard,"Push, PR 생성, 이슈 생성, 릴리스",이슈·PR·댓글·파일 관리,낮음,코드 버전 관리·협업
+240,개발자 도구,GitLab,깃랩,Premium,"Push, MR 생성, 이슈 생성",이슈·MR·파이프라인 관리,낮음,DevOps 플랫폼
+241,개발자 도구,Bitbucket,비트버켓,Premium,"Push, PR 생성",이슈·PR·파일 관리,낮음,Atlassian 코드 저장소
+242,개발자 도구,Jenkins,젠킨스,Premium,"빌드 완료, 빌드 실패","빌드 트리거, 상태 조회",낮음,CI/CD 자동화
+243,개발자 도구,CircleCI,서클CI,Premium,파이프라인 완료,"파이프라인 트리거, 상태 조회",낮음,클라우드 CI/CD
+244,개발자 도구,PagerDuty,페이저듀티,Premium,인시던트 생성/해결,인시던트 생성·해결·에스컬레이션,낮음,IT 인시던트 관리
+245,개발자 도구,OpsGenie,옵스지니,Premium,알림 생성,"알림 생성·종결, 온콜 조회",낮음,DevOps 알림 관리
+246,개발자 도구,Datadog,데이터독,Premium,모니터 알림,"이벤트 게시, 메트릭 조회, 인시던트 관리",낮음,클라우드 모니터링
+247,개발자 도구,New Relic,뉴렐릭,Premium,알림 정책 발동,"알림 관리, 대시보드 조회",낮음,애플리케이션 성능 모니터링
+248,개발자 도구,Sentry,센트리,Premium,"새 이슈, 오류 발생","이슈 조회·관리, 프로젝트 통계",낮음,에러 추적·모니터링
+249,개발자 도구,Bugzilla,버그질라,Premium,버그 생성/수정,"버그 CRUD, 댓글 추가",낮음,오픈소스 버그 추적
+250,개발자 도구,Confluence,컨플루언스,Premium,페이지 생성/수정,"페이지 CRUD, 댓글 추가, 공간 관리",낮음,Atlassian 팀 위키
+251,개발자 도구,ServiceNow,서비스나우,Premium,레코드 생성/수정,"레코드 CRUD, 워크플로우 실행, 인시던트 관리",낮음,IT 서비스 관리 (ITSM)
+252,양식·설문,Wufoo,우푸,Premium,새 제출,양식·제출·결제 관리,낮음,온라인 양식 빌더
+253,양식·설문,Formstack,폼스택,Premium,새 제출,양식·제출·워크플로우 관리,낮음,비즈니스 양식 자동화
+254,양식·설문,Cognito Forms,코그니토 폼즈,Standard,새 제출,양식·제출 관리,낮음,온라인 양식 빌더
+255,양식·설문,123FormBuilder,123폼빌더,Premium,새 제출,양식·제출 관리,낮음,드래그앤드롭 양식
+256,양식·설문,Paperform,페이퍼폼,Premium,새 제출,양식·결제·예약 관리,낮음,멀티 기능 양식 빌더
+257,양식·설문,Qualtrics,퀄트릭스,Premium,새 응답,"설문 조회, 응답 데이터 분석",낮음,기업 경험 관리
+258,AI·ML,Content Moderator,콘텐츠 조정자,Premium,-,텍스트·이미지·비디오 유해 콘텐츠 감지,낮음,AI 기반 콘텐츠 필터링
+259,AI·ML,Custom Vision,커스텀 비전,Premium,-,이미지 분류·개체 탐지 (커스텀 모델),낮음,맞춤형 이미지 AI
+260,AI·ML,Language Understanding (LUIS),루이스,Premium,발화 수신,"의도 분석, 개체 추출",낮음,자연어 의도 이해 AI
+261,AI·ML,QnA Maker,QnA 메이커,Premium,-,"질문→답변 매핑, 기술 자료 관리",낮음,FAQ 기반 챗봇 AI
+262,전자서명·문서,SignNow,사인나우,Premium,서명 완료,서명 요청 생성·발송·관리,낮음,비즈니스 전자서명
+263,전자서명·문서,PandaDoc,판다독,Premium,문서 완료/조회,문서 생성·발송·상태 조회,낮음,영업 문서·전자서명
+264,전자서명·문서,PDF4me,PDF4me,Premium,-,PDF 변환·병합·분할·압축·OCR,낮음,PDF 자동화 도구
+265,전자서명·문서,Muhimbi PDF,무힘비 PDF,Premium,-,PDF 변환·병합·분할·워터마크,낮음,SharePoint PDF 변환
+266,전자서명·문서,ABBYY FlexiCapture,애비 플렉시캡처,Premium,-,문서 OCR·데이터 추출·분류,낮음,지능형 문서 처리 (IDP)
+267,교육·LMS,Edmodo,에드모도,Premium,게시물 생성,게시물·과제·그룹 관리,낮음,교사-학생 소통 플랫폼
+268,통합·개발,Encodian Toolkit,인코디안 툴킷,Premium,-,"데이터 변환, 이미지 처리, 문서 변환",낮음,다목적 변환 도구
+269,통합·개발,XML,XML 처리,Standard,-,XML 파싱·변환,낮음,XML 데이터 처리
+270,통합·개발,Encodian,인코디안,Premium,-,"Office 파일 변환, 이미지 처리, 바코드",낮음,문서·이미지 처리 유틸
+271,통합·개발,Plumsail Documents,플럼세일 도큐먼츠,Premium,-,Word·PDF·Excel 문서 생성,낮음,템플릿 기반 문서 자동화
+272,통합·개발,Cloudmersive,클라우드머시브,Premium,-,"파일 변환, 바이러스 스캔, 이미지 처리",낮음,클라우드 API 도구
+273,통합·개발,Zapier (via webhook),재피어,Standard,-,워크플로우 트리거,낮음,타 자동화 도구 연동
+274,통합·개발,Make (Integromat),메이크,Premium,-,시나리오 실행·관리,낮음,고급 자동화 플랫폼
+275,통합·개발,n8n (via webhook),n8n,Standard,-,워크플로우 트리거,낮음,오픈소스 자동화 도구
+276,일정·시간,Acuity Scheduling,어큐이티 스케줄링,Premium,예약 생성/취소/변경,예약 조회·취소·관리,낮음,온라인 예약 관리
+277,일정·시간,Doodle,두들,Premium,투표 완료,투표 생성·참여자 조회,낮음,그룹 일정 조율
+278,일정·시간,When2meet (via webhook),When2meet,Standard,-,가용성 수집 (webhook 연동),낮음,그룹 가용 시간 수집
+279,일정·시간,Toggl Track,토글 트랙,Premium,시간 추적 시작/중지,"시간 항목 CRUD, 보고서 조회",낮음,시간 추적 도구
+280,일정·시간,Harvest,하비스트,Premium,시간 항목 생성,시간·비용·청구서 관리,낮음,시간 추적·청구 관리
+281,일정·시간,Clockify,클락파이,Premium,시간 항목 생성,시간 항목·프로젝트·보고서 관리,낮음,무료 시간 추적
+282,기타,RSS,RSS 피드,Standard,새 피드 항목,피드 항목 조회,낮음,RSS 뉴스·블로그 자동화
+283,기타,Cloudmersive Virus Scan,클라우드머시브 바이러스 스캔,Premium,-,파일 바이러스 스캔,낮음,업로드 파일 보안 검사
+284,기타,Encodian Conversion,인코디안 변환,Premium,-,파일 형식 변환,낮음,다양한 파일 형식 변환
+285,기타,Bing Maps,빙 지도,Standard,-,"경로 계산, 위치 검색, 주소 변환",낮음,지도·위치 서비스
+286,기타,Weather (MSN Weather),날씨,Standard,날씨 이벤트,현재 날씨·예보 조회,낮음,날씨 데이터 조회
+287,기타,Currency Converter,환율 변환기,Standard,-,실시간 환율 변환,낮음,통화 환율 조회·변환
+288,기타,Event Grid (System Topics),이벤트 그리드 시스템,Premium,Azure 리소스 이벤트,이벤트 라우팅,낮음,Azure 이벤트 기반 연동
+289,기타,Localization (String Resources),다국어 현지화,Standard,-,문자열 번역·현지화,낮음,앱 다국어 처리
+290,기타,Power Apps for Makers,파워앱스 메이커,Premium,-,"앱 관리, 환경 관리",낮음,Power Apps 관리 자동화
+291,기타,Power Platform for Admins,파워 플랫폼 관리자,Premium,-,환경·커넥터·정책 관리,낮음,Power Platform 관리 자동화
+292,기타,Microsoft Whiteboard,MS 화이트보드,Standard,-,화이트보드 조회·생성,낮음,디지털 화이트보드
+293,기타,Search (Bing/Microsoft),검색 서비스,Standard,-,"웹 검색, 이미지 검색, 뉴스 검색",낮음,Bing 검색 API
+294,기타,Adobe Creative Cloud,어도비 크리에이티브,Premium,-,"에셋 관리, 라이선스 관리",낮음,Adobe 크리에이티브 도구
+295,기타,Canva,캔바,Premium,-,디자인 조회·내보내기,낮음,온라인 그래픽 디자인
+296,기타,Figma,피그마,Premium,-,"파일·컴포넌트 조회, 댓글 관리",낮음,UI/UX 디자인 협업
+297,기타,Loom,룸,Premium,새 비디오 녹화,비디오 조회·공유,낮음,비동기 비디오 메시지
+298,기타,Miro,미로,Premium,보드 변경,보드·카드·위젯 관리,낮음,온라인 협업 화이트보드
+299,기타,Lucidchart,루시드차트,Premium,-,다이어그램 조회·관리,낮음,다이어그램 협업 도구
+300,기타,Stormboard,스톰보드,Premium,스티커 추가,보드·스티커 관리,낮음,디지털 브레인스토밍
+301,기타,LiveTiles,라이브타일즈,Premium,-,인트라넷 콘텐츠 관리,낮음,SharePoint 인트라넷 빌더
+302,기타,Nintex Workflow,닌텍스 워크플로우,Premium,-,워크플로우 실행·관리,낮음,엔터프라이즈 워크플로우 자동화
+303,기타,K2 (Software AG),K2,Premium,-,프로세스·양식 관리,낮음,로우코드 프로세스 자동화
+304,기타,Laserfiche,레이저피시,Premium,문서 생성,문서·폴더·워크플로우 관리,낮음,콘텐츠·프로세스 관리
+305,기타,OpenText,오픈텍스트,Premium,-,문서·콘텐츠 관리,낮음,기업 정보 관리
+306,기타,Objective Connect,오브젝티브 커넥트,Premium,-,파일 공유·협업,낮음,안전한 파일 공유
+307,기타,Microsoft Sustainability Manager,MS 지속가능성 관리자,Premium,-,탄소 배출 데이터 관리,낮음,ESG·탄소 중립 관리
+308,기타,Compliance and Audit,규정 준수·감사,Premium,-,"감사 로그 조회, 규정 준수 확인",낮음,Microsoft 365 보안·감사
+309,기타,Microsoft Purview,MS 퍼뷰,Premium,-,"데이터 분류·레이블링, 정보 보호",낮음,데이터 거버넌스·컴플라이언스
+310,기타,Azure Purview (Data Map),Azure 데이터 맵,Premium,-,데이터 카탈로그 조회·관리,낮음,데이터 거버넌스
+311,기타,Microsoft Defender for Cloud,MS 디펜더,Premium,보안 경고,보안 경고·권장사항 조회,낮음,클라우드 보안 모니터링
+312,기타,Microsoft Sentinel,MS 센티넬,Premium,인시던트 생성,인시던트·경고·헌팅쿼리 관리,낮음,클라우드 SIEM
+313,기타,Power Pages,파워 페이지스,Premium,-,웹사이트 데이터 관리,낮음,로우코드 웹사이트 빌더

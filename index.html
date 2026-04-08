@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connector Finder — Power Automate 커넥터 검색</title>
+  <meta name="description" content="Power Automate 312개 커넥터를 업무 시나리오와 키워드로 빠르게 검색하세요.">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <!-- Fuse.js : 경량 퍼지 검색 엔진 (서버 불필요) -->
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+</head>
+<body>
+
+<!-- =================== HEADER =================== -->
+<header class="site-header">
+  <div class="header-inner">
+    <a class="logo" href="#" id="logo-home">
+      <div class="logo-icon">⚡</div>
+      <span class="logo-text">Connector<span> Finder</span></span>
+    </a>
+
+    <div class="header-search">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="main-search" placeholder="트리거, 액션, 커넥터명 검색..." autocomplete="off" spellcheck="false">
+      <button class="search-clear" id="search-clear" title="검색어 지우기">✕</button>
+    </div>
+
+    <div class="header-stats">
+      <div class="stat-item">
+        <span class="stat-num" id="stat-total">312</span>
+        <span class="stat-label">전체 커넥터</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-results">312</span>
+        <span class="stat-label">검색 결과</span>
+      </div>
+      <a href="prompts.html" style="display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border:1.5px solid var(--color-border);border-radius:var(--radius-full);font-size:13px;font-weight:500;color:var(--color-text-m);text-decoration:none;transition:var(--transition);white-space:nowrap;" onmouseover="this.style.borderColor='var(--color-primary)';this.style.color='var(--color-primary)';this.style.background='var(--color-primary-lt)';" onmouseout="this.style.borderColor='';this.style.color='';this.style.background='';">🤖 AI 프롬프트 300</a>
+    </div>
+  </div>
+</header>
+
+<!-- =================== SCENARIO TAGS =================== -->
+<nav class="scenario-section" aria-label="업무 시나리오 빠른 검색">
+  <div class="scenario-inner">
+    <span class="scenario-label">업무별 검색</span>
+    <button class="scenario-btn" data-keywords="이메일,메일,발송,수신,SMTP,Gmail,Outlook,그룹 이메일" id="sc-email">📧 이메일 자동화</button>
+    <button class="scenario-btn" data-keywords="파일,업로드,다운로드,문서,PDF,SharePoint,Drive,저장소,백업,폴더" id="sc-file">📁 파일·문서 관리</button>
+    <button class="scenario-btn" data-keywords="승인,결재,요청,Approval,승인 요청" id="sc-approval">✅ 승인·결재</button>
+    <button class="scenario-btn" data-keywords="데이터,보고서,분석,Excel,Power BI,쿼리,스프레드시트,SQL,통계" id="sc-data">📊 데이터·보고서</button>
+    <button class="scenario-btn" data-keywords="메시지,채널,알림,Teams,Slack,푸시,채팅,협업" id="sc-collab">💬 팀 협업·알림</button>
+    <button class="scenario-btn" data-keywords="AI,텍스트 생성,번역,분류,ChatGPT,OpenAI,GPT,Copilot,요약,분석" id="sc-ai">🤖 AI 자동화</button>
+    <button class="scenario-btn" data-keywords="직원,채용,휴가,급여,인사,HR,지원자" id="sc-hr">👤 HR·인사 관리</button>
+    <button class="scenario-btn" data-keywords="주문,재고,결제,Shopify,이커머스,구매,판매,상품" id="sc-ecom">🛒 전자상거래</button>
+    <button class="scenario-btn" data-keywords="캘린더,예약,일정,회의,이벤트,Calendar,Booking" id="sc-cal">📅 일정·예약</button>
+    <button class="scenario-btn" data-keywords="서명,계약서,DocuSign,전자서명,PDF,문서 생성" id="sc-sign">🔐 전자서명·문서</button>
+    <button class="scenario-btn" data-keywords="CRM,리드,고객,영업,거래,연락처,파이프라인,세일즈" id="sc-crm">🤝 CRM·영업</button>
+    <button class="scenario-btn" data-keywords="SMS,전화,알림,WhatsApp,텔레그램,카카오,메시지 전송" id="sc-msg">📱 SMS·메시지</button>
+  </div>
+</nav>
+
+<!-- =================== MAIN LAYOUT =================== -->
+<main class="main-layout">
+
+  <!-- ---- SIDEBAR ---- -->
+  <aside class="sidebar">
+    <div class="sidebar-title">
+      필터
+      <button class="reset-btn" id="reset-all">초기화</button>
+    </div>
+
+    <!-- Tier Filter -->
+    <div class="filter-group">
+      <div class="filter-group-title">등급</div>
+      <div class="tier-tabs">
+        <button class="tier-btn active" data-tier="all" id="tier-all">전체</button>
+        <button class="tier-btn" data-tier="Standard" id="tier-std">Standard</button>
+        <button class="tier-btn" data-tier="Premium" id="tier-prm">Premium</button>
+      </div>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="filter-group">
+      <div class="filter-group-title">카테고리</div>
+      <div class="category-list" id="category-list">
+        <!-- JS로 동적 생성 -->
+      </div>
+    </div>
+
+    <!-- Sort -->
+    <div class="filter-group">
+      <div class="filter-group-title">정렬</div>
+      <select class="sort-select" id="sort-select">
+        <option value="relevance">관련도순</option>
+        <option value="nameKo">이름순 (가나다)</option>
+        <option value="category">카테고리순</option>
+        <option value="tier-std">등급순 (Standard 우선)</option>
+      </select>
+    </div>
+  </aside>
+
+  <!-- ---- RESULTS AREA ---- -->
+  <section class="results-area">
+    <div class="results-header">
+      <div class="results-count">
+        <strong id="result-count">312</strong>개의 커넥터
+        <span id="search-query-label"></span>
+      </div>
+      <div class="view-toggle">
+        <button class="view-btn active" id="view-grid" title="그리드 보기">⊞</button>
+        <button class="view-btn" id="view-list" title="리스트 보기">☰</button>
+      </div>
+    </div>
+    <div class="cards-grid" id="cards-container">
+      <!-- 카드들이 여기에 렌더링됩니다 -->
+    </div>
+  </section>
+
+</main>
+
+<!-- =================== MODAL =================== -->
+<div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div>
+        <div class="card-badges" id="modal-badges"></div>
+        <div style="margin-top:8px">
+          <div class="card-name-ko" id="modal-title" style="font-size:20px;font-weight:700;color:var(--color-text-h)"></div>
+          <div class="card-name-en" id="modal-name-en" style="font-size:13px;color:var(--color-text-l);margin-top:2px"></div>
+        </div>
+      </div>
+      <button class="modal-close" id="modal-close" aria-label="닫기">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Description -->
+      <div>
+        <div class="modal-section-title">📌 설명</div>
+        <div class="modal-desc" id="modal-desc"></div>
+      </div>
+
+      <!-- Triggers -->
+      <div id="modal-triggers-section">
+        <div class="modal-section-title">⚡ 주요 트리거</div>
+        <div class="modal-tags-wrap" id="modal-triggers"></div>
+      </div>
+
+      <!-- Actions -->
+      <div id="modal-actions-section">
+        <div class="modal-section-title">🎯 주요 액션</div>
+        <div class="modal-tags-wrap" id="modal-actions"></div>
+      </div>
+
+      <!-- How to Connect -->
+      <div id="modal-how-to-section" style="display:none">
+        <div class="modal-section-title">🔑 연결 방법</div>
+        <ul class="modal-how-to" id="modal-how-to"></ul>
+      </div>
+
+      <!-- Prerequisites -->
+      <div id="modal-prereqs-section" style="display:none">
+        <div class="modal-section-title">📋 필수 조건</div>
+        <div class="modal-prerequisites" id="modal-prereqs"></div>
+      </div>
+
+      <!-- Recommended Prompts -->
+      <div id="modal-ai-section" class="recommendation-section">
+        <div class="modal-section-title">🤖 추천 AI 프롬프트</div>
+        <div class="recommendation-grid" id="modal-ai-prompts"></div>
+      </div>
+
+      <!-- Related -->
+      <div id="modal-related-section" class="modal-related">
+        <div class="modal-section-title">🔗 같은 카테고리 커넥터</div>
+        <div class="related-cards" id="modal-related"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>Power Automate Connector Finder · 데이터 기준: PowerAutomate_connecter.xlsx · 312개 커넥터</p>
+</footer>
+
+<!-- =================== DATA + SCRIPT =================== -->
+<script src="assets/js/connector_data.js"></script>
+<script src="assets/js/connector_details.js"></script>
+<script src="assets/js/ai_prompt_data.js"></script>
+<script>
+// ============================================================
+//  STATE
+// ============================================================
+const state = {
+  query: '',
+  scenario: null,    // 활성 시나리오 버튼 keywords
+  tier: 'all',       // 'all' | 'Standard' | 'Premium'
+  categories: new Set(),  // 선택된 카테고리들 (비어있으면 전체)
+  sort: 'relevance',
+  viewMode: 'grid',  // 'grid' | 'list'
+  results: [],
+  openConnector: null,
+};
+
+// ============================================================
+//  FUSE.JS SETUP
+// ============================================================
+const fuseOptions = {
+  keys: [
+    { name: 'nameKo',      weight: 0.25 },
+    { name: 'nameEn',      weight: 0.15 },
+    { name: 'triggers',    weight: 0.25 },
+    { name: 'actions',     weight: 0.25 },
+    { name: 'description', weight: 0.10 },
+    { name: 'category',    weight: 0.05 },
+    { name: 'searchTags',  weight: 0.30 },
+  ],
+  threshold: 0.4,
+  includeScore: true,
+  ignoreLocation: true,
+  minMatchCharLength: 1,
+};
+
+const fuse = new Fuse(CONNECTORS, fuseOptions);
+
+// AI 프롬프트 검색용 Fuse
+const promptFuse = new Fuse(PROMPTS, {
+  keys: ['title', 'category', 'tags', 'prompt'],
+  threshold: 0.3
+});
+
+// ============================================================
+//  CATEGORIES INIT
+// ============================================================
+function initCategories() {
+  const catCount = {};
+  CONNECTORS.forEach(c => {
+    catCount[c.category] = (catCount[c.category] || 0) + 1;
+  });
+  const cats = Object.keys(catCount).sort();
+  const list = document.getElementById('category-list');
+  list.innerHTML = '';
+  cats.forEach(cat => {
+    const item = document.createElement('label');
+    item.className = 'cat-item';
+    item.innerHTML = `
+      <input type="checkbox" value="${cat}" class="cat-cb">
+      <span class="cat-name">${cat}</span>
+      <span class="cat-count">${catCount[cat]}</span>
+    `;
+    item.querySelector('.cat-cb').addEventListener('change', e => {
+      if (e.target.checked) state.categories.add(cat);
+      else state.categories.delete(cat);
+      // UI 업데이트
+      item.classList.toggle('selected', e.target.checked);
+      search();
+    });
+    list.appendChild(item);
+  });
+}
+
+// ============================================================
+//  SEARCH ENGINE
+// ============================================================
+function search() {
+  let pool = [];
+
+  // 1) 키워드 검색 (Fuse.js) OR 전체
+  if (state.query.trim().length > 0) {
+    pool = fuse.search(state.query).map(r => ({ ...r.item, _score: r.score }));
+  } else if (state.scenario) {
+    // 시나리오 키워드로 Fuse 검색 (OR 검색: 가장 높은 점수 사용)
+    const kwds = state.scenario.split(',').map(k => k.trim()).filter(Boolean);
+    const scoreMap = {};
+    kwds.forEach(kw => {
+      const res = fuse.search(kw);
+      res.forEach(r => {
+        if (!scoreMap[r.item.id] || r.score < scoreMap[r.item.id].score) {
+          scoreMap[r.item.id] = { ...r.item, _score: r.score };
+        }
+      });
+    });
+    pool = Object.values(scoreMap).sort((a, b) => a._score - b._score);
+  } else {
+    pool = CONNECTORS.map(c => ({ ...c, _score: 0 }));
+  }
+
+  // 2) Tier 필터
+  if (state.tier !== 'all') {
+    pool = pool.filter(c => c.tier === state.tier);
+  }
+
+  // 3) Category 필터
+  if (state.categories.size > 0) {
+    pool = pool.filter(c => state.categories.has(c.category));
+  }
+
+  // 4) 정렬
+  if (state.sort === 'nameKo') {
+    pool.sort((a, b) => a.nameKo.localeCompare(b.nameKo, 'ko'));
+  } else if (state.sort === 'category') {
+    pool.sort((a, b) => a.category.localeCompare(b.category, 'ko') || a.nameKo.localeCompare(b.nameKo, 'ko'));
+  } else if (state.sort === 'tier-std') {
+    pool.sort((a, b) => {
+      if (a.tier === b.tier) return a.nameKo.localeCompare(b.nameKo, 'ko');
+      return a.tier === 'Standard' ? -1 : 1;
+    });
+  }
+  // else relevance: 기본 Fuse 순서 유지
+
+  state.results = pool;
+  render();
+}
+
+// ============================================================
+//  HIGHLIGHT HELPER
+// ============================================================
+function highlight(text, query) {
+  if (!query || query.length < 2) return escapeHtml(text);
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`(${escaped})`, 'gi');
+  return escapeHtml(text).replace(re, '<mark>$1</mark>');
+}
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+//  RENDER CARDS
+// ============================================================
+function render() {
+  const container = document.getElementById('cards-container');
+  const q = state.query;
+
+  // 결과 카운트 업데이트
+  document.getElementById('result-count').textContent = state.results.length.toLocaleString();
+  document.getElementById('stat-results').textContent = state.results.length.toLocaleString();
+
+  // 검색어 라벨
+  const label = document.getElementById('search-query-label');
+  if (q) label.textContent = `— "${q}" 검색 결과`;
+  else if (state.scenario) label.textContent = '— 시나리오 검색';
+  else label.textContent = '';
+
+  // 빈 결과
+  if (state.results.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-title">검색 결과가 없습니다</div>
+        <div class="empty-desc">다른 키워드를 시도하거나 필터를 초기화해 보세요.</div>
+        <button class="empty-reset" onclick="resetAll()">전체 초기화</button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = '';
+
+  state.results.forEach((c, idx) => {
+    const card = document.createElement('div');
+    card.className = 'connector-card';
+    card.style.animationDelay = `${Math.min(idx, 20) * 20}ms`;
+    card.setAttribute('data-id', c.id);
+
+    const tierBadge = c.tier === 'Standard'
+      ? '<span class="badge badge-standard">Standard</span>'
+      : '<span class="badge badge-premium">Premium</span>';
+
+    const tierIcon = c.tier === 'Standard' ? '🟢' : '🟡';
+
+    // 트리거 태그 (최대 3개)
+    const triggerTags = c.triggers.length > 0
+      ? c.triggers.slice(0, 3).map(t =>
+          `<span class="tag tag-trigger">${highlight(t, q)}</span>`
+        ).join('') + (c.triggers.length > 3 ? `<span class="tag tag-more">+${c.triggers.length - 3}</span>` : '')
+      : '<span style="font-size:12px;color:var(--color-text-l)">없음</span>';
+
+    // 액션 태그 (최대 3개)
+    const actionTags = c.actions.length > 0
+      ? c.actions.slice(0, 3).map(a =>
+          `<span class="tag tag-action">${highlight(a, q)}</span>`
+        ).join('') + (c.actions.length > 3 ? `<span class="tag tag-more">+${c.actions.length - 3}</span>` : '')
+      : '<span style="font-size:12px;color:var(--color-text-l)">없음</span>';
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-badges">
+          <span class="badge badge-category">${escapeHtml(c.category)}</span>
+          ${tierBadge}
+        </div>
+        <div class="card-tier-icon">${tierIcon}</div>
+      </div>
+      <div class="card-name">
+        <div class="card-name-ko">${highlight(c.nameKo, q)}</div>
+        <div class="card-name-en">${highlight(c.nameEn, q)}</div>
+      </div>
+      <div class="card-desc">${highlight(c.description, q)}</div>
+      <div class="card-items">
+        <div class="card-item-row">
+          <span class="card-item-label">⚡ 트리거</span>
+          <div class="card-tags">${triggerTags}</div>
+        </div>
+        <div class="card-item-row">
+          <span class="card-item-label">🎯 액션</span>
+          <div class="card-tags">${actionTags}</div>
+        </div>
+      </div>
+    `;
+
+    card.addEventListener('click', () => openModal(c.id));
+    container.appendChild(card);
+  });
+}
+
+// ============================================================
+//  MODAL
+// ============================================================
+function openModal(id) {
+  const c = CONNECTORS.find(x => x.id === id);
+  if (!c) return;
+  state.openConnector = id;
+
+  // 뱃지
+  const tierBadge = c.tier === 'Standard'
+    ? '<span class="badge badge-standard">Standard</span>'
+    : '<span class="badge badge-premium">Premium</span>';
+  document.getElementById('modal-badges').innerHTML =
+    `<span class="badge badge-category">${escapeHtml(c.category)}</span>${tierBadge}`;
+
+  document.getElementById('modal-title').textContent = c.nameKo;
+  document.getElementById('modal-name-en').textContent = c.nameEn;
+  document.getElementById('modal-desc').textContent = c.description;
+
+  // Triggers
+  const trigSec = document.getElementById('modal-triggers-section');
+  const trigWrap = document.getElementById('modal-triggers');
+  if (c.triggers.length > 0) {
+    trigWrap.innerHTML = c.triggers.map(t =>
+      `<span class="modal-tag modal-tag-trigger">${escapeHtml(t)}</span>`
+    ).join('');
+    trigSec.style.display = '';
+  } else {
+    trigSec.style.display = 'none';
+  }
+
+  // Actions
+  const actSec = document.getElementById('modal-actions-section');
+  const actWrap = document.getElementById('modal-actions');
+  if (c.actions.length > 0) {
+    actWrap.innerHTML = c.actions.map(a =>
+      `<span class="modal-tag modal-tag-action">${escapeHtml(a)}</span>`
+    ).join('');
+    actSec.style.display = '';
+  } else {
+    actSec.style.display = 'none';
+  }
+
+  // Related (같은 카테고리, 자신 제외, 최대 4개)
+  const related = CONNECTORS.filter(x => x.category === c.category && x.id !== c.id).slice(0, 4);
+  const relSec = document.getElementById('modal-related-section');
+  const relWrap = document.getElementById('modal-related');
+  if (related.length > 0) {
+    relWrap.innerHTML = related.map(r => `
+      <div class="related-card" data-id="${r.id}">
+        <div class="related-card-ko">${escapeHtml(r.nameKo)}</div>
+        <div class="related-card-en">${escapeHtml(r.nameEn)}</div>
+      </div>
+    `).join('');
+    relWrap.querySelectorAll('.related-card').forEach(el => {
+      el.addEventListener('click', () => openModal(parseInt(el.dataset.id)));
+    });
+    relSec.style.display = '';
+  } else {
+    relSec.style.display = 'none';
+  }
+
+  // Open
+  document.getElementById('modal-backdrop').classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  // --- 상세 정보 및 AI 추천 로직 추가 ---
+  const details = (typeof CONNECTOR_DETAILS !== 'undefined') ? CONNECTOR_DETAILS[id] : null;
+  
+  // 연결 방법
+  const howSec = document.getElementById('modal-how-to-section');
+  const howList = document.getElementById('modal-how-to');
+  if (details && details.howToConnect && details.howToConnect.length > 0) {
+    howList.innerHTML = details.howToConnect.map(step => `<li>${escapeHtml(step)}</li>`).join('');
+    howSec.style.display = 'block';
+  } else {
+    howSec.style.display = 'none';
+  }
+
+  // 필수 조건
+  const preSec = document.getElementById('modal-prereqs-section');
+  const preWrap = document.getElementById('modal-prereqs');
+  if (details && details.prerequisites && details.prerequisites.length > 0) {
+    preWrap.innerHTML = details.prerequisites.map(p => `<span class="prereq-tag">${escapeHtml(p)}</span>`).join('');
+    preSec.style.display = 'block';
+  } else {
+    preSec.style.display = 'none';
+  }
+
+  // AI 프롬프트 추천 (커넥터 이름 + 설명 + 트리거/액션 키워드로 검색)
+  const searchQuery = `${c.nameKo} ${c.nameEn} ${c.description} ${c.triggers.join(' ')} ${c.actions.join(' ')}`;
+  const recommendedPrompts = promptFuse.search(searchQuery).slice(0, 4);
+  const aiWrap = document.getElementById('modal-ai-prompts');
+  
+  if (recommendedPrompts.length > 0) {
+    aiWrap.innerHTML = recommendedPrompts.map(r => `
+      <div class="recommendation-card" onclick="location.href='prompts.html?id=${r.item.id}'">
+        <div class="rec-type">${escapeHtml(r.item.category)}</div>
+        <div class="rec-title">${escapeHtml(r.item.title)}</div>
+        <div class="rec-meta">#${r.item.id}</div>
+      </div>
+    `).join('');
+    document.getElementById('modal-ai-section').style.display = 'block';
+  } else {
+    document.getElementById('modal-ai-section').style.display = 'none';
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal-backdrop').classList.remove('active');
+  document.body.style.overflow = '';
+  state.openConnector = null;
+}
+
+// ============================================================
+//  UI EVENT HANDLERS
+// ============================================================
+
+// Search input
+const searchInput = document.getElementById('main-search');
+const clearBtn   = document.getElementById('search-clear');
+
+let searchTimer = null;
+searchInput.addEventListener('input', e => {
+  state.query = e.target.value;
+  clearBtn.style.display = state.query ? 'block' : 'none';
+  // 시나리오 버튼 비활성화
+  if (state.query) {
+    deactivateScenarios();
+    state.scenario = null;
+  }
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(search, 180); // debounce
+});
+
+clearBtn.addEventListener('click', () => {
+  searchInput.value = '';
+  state.query = '';
+  clearBtn.style.display = 'none';
+  search();
+});
+
+// Scenario buttons
+function deactivateScenarios() {
+  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+}
+
+document.querySelectorAll('.scenario-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('active')) {
+      // 토글 비활성화
+      btn.classList.remove('active');
+      state.scenario = null;
+    } else {
+      deactivateScenarios();
+      btn.classList.add('active');
+      state.scenario = btn.dataset.keywords;
+      // 검색창 초기화
+      searchInput.value = '';
+      state.query = '';
+      clearBtn.style.display = 'none';
+    }
+    search();
+  });
+});
+
+// Tier buttons
+document.querySelectorAll('.tier-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.tier = btn.dataset.tier;
+    search();
+  });
+});
+
+// Sort
+document.getElementById('sort-select').addEventListener('change', e => {
+  state.sort = e.target.value;
+  search();
+});
+
+// View toggle
+document.getElementById('view-grid').addEventListener('click', () => {
+  state.viewMode = 'grid';
+  document.getElementById('cards-container').classList.remove('list-view');
+  document.getElementById('view-grid').classList.add('active');
+  document.getElementById('view-list').classList.remove('active');
+});
+
+document.getElementById('view-list').addEventListener('click', () => {
+  state.viewMode = 'list';
+  document.getElementById('cards-container').classList.add('list-view');
+  document.getElementById('view-list').classList.add('active');
+  document.getElementById('view-grid').classList.remove('active');
+});
+
+// Modal close
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-backdrop').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-backdrop')) closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// Reset all
+function resetAll() {
+  searchInput.value = '';
+  state.query = '';
+  state.scenario = null;
+  state.tier = 'all';
+  state.categories.clear();
+  state.sort = 'relevance';
+  clearBtn.style.display = 'none';
+
+  deactivateScenarios();
+  document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tier-all').classList.add('active');
+  document.querySelectorAll('.cat-cb').forEach(cb => { cb.checked = false; });
+  document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById('sort-select').value = 'relevance';
+
+  search();
+}
+
+document.getElementById('reset-all').addEventListener('click', resetAll);
+document.getElementById('logo-home').addEventListener('click', e => { e.preventDefault(); resetAll(); });
+
+// ============================================================
+//  INIT
+// ============================================================
+document.getElementById('stat-total').textContent = CONNECTORS.length.toLocaleString();
+initCategories();
+// URL 파라미터 체크 (id가 있으면 모달 열기)
+const urlParams = new URLSearchParams(window.location.search);
+const directId = urlParams.get('id');
+if (directId) {
+  setTimeout(() => openModal(parseInt(directId)), 500);
+}
+</script>
+</body>
+</html>
