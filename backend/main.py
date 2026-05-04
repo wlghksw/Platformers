@@ -556,6 +556,334 @@ async def get_stats():
         "totalCount": total_files
     }
 
+# ──────────────────────────────────────────────────────────────
+# Teams / Power Automate 전용 단일 파이프라인 엔드포인트
+# Power Automate에서 HTTP POST로 아래 JSON을 보내면
+# 웹 스크래핑 → AI 생성 → 이미지 자동 배치 → HTML 렌더링까지
+# 한 번에 처리 후 완성된 HTML 텍스트를 반환합니다.
+# ──────────────────────────────────────────────────────────────
+
+class TeamsWebhookRequest(BaseModel):
+    analysis_link: str = ""        # 팀즈 게시글에 포함된 분석할 원본 링크
+    reference_links: str = ""      # 홈페이지/유튜브 참고 링크
+    extra_hashtags: str = ""       # 추가 해시태그
+    api_key: str                   # Claude API Key (Power Automate 환경변수에서 주입)
+
+
+@app.post("/api/teams_webhook")
+async def teams_webhook(request: TeamsWebhookRequest):
+    """
+    Power Automate → Teams 연동용 단일 엔드포인트.
+    /generate + /render_html 를 하나로 통합.
+    이미지는 문단 사이에 균등 자동 배치됩니다.
+    """
+    import requests as req_lib
+    from bs4 import BeautifulSoup
+    import uuid, re, json
+
+    start_time = time.time()
+    file_count = len(glob.glob(os.path.join(OUTPUT_DIR, "blog_*.html"))) + 1
+    base_filename = f"blog_{file_count}"
+
+    # ── 1. 웹 스크래핑 ──────────────────────────────────────────
+    scraped_images = []
+    fetched_title = "제목 미상"
+    all_text = ""
+
+    if request.analysis_link and request.analysis_link.strip().startswith("http"):
+        try:
+            headers = {"User-Agent": "Mozilla/5.0"}
+            res = req_lib.get(request.analysis_link.strip(), headers=headers, timeout=10)
+            if res.status_code == 200:
+                soup = BeautifulSoup(res.text, "html.parser")
+
+                h1_tag = soup.find("h1", class_="entry-title")
+                if h1_tag:
+                    fetched_title = h1_tag.get_text(separator=" ", strip=True)
+
+                all_text += f"프로젝트/강좌명: {fetched_title}\n\n"
+
+                if "blog.naver.com" in request.analysis_link and "PostView" not in request.analysis_link:
+                    iframe = soup.find("iframe", id="mainFrame")
+                    if iframe and iframe.get("src"):
+                        real_url = "https://blog.naver.com" + iframe["src"]
+                        res = req_lib.get(real_url, headers=headers, timeout=10)
+                        soup = BeautifulSoup(res.text, "html.parser")
+
+                # 이미지 추출 (기존 /generate 로직 그대로)
+                p_tags = soup.find_all("p", style=lambda v: v and "text-align: center" in v.lower())
+                img_tags = []
+                for p in p_tags:
+                    img_tags.extend(p.find_all("img"))
+                for img in img_tags:
+                    if len(scraped_images) >= 15:
+                        break
+                    src = img.get("data-lazy-src") or img.get("src")
+                    if not src or not src.startswith("http"):
+                        continue
+                    img_class = img.get("class", [])
+                    img_class_str = " ".join(img_class).lower() if isinstance(img_class, list) else str(img_class).lower()
+                    try:
+                        img_width = int(img.get("width", 0))
+                    except Exception:
+                        img_width = 0
+
+                    is_valid = (
+                        any(kw in src for kw in ["postfiles.pstatic.net", "blogfiles.naver.net"])
+                        or any(kw in img_class_str for kw in ["se-image-resource", "wp-image", "size-full", "aligncenter"])
+                        or img_width >= 250
+                    )
+                    if is_valid:
+                        try:
+                            img_res = req_lib.get(src, headers=headers, timeout=5)
+                            if img_res.status_code == 200 and len(img_res.content) > 15000:
+                                ext = os.path.splitext(src.split("?")[0])[1].lower()
+                                if ext not in [".jpg", ".jpeg", ".png", ".gif"]:
+                                    ext = ".jpg"
+                                img_filename = f"{base_filename}_scraped_{uuid.uuid4().hex[:6]}{ext}"
+                                out_path = os.path.join(OUTPUT_DIR, img_filename)
+                                with open(out_path, "wb") as f:
+                                    f.write(img_res.content)
+                                scraped_images.append(img_filename)
+                        except Exception:
+                            pass
+
+                for tag in soup(["script", "style", "nav", "footer", "iframe"]):
+                    tag.extract()
+                extracted_text = soup.get_text(separator=" ", strip=True)
+                all_text += f"\n\n[웹사이트 크롤링 원문 텍스트 ({request.analysis_link})]\n{extracted_text[:4000]}\n\n"
+            else:
+                all_text += f"\n\n(웹사이트 크롤링 실패 - 상태코드: {res.status_code})\n\n"
+        except Exception as e:
+            all_text += f"\n\n(웹사이트 크롤링 오류: {str(e)})\n\n"
+
+    # ── 2. Claude AI 호출 (기존 /generate 프롬프트 그대로 사용) ─
+    client = anthropic.Anthropic(api_key=request.api_key)
+    image_instruction = ""
+    image_contents = []
+
+    text_prompt = f"""
+# 지시어: 아래 정보를 바탕으로 네이버 블로그 스마트에디터 완벽 복제용 JSON 데이터를 생성해줘.
+
+**[매우 중요한 기본 규칙 - 이모지 절대 금지 & 이미지 문구 절대 금지]**
+- 절대로 어떠한 형태의 이모지나 이모티콘(🔥, 😊, 🚀, 👍 등)도 사용하지 마세요.
+- 절대로 본문(body_paragraphs) 내에 `[IMAGE_X]` 와 같은 이미지 배치 기호를 넣지 마세요. 사용자가 알아서 배치합니다.
+- 외부 사이트 크롤링 텍스트에 포함된 쓸모없는 네이버 블로그 문구(예: "존재하지 않는 이미지입니다.", "AI 활용 설정", "사진 설명을 입력하세요.")를 절대로 결과물에 포함하지 마세요. 철저히 지우고 핵심 내용만 추출하세요.
+
+## [입력 데이터]
+- 제목 키워드: {fetched_title}
+- 참고 링크: {request.reference_links}
+- 분석할 원본 링크: {request.analysis_link}
+- 필수 해시태그: #에듀올랩 #크레용스쿨 #홈스쿨 #이러닝강좌 {request.extra_hashtags}
+
+## [강력 지시사항: 스크래핑된 외부 문서 핵심 요약 및 엄격한 규칙]
+하단 **[참고할 첨부파일 기반 추출 내용]** 섹션에 사용자가 제공한 **[웹사이트 크롤링 원문 텍스트]**가 포함되어 있다면, **반드시 그 내용을 1순위로 정독하고 가장 중요한 핵심 정보만 요약하여 간결하게** 작성하세요. 불필요하게 살을 붙이지 말고 가독성이 좋도록 짧고 명확한 문장을 사용하세요.
+
+**[본문 작성 필수 규칙]**
+1. 강의의 핵심 소재나 도구가 있다면 이에 대한 간단한 설명 문구를 추가하세요.
+2. 강의를 통해서 배울 수 있는 것이 무엇인지에 대한 확실한 설명을 포함하세요.
+3. 단, **위 1, 2번 규칙에 대한 내용은 반드시 '웹사이트 크롤링 원문 텍스트'에서만 근거를 찾아 작성해야 하며, 원문에 해당 내용이 존재하지 않는다면 절대로 임의로 지어내어 추가하지 마세요.**
+4. **`main_title` 필드는 반드시 샘플 포맷 그대로 작성해야 합니다. 특히 앞부분의 'Home스쿨'은 절대로 '홈스쿨'이나 다른 한글로 바꾸지 마세요. 영문 'Home'과 한글 '스쿨'의 조합 형태 그대로 유지해야 합니다.**
+
+## [출력 형식 (오직 JSON 데이터만 출력할 것)]
+반드시 아래 JSON 포맷에 맞추어 코드 블록(```json) 안에 응답하세요. 다른 설명은 일절 생략하세요.
+
+```json
+{{
+  "category": "사회/경제, 전문강좌 (혹은 성격에 맞는 분야)",
+  "main_title": "Home스쿨 | {fetched_title} -크레용스쿨 이러닝 강좌 소개",
+  "quote_hook": "부모님의 시선을 끄는 캐치프레이즈 인용구를 작성하세요.\\n마치 세계의 이야기와 랜드마크를 재미있게~ 처럼 작성합니다.",
+  "body_paragraphs": [
+    "{fetched_title} 는 초등학생을 위한 강좌입니다. (도입 첫 문장 등 자연스러운 시작)",
+    "학생들은 자연스럽게 강좌의 핵심 내용과 도구의 사용법을 학습 가능합니다.",
+    "본문 배열(body_paragraphs)은 무조건 최대 7문단(요소 7개) 이하로 구성하세요. 핵심 위주의 간결한 문장이어야 합니다. 절대로 이미지 마커는 넣지 마세요."
+  ],
+  "highlight_keywords": [
+    "문화, 역사", "소근육 발달", "이해도가 더 높아집니다", "공간 지각 능력과 창의력"
+  ],
+  "youtube_link_title": "유튜브에서 즐기기",
+  "youtube_link": "입력받은 참고링크 중 유튜브 형태의 링크 (없으면 빈칸)",
+  "homepage_link_title": "만들면서 배우는 홈페이지 - 크레용스쿨",
+  "homepage_link": "입력받은 참고링크 중 홈페이지 링크 (없으면 빈칸)",
+  "outro_text": "소개 드리는 강좌들은\\n엄마도 손쉽게 교육할 수 있도록\\n제작한 홈스쿨 이러닝 강좌들입니다!\\n\\n크레용스쿨에서 제작/활용하게 될\\n교육 영상 콘텐츠를 기대해 주세요.\\n\\n앞으로 좋은 콘텐츠 제작에 앞장설\\n에듀올랩에\\n많은 기대와 관심 부탁드려요.",
+  "hashtags": "해시태그 모음들"
+}}
+```
+- body_paragraphs 내부에서 시선을 끌만한(주황색/볼드 적용 유도할) 핵심 문구나 단어를 뽑아서 highlight_keywords 배열에 넣어주세요.
+- quote_hook, outro_text 내에서 줄바꿈이 필요하다면 반드시 \\n 으로 처리해 주세요.
+
+{image_instruction}
+
+[참고할 첨부파일 기반 추출 내용]
+{all_text}
+"""
+
+    messages_content = []
+    if image_contents:
+        messages_content.extend(image_contents)
+    messages_content.append({"type": "text", "text": text_prompt})
+
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=4000,
+            messages=[{"role": "user", "content": messages_content}]
+        )
+        blog_content = response.content[0].text
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    json_data = {}
+    json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', blog_content, re.DOTALL)
+    if json_match:
+        try:
+            json_data = json.loads(json_match.group(1))
+        except Exception as e:
+            print("JSON parsing error:", e)
+    else:
+        print("Regex failed to find JSON format.")
+
+    json_data["main_title"] = f"Home스쿨 | {fetched_title} -크레용스쿨 이러닝 강좌 소개"
+    json_data["original_title"] = fetched_title
+
+    # ── 3. 이미지 자동 배치 (문단 사이 균등 분배) ───────────────
+    # 스크래핑된 이미지를 body_paragraphs 문단 수에 맞춰 균등 배치
+    paragraphs = json_data.get("body_paragraphs", [])
+    auto_layout: dict = {}
+    if scraped_images and paragraphs:
+        step = max(1, len(paragraphs) // len(scraped_images))
+        for i, img_name in enumerate(scraped_images):
+            para_idx = min(i * step, len(paragraphs) - 1)
+            # 이미 배치된 인덱스면 다음 빈 칸으로
+            while str(para_idx) in auto_layout and para_idx < len(paragraphs) - 1:
+                para_idx += 1
+            auto_layout[str(para_idx)] = img_name
+
+    # ── 4. HTML 렌더링 (기존 /render_html 로직 그대로) ──────────
+    keywords = json_data.get("highlight_keywords", [])
+    body_html_parts = []
+    for idx, p_text in enumerate(paragraphs):
+        p = p_text
+        for kw in keywords:
+            if kw and kw in p:
+                p = p.replace(kw, f'<span style="color:#ff8c00; font-weight:bold;">{kw}</span>')
+        body_html_parts.append(
+            f"<div style='text-align: center; color: #555; line-height: 1.8; font-size: 16px; "
+            f"font-weight: 500; font-family: \"Malgun Gothic\", sans-serif; margin-bottom: 25px;'>{p}</div>"
+        )
+        str_idx = str(idx)
+        if str_idx in auto_layout and auto_layout[str_idx]:
+            img_name = auto_layout[str_idx]
+            body_html_parts.append(
+                f"<div style='text-align: center; margin: 35px 0;'>"
+                f"<img src='./{img_name}' style='max-width: 100%; border-radius: 12px; "
+                f"box-shadow: 0 4px 10px rgba(0,0,0,0.05);'/></div>"
+            )
+    body_html = "\n".join(body_html_parts)
+
+    quote_hook = json_data.get("quote_hook", "").replace("\\n", "<br>").replace("\n", "<br>")
+    outro_text = (
+        json_data.get("outro_text", "")
+        .replace("\\n", "<br>")
+        .replace("\n", "<br>")
+        .replace("에듀올랩", '<span style="color: #ff9900; font-size: 24px; font-weight: bold; font-style: italic;">에듀올랩</span>')
+    )
+
+    link_cards_html = ""
+    if json_data.get("homepage_link"):
+        link_cards_html += f'''
+        <div style="border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; text-align: left; margin: 20px auto; max-width: 600px;">
+            <a href="{json_data.get('homepage_link')}" style="text-decoration: none; color: #333; display: block;">
+                <div style="font-weight: bold; margin-bottom: 8px;">{json_data.get('homepage_link_title', '링크 바로가기')}</div>
+                <div style="font-size: 13px; color: #00c73c;">{json_data.get('homepage_link')}</div>
+            </a>
+        </div>
+        '''
+    if json_data.get("youtube_link"):
+        link_cards_html += f'''
+        <div style="font-weight: bold; margin: 40px 0 10px 0; color:#333;">{json_data.get('youtube_link_title', '유튜브에서 즐기기')}</div>
+        <div style="border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px; text-align: left; margin: 0 auto; max-width: 600px;">
+            <a href="{json_data.get('youtube_link')}" style="text-decoration: none; color: #333; display: block;">
+                <div style="font-weight: bold; margin-bottom: 8px;">유튜브 영상 보기</div>
+                <div style="font-size: 13px; color: #00c73c;">youtube.com</div>
+            </a>
+        </div>
+        '''
+
+    html_template = f"""
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head><meta charset="UTF-8"><title>블로그 결과 - {base_filename}</title></head>
+    <body style="margin: 0; padding: 0; background-color: #f9f9f9;">
+    <div style="background-color: white; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Dotum', sans-serif; max-width: 800px; margin: 40px auto; padding: 60px 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+
+        <div style="font-size: 16px; font-weight: bold; margin-bottom: 30px; color: #333; padding: 15px; background-color: #e9ecef; border-radius: 8px; border-left: 4px solid #ff9900;">
+            📝 블로그 작성 시 제목입력칸용 복사 내용: <br/>{json_data.get('main_title', '')}
+        </div>
+
+        <div style="text-align: center; margin-bottom: 40px;">
+            <span style="color: #ff9900; font-weight: bold; font-size: 16px;">{json_data.get('category', '')}</span>
+            <h1 style="font-size: 32px; font-weight: bold; margin: 20px 0; color: #222; word-break: keep-all; line-height: 1.4;">{json_data.get('original_title', json_data.get('main_title', ''))}</h1>
+            <div style="margin: 40px auto 30px auto; border-top: 1px solid #777; width: 60%; position: relative;">
+                <div style="position: absolute; top: -7px; left: 50%; width: 12px; height: 12px; background: white; border: 1px solid #555; transform: translateX(-50%) rotate(45deg);"></div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 70px 0;">
+            <span style="font-size: 50px; color: #ccc; font-family: serif; display: block; height: 30px; line-height: 30px;">"</span>
+            <p style="color: #ff9900; font-size: 20px; font-weight: bold; font-style: italic; line-height: 1.8; margin: 30px 0;">
+                {quote_hook}
+            </p>
+            <span style="font-size: 50px; color: #ccc; font-family: serif; display: block; height: 30px; line-height: 30px;">"</span>
+        </div>
+
+        <div style="margin-bottom: 80px;">
+            {body_html}
+        </div>
+
+        <div style="margin: 60px 0; text-align: center;">
+            <div style="width: 1px; height: 40px; background-color: #aaa; margin: 0 auto 30px auto;"></div>
+            {link_cards_html}
+        </div>
+
+        <div style="text-align: center; font-size: 17px; color: #555; font-weight:500; line-height: 1.9; margin-top: 80px;">
+            {outro_text}
+            <br><br>
+            <span style="color: #888; font-size: 15px;">{json_data.get('hashtags', '')}</span>
+        </div>
+
+    </div>
+    </body>
+    </html>
+    """
+
+    html_path = os.path.join(OUTPUT_DIR, f"{base_filename}.html")
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html_template)
+
+    # ── 5. 히스토리 기록 ─────────────────────────────────────────
+    duration = time.time() - start_time
+    try:
+        with open(HISTORY_FILE, "r+", encoding="utf-8") as f:
+            history = json.load(f)
+            history.append({"date": datetime.now().strftime("%Y-%m-%d"), "duration": duration})
+            f.seek(0)
+            json.dump(history, f, indent=2)
+    except Exception as e:
+        print(f"History record error: {e}")
+
+    # ── 6. Power Automate로 결과 반환 ────────────────────────────
+    return {
+        "status": "success",
+        "filename": f"{base_filename}.html",
+        "title": json_data.get("main_title", ""),
+        "html_content": html_template,          # HTML 본문 전체 (Teams 메시지 첨부용)
+        "scraped_images_count": len(scraped_images),
+        "duration_seconds": round(duration, 1),
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))  # Railway는 $PORT를 자동 주입
+    uvicorn.run(app, host="0.0.0.0", port=port)
