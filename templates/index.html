@@ -633,43 +633,33 @@
   <!-- MAIN CARD -->
   <div class="card-wrap">
     <div class="card">
-      <div class="card-tabs">
-        <button class="tab-btn active" onclick="switchTab(this, 'upload')">파일 업로드</button>
-        <button class="tab-btn" onclick="switchTab(this, 'options')">생성 옵션</button>
-      </div>
-
       <div class="card-body">
-        <!-- TAB: UPLOAD -->
-        <div id="tab-upload">
-          <!-- 콘텐츠 파일 -->
-          <div class="drop-section" id="drop-content">
-            <div class="drop-label">
-              <span class="required-dot"></span>
-              제안서 콘텐츠 문서 (한글/워드/PDF/TXT)
+        <!-- 콘텐츠 파일 업로드 -->
+        <div class="drop-section" id="drop-content">
+          <div class="drop-label">
+            <span class="required-dot"></span>
+            제안서 콘텐츠 문서 (한글/워드/PDF/TXT)
+          </div>
+          <div class="drop-zone" id="content-zone">
+            <input type="file" id="content-file" hidden accept=".pdf,.docx,.txt" onchange="onFileSelect(this, 'content')">
+            <div class="drop-zone-content" onclick="document.getElementById('content-file').click()">
+              <div class="drop-icon">📄</div>
+              <div class="drop-text">파일을 드래그하거나 클릭하여 업로드</div>
+              <div class="file-name" id="content-name-display">선택된 파일 없음</div>
             </div>
-            <div class="drop-zone" id="content-zone">
-              <input type="file" id="content-file" hidden accept=".pdf,.docx,.txt" onchange="onFileSelect(this, 'content')">
-              <div class="drop-zone-content" onclick="document.getElementById('content-file').click()">
-                <div class="drop-icon">📄</div>
-                <div class="drop-text">파일을 드래그하거나 클릭하여 업로드</div>
-                <div class="file-name" id="content-name-display">선택된 파일 없음</div>
-              </div>
-            </div>
-            <div class="file-selected" id="content-selected" style="display:none;">
-              <span>📎</span>
-              <span class="file-name" id="content-name"></span>
-              <span class="file-remove" onclick="removeFile('content')">✕</span>
-            </div>
+          </div>
+          <div class="file-selected" id="content-selected" style="display:none;">
+            <span>📎</span>
+            <span class="file-name" id="content-name"></span>
+            <span class="file-remove" onclick="removeFile('content')">✕</span>
           </div>
         </div>
 
-        <!-- TAB: OPTIONS -->
-        <div id="tab-options" style="display:none">
-          <div class="instructions-wrap">
-            <div class="drop-label">추가 지시사항 <span class="optional-tag">선택</span></div>
-            <textarea class="instructions-textarea" id="instructions"
-              placeholder="예: 청중은 임원진입니다. 숫자 데이터를 강조해주세요. 슬라이드는 20장 이상으로 만들어주세요."></textarea>
-          </div>
+        <!-- 추가 지시사항 -->
+        <div class="instructions-wrap" style="margin-top: 30px;">
+          <div class="drop-label">추가 지시사항 <span class="optional-tag">선택</span></div>
+          <textarea class="instructions-textarea" id="instructions"
+            placeholder="예: 청중은 임원진입니다. 숫자 데이터를 강조해주세요. 슬라이드는 20장 이상으로 만들어주세요."></textarea>
         </div>
 
         <!-- GENERATE BTN -->
@@ -739,14 +729,6 @@
     const files = {
       content: null
     };
-
-    function switchTab(btn, tabId) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      
-      document.getElementById('tab-upload').style.display = tabId === 'upload' ? 'block' : 'none';
-      document.getElementById('tab-options').style.display = tabId === 'options' ? 'block' : 'none';
-    }
 
     function onFileSelect(input, type) {
       const file = input.files[0];
