@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ── 디자인 토큰 (크레용스쿨 테마) ── */
+    :root {
+      --bg-ivory: #FAF8ED;
+      --primary-yellow: #FFC000;
+      --text-black: #111111;
+      --text-gray: #555555;
+      --slide-width: 1280px;
+      --slide-height: 720px;
+    }
+
+    /* ── 전역 설정 ── */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #2c2c2c; /* 뷰어 바깥 배경 */
+      font-family: 'Noto Sans KR', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 0;
+      gap: 40px;
+    }
+
+    /* ── PDF 저장 플로팅 버튼 ── */
+    .controls {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    .btn-pdf {
+      background: var(--primary-yellow);
+      color: var(--text-black);
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+    }
+    .btn-pdf:hover {
+      transform: translateY(-2px);
+    }
+
+    /* ── 슬라이드 공통 ── */
+    .slide {
+      width: var(--slide-width);
+      height: var(--slide-height);
+      background-color: var(--bg-ivory);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      /* 라인아트 배경 (CSS 도형으로 심플하게 묘사) */
+      background-image: 
+        radial-gradient(circle at 80% 20%, transparent 0%, transparent 100%),
+        linear-gradient(to right, transparent 0%, transparent 100%);
+    }
+
+    /* 배경 장식 (구름) */
+    .cloud {
+      position: absolute;
+      border: 2px solid #ccc;
+      border-radius: 50px;
+      background: transparent;
+      opacity: 0.5;
+    }
+    .cloud-1 { top: 15%; right: 25%; width: 120px; height: 40px; }
+    .cloud-2 { top: 25%; right: 10%; width: 80px; height: 30px; }
+
+    /* ── 표지 슬라이드 (TITLE) ── */
+    .slide-title {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-left: 120px;
+    }
+    .title-logo-top {
+      position: absolute;
+      top: 100px;
+      left: 120px;
+      font-size: 32px;
+      font-weight: 900;
+      color: #E83A25; /* 임시 로고 텍스트 */
+    }
+    .title-logo-top span { color: #1A9C6B; }
+    .title-logo-top span:last-child { color: var(--primary-yellow); }
+
+    .title-tag {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-gray);
+      margin-bottom: 20px;
+    }
+    .title-main {
+      font-size: 80px;
+      font-weight: 900;
+      color: var(--text-black);
+      line-height: 1.2;
+    }
+    .title-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 80px;
+      background-color: var(--primary-yellow);
+      display: flex;
+      align-items: center;
+      padding: 0 120px;
+    }
+    .title-footer-text {
+      color: #333;
+      font-weight: 500;
+      font-size: 18px;
+    }
+
+    /* ── 본문 슬라이드 (CONTENT) ── */
+    .slide-content {
+      padding: 60px 80px;
+    }
+    .header {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 40px;
+      position: relative;
+    }
+    .header-number {
+      font-size: 80px;
+      font-weight: 900;
+      color: var(--text-black);
+      line-height: 0.8;
+      margin-right: 20px;
+    }
+    .header-text-group {
+      flex: 1;
+    }
+    .header-title {
+      font-size: 40px;
+      font-weight: 900;
+      color: var(--text-black);
+      padding-bottom: 10px;
+      border-bottom: 4px solid var(--text-black); /* 굵은 검은색 밑줄 */
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .header-subtitle {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--text-gray);
+    }
+    .header-logo {
+      position: absolute;
+      top: 0;
+      right: 0;
+      font-size: 24px;
+      font-weight: 900;
+      color: #E83A25;
+    }
+
+    .content-body {
+      font-size: 24px;
+      color: var(--text-black);
+      line-height: 1.6;
+    }
+    .content-body ul {
+      margin-left: 30px;
+      margin-bottom: 20px;
+    }
+    .content-body li {
+      margin-bottom: 12px;
+    }
+
+    /* 추출된 이미지 표시 영역 */
+    .slide-image-wrapper {
+      flex: 0 0 450px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .slide-image-wrapper img {
+      max-width: 100%;
+      max-height: 400px;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    /* ── 인쇄 설정 (@media print) ── */
+    @media print {
+      @page {
+        size: 33.87cm 19.05cm; /* 16:9 비율 강제 */
+        margin: 0;
+      }
+      body {
+        background-color: transparent;
+        padding: 0;
+        gap: 0;
+      }
+      .controls {
+        display: none !important;
+      }
+      .slide {
+        box-shadow: none;
+        page-break-after: always; /* 슬라이드 한 장마다 강제 줄바꿈 */
+        break-after: page;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 컨트롤 바 -->
+  <div class="controls">
+    <button class="btn-pdf" onclick="window.print()">📥 PDF로 저장</button>
+  </div>
+
+  <!-- 슬라이드 렌더링 -->
+  {% for slide in slides %}
+  
+  {% if slide.layout == 'title' %}
+  <!-- 표지 슬라이드 (통째로 이미지 고정) -->
+  <section class="slide slide-title" style="padding:0; margin:0; display:flex;">
+    <!-- 사용자가 직접 제공한 표지 이미지를 전체 화면으로 렌더링 -->
+    <img src="/static/img/cover.png" alt="크레용스쿨 교육 소개서 표지" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='https://via.placeholder.com/1280x720.png?text=Cover+Image+Not+Found+(Place+cover.png+in+static/img)'">
+  </section>
+
+  {% else %}
+  <!-- 본문 슬라이드 -->
+  <section class="slide slide-content" style="position: relative;">
+    <!-- 상단 고정 배경 이미지 (사용자가 제공한 이미지) -->
+    <img src="/static/img/header_bg.png" alt="상단 배경" style="position: absolute; top: 0; left: 0; width: 100%; height: auto; z-index: 0;" onerror="this.style.display='none'">
+
+    <div class="cloud cloud-1"></div>
+    <div class="cloud cloud-2"></div>
+
+    <div class="header" style="position: relative; z-index: 1;">
+      <div class="header-number">{{ loop.index }}</div>
+      <div class="header-text-group">
+        <div class="header-title">{{ slide.title }}</div>
+        <div class="header-subtitle">{{ slide.subtitle | default('세부 내용을 입력하세요') }}</div>
+      </div>
+      <!-- 기존 텍스트 로고 삭제 (배경 이미지에 로고가 포함되어 있음) -->
+    </div>
+
+    <div class="content-flex-container" style="display: flex; gap: 40px; height: calc(100% - 160px); position: relative; z-index: 1;">
+      <div class="content-body" style="flex: 1; overflow-y: hidden;">
+        {% if slide.content %}
+          
+          {# 1. 하이라이트 박스 #}
+          {% if slide.content.highlight %}
+            <div style="display:inline-block; padding:8px 16px; background-color:var(--primary-yellow); color:var(--text-black); font-weight:700; border-radius:8px; margin-bottom:20px; font-size:0.85em;">
+              {{ slide.content.highlight }}
+            </div>
+          {% endif %}
+
+          {# 2. Two Column (좌우 분할) #}
+          {% if slide.content.left_column or slide.content.right_column %}
+            <div style="display:flex; flex-wrap:wrap; gap:40px;">
+              <div style="flex:1 1 250px;">
+                {% if slide.content.left_column %}
+                  <ul>
+                    {% for point in slide.content.left_column %}
+                      <li>{{ point }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+              <div style="flex:1 1 250px;">
+                {% if slide.content.right_column %}
+                  <ul>
+                    {% for point in slide.content.right_column %}
+                      <li>{{ point }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+
+          {# 3. 기본 리스트 (main_points) #}
+          {% if slide.content.main_points %}
+            <div>
+              <ul>
+                {% for point in slide.content.main_points %}
+                  <li>{{ point }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+          
+          {# 4. 부가 설명 (sub_text) #}
+          {% if slide.content.sub_text %}
+            <p style="margin-top:20px; color:var(--text-gray); font-size:0.85em;">{{ slide.content.sub_text }}</p>
+          {% endif %}
+          
+        {% else %}
+          <p style="color:var(--text-gray);">여기에 본문 내용을 입력하세요.</p>
+        {% endif %}
+      </div>
+
+      {# 이미지 렌더링 (추출된 이미지가 있으면 하나씩 순서대로 배치) #}
+      {% set img_index = loop.index0 - 1 %}
+      {% if images and img_index >= 0 and img_index < images|length %}
+        <div class="slide-image-wrapper">
+          <img src="{{ images[img_index] }}" alt="추출된 슬라이드 이미지">
+        </div>
+      {% endif %}
+    </div>
+
+  </section>
+  {% endif %}
+
+  {% endfor %}
+
+  <!-- 글씨 자동 축소 스크립트 (스크롤바 방지) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const bodies = document.querySelectorAll('.content-body');
+      bodies.forEach(body => {
+        let fontSize = 24; // 초기 CSS 폰트 사이즈
+        // 스크롤바가 생길 정도로 내용이 넘치면 글씨 크기를 1px씩 줄임 (최소 12px)
+        while(body.scrollHeight > body.clientHeight && fontSize > 12) {
+          fontSize -= 1;
+          body.style.fontSize = fontSize + 'px';
+          // 내부의 모든 텍스트 요소(ul, li, p 등)도 비율에 맞게 줄이기 위해 상속을 활용
+        }
+      });
+    });
+  </script>
+</body>
+</html>
