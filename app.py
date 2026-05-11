@@ -68,6 +68,7 @@ def generate():
 
     content_file = request.files["content_file"]
     instructions = request.form.get("instructions", "").strip()
+    category = request.form.get("category", "proposal")
 
     if not content_file.filename:
         return jsonify({"error": "파일을 선택해주세요."}), 400
@@ -100,11 +101,12 @@ def generate():
 
     # ── 5. Claude API로 슬라이드 구조 생성 (크레용스쿨 표준 양식 적용) ──
     try:
-        # 템플릿 정보 없이 내용만으로 슬라이드 구성 요청
+        # 카테고리 정보와 함께 슬라이드 구성 요청
         slides_data = generate_slides(
             document_text=document_text,
             template_info=None,
             custom_instructions=instructions,
+            category=category
         )
     except Exception as e:
         traceback.print_exc()
@@ -115,7 +117,8 @@ def generate():
     with open(data_path, "w", encoding="utf-8") as f:
         json.dump({
             "slides_data": slides_data,
-            "images": images
+            "images": images,
+            "category": category
         }, f, ensure_ascii=False)
 
     return jsonify({"redirect": f"/viewer/{session_id}"})
@@ -139,7 +142,14 @@ def viewer(session_id):
     if slides and slides[0].get("layout") != "title":
         slides[0]["layout"] = "title"
         
-    return render_template("viewer.html", slides=slides, title=title, images=image_urls)
+    return render_template(
+        "viewer.html",
+        slides=slides,
+        title=title,
+        images=image_urls,
+        session_id=session_id,
+        category=data.get("category", "proposal")
+    )
 
 from flask import send_from_directory
 @app.route("/api/images/<session_id>/<filename>")

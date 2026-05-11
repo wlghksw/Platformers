@@ -53,7 +53,7 @@ Analyze the given document and generate a structured PPT slide plan in JSON form
       "tag": "OVERVIEW",
       "title": "Slide headline",
       "subtitle": "Optional section label or supporting line",
-      "layout": "title" | "content" | "two_column" | "data" | "closing",
+      "layout": "title" | "chapter" | "content" | "two_column" | "data" | "closing",
       "content": {
         "main_points": ["Key point 1", "Key point 2"],
         "sub_text": "Supporting description (optional)",
@@ -68,6 +68,7 @@ Analyze the given document and generate a structured PPT slide plan in JSON form
 
 ## Layout Selection Guide
 - title: Cover slide (first slide only)
+- chapter: Divider slide for a new section/chapter (contains 01, 02 prefix)
 - content: General content with bullet points
 - two_column: Comparisons, pros/cons, before/after
 - data: Numbers, statistics, KPIs
@@ -111,7 +112,8 @@ def _chunk_text(text: str, chunk_size: int = 15000) -> list[str]:
 def generate_slides(
     document_text: str,
     template_info: dict = None,
-    custom_instructions: str = None
+    custom_instructions: str = None,
+    category: str = "proposal"
 ) -> dict:
     """
     Claude API로 슬라이드 구조 생성
@@ -159,6 +161,7 @@ def generate_slides(
                 page_offset=page_offset,
                 is_continuation=(not is_first),
                 is_last=is_last,
+                category=category
             )
         except Exception as e:
             # 특정 청크 실패 시 건너뛰고 다음으로 진행하거나 에러 로깅
@@ -196,8 +199,29 @@ def generate_slides(
 
 def _call_api(client, text: str, style_block: str, custom_instructions: str,
               min_slides: int, max_slides: int, page_offset: int,
-              is_continuation: bool, is_last: bool = True) -> dict:
+              is_continuation: bool, is_last: bool = True, category: str = "proposal") -> dict:
     """단일 Claude API 호출"""
+
+    category_note = ""
+    if category == "at_curriculum":
+        category_note = f"""
+## [CATEGORY: AT Center Curriculum]
+1. Structure:
+   - Must divide the presentation into clearly numbered Chapters (01, 02, etc.).
+   - EVERY Chapter MUST start with a "chapter" layout slide.
+   - Example slide sequence: title -> chapter (01) -> content -> content -> chapter (02) -> content -> closing.
+2. Tone: Educational, clear, instructional, and structured for learners.
+3. Content: Focus on learning objectives and step-by-step concepts.
+4. Goal: Generate around {min_slides} to {max_slides} slides.
+"""
+    else:
+        category_note = f"""
+## [CATEGORY: Education Proposal]
+1. Structure: Professional business proposal flow (Overview -> Problem -> Solution -> Strategy -> Conclusion).
+2. Layouts: Do NOT use "chapter" layout. Stick to title, content, two_column, data, closing.
+3. Tone: Persuasive, professional, corporate.
+4. Goal: Generate around {min_slides} to {max_slides} slides.
+"""
 
     continuation_note = ""
     if is_continuation:
@@ -209,7 +233,9 @@ def _call_api(client, text: str, style_block: str, custom_instructions: str,
     else:
         continuation_note = f"\nGenerate between {min_slides} and {max_slides} slides for this section."
 
-    user_content = f"""Analyze this document content and generate a slide structure.
+    user_content = f"""{category_note}
+
+Analyze this document content and generate a slide structure.
 {continuation_note}
 {style_block}
 ## Document Content

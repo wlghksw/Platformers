@@ -218,6 +218,45 @@
         break-after: page;
       }
     }
+
+    /* ── AT 센터 교안 추가 스타일 ── */
+    .at-chapter-bg {
+      background-image: url('/static/img/at_chapter.png');
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-left: 120px;
+      position: relative;
+    }
+    .at-chapter-num {
+      font-size: 100px;
+      font-weight: 800;
+      color: #2550e8;
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+    .at-chapter-title {
+      font-size: 64px;
+      font-weight: 800;
+      color: #1a1a1a;
+      line-height: 1.2;
+    }
+    .at-content-bg {
+      background-image: url('/static/img/at_content_bg.png');
+      background-size: cover;
+    }
+    .at-header-info {
+      position: absolute;
+      top: 35px;
+      left: 120px;
+      font-size: 18px;
+      color: #777;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .at-header-info b { color: #333; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -230,13 +269,58 @@
   <!-- 슬라이드 렌더링 -->
   {% for slide in slides %}
   
-  {% if slide.layout == 'title' %}
-  <!-- 표지 슬라이드 (통째로 이미지 고정) -->
-  <section class="slide slide-title" style="padding:0; margin:0; display:flex;">
-    <!-- 사용자가 직접 제공한 표지 이미지를 전체 화면으로 렌더링 -->
-    <img src="/static/img/cover.png" alt="크레용스쿨 교육 소개서 표지" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='https://via.placeholder.com/1280x720.png?text=Cover+Image+Not+Found+(Place+cover.png+in+static/img)'">
-  </section>
+  {# 1. AT 센터 교안 레이아웃 #}
+  {% if category == 'at_curriculum' %}
+    {% if slide.layout == 'title' %}
+      <section class="slide" style="padding:0;">
+        <img src="/static/img/at_cover.png" alt="AT센터 표지" style="width:100%; height:100%; object-fit:cover;">
+      </section>
+    {% elif slide.layout == 'chapter' %}
+      <section class="slide at-chapter-bg">
+        <div class="at-chapter-num">{{ slide.title[:2] }}</div>
+        <div class="at-chapter-title">{{ slide.title[2:] | trim }}</div>
+      </section>
+    {% else %}
+      <section class="slide at-content-bg">
+        <div class="at-header-info">
+           <b>{{ slide.tag }}</b> | {{ slide.subtitle | default(title) }}
+        </div>
+        <div class="slide-content" style="margin-top: 100px;">
+          <div class="header" style="margin-bottom: 20px;">
+            <div class="header-text-group">
+              <div class="header-title" style="font-size: 48px; border-bottom: none; margin-bottom: 0;">{{ slide.title }}</div>
+            </div>
+          </div>
+          <div class="content-flex-container" style="display: flex; gap: 40px; height: calc(100% - 200px); position: relative; z-index: 1;">
+            <div class="content-body" style="flex: 1; overflow-y: hidden;">
+              {% if slide.content %}
+                {% if slide.content.main_points %}
+                  <ul>
+                    {% for point in slide.content.main_points %}
+                      <li>{{ point }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+                {% if slide.content.sub_text %}
+                  <p style="font-size: 0.9em; color: #666; margin-top: 20px;">{{ slide.content.sub_text }}</p>
+                {% endif %}
+              {% endif %}
+            </div>
+            {% set img_index = loop.index0 %}
+            {% if images and img_index >= 0 and img_index < images|length %}
+              <div class="slide-image-wrapper">
+                <img src="{{ images[img_index] }}" alt="추출된 이미지">
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        <div style="position: absolute; bottom: 30px; right: 40px; font-size: 14px; font-weight: 700; color: #999;">
+          {{ loop.index }} / {{ slides | length }}
+        </div>
+      </section>
+    {% endif %}
 
+  {# 2. 기존 교육 제안서 레이아웃 #}
   {% else %}
   <!-- 본문 슬라이드 -->
   <section class="slide slide-content" style="position: relative;">
@@ -320,9 +404,13 @@
       {% endif %}
     </div>
 
+    <!-- 하단 페이지 번호 -->
+    <div style="position: absolute; bottom: 30px; right: 40px; font-size: 14px; font-weight: 700; color: #999;">
+      {{ loop.index }} / {{ slides | length }}
+    </div>
   </section>
   {% endif %}
-
+  {% endif %}
   {% endfor %}
 
   <!-- 글씨 자동 축소 스크립트 (스크롤바 방지) -->

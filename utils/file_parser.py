@@ -29,7 +29,8 @@ def extract_images_from_pdf(filepath: str, output_dir: str, min_width: int = 200
     PDF에서 유효한 이미지를 추출하여 파일로 저장
     Returns: [{"path": str, "page": int, "width": int, "height": int}]
     """
-    import fitz
+    # pyrefly: ignore [missing-import]
+    import fitz  # PyMuPDF
 
     os.makedirs(output_dir, exist_ok=True)
     results = []
@@ -71,6 +72,7 @@ def extract_images_from_pdf(filepath: str, output_dir: str, min_width: int = 200
 
 
 def _extract_pdf(filepath: str) -> str:
+    # pyrefly: ignore [missing-import]
     import fitz
 
     doc = fitz.open(filepath)
@@ -123,6 +125,7 @@ def get_template_info(filepath: str) -> dict:
     """
     템플릿 PDF에서 색상 팔레트, 폰트, 레이아웃 구조를 상세 추출
     """
+    # pyrefly: ignore [missing-import]
     import fitz
 
     info = {

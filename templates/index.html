@@ -321,6 +321,69 @@
       color: #b0afa9;
     }
 
+    /* ── CATEGORY SELECTOR ── */
+    .category-section {
+      margin-bottom: 2rem;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .category-card {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      background: white;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      position: relative;
+    }
+
+    .category-card:hover {
+      border-color: var(--blue-light);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .category-card.active {
+      border-color: var(--blue);
+      background: #f0f4ff;
+      box-shadow: 0 4px 20px rgba(37, 80, 232, 0.1);
+    }
+
+    .category-card.active::after {
+      content: '✓';
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      color: var(--blue);
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .cat-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .cat-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .cat-desc {
+      font-size: 0.75rem;
+      color: var(--slate);
+      line-height: 1.4;
+    }
+
     /* ── GENERATE BUTTON ── */
     .btn-generate {
       width: 100%;
@@ -634,6 +697,26 @@
   <div class="card-wrap">
     <div class="card">
       <div class="card-body">
+        <!-- 카테고리 선택 -->
+        <div class="category-section">
+          <div class="drop-label">
+            <span class="required-dot"></span>
+            PPT 유형 선택
+          </div>
+          <div class="category-grid">
+            <div class="category-card active" id="cat-proposal" onclick="selectCategory('proposal')">
+              <div class="cat-icon">📁</div>
+              <div class="cat-title">교육 제안서 PPT</div>
+              <div class="cat-desc">사업 제안, 소개서, 회사 소개서 제작에 최적화</div>
+            </div>
+            <div class="category-card" id="cat-at" onclick="selectCategory('at_curriculum')">
+              <div class="cat-icon">🏫</div>
+              <div class="cat-title">AT 센터 교안 PPT</div>
+              <div class="cat-desc">교안 전용 디자인 및 챕터 구분 시스템 적용</div>
+            </div>
+          </div>
+        </div>
+
         <!-- 콘텐츠 파일 업로드 -->
         <div class="drop-section" id="drop-content">
           <div class="drop-label">
@@ -726,15 +809,29 @@
   </div>
 
   <script>
-    const files = {
-      content: null
+    const state = {
+      content: null,
+      category: 'proposal'
     };
+
+    function selectCategory(cat) {
+      state.category = cat;
+      document.querySelectorAll('.category-card').forEach(card => card.classList.remove('active'));
+      document.getElementById(`cat-${cat === 'proposal' ? 'proposal' : 'at'}`).classList.add('active');
+      
+      const label = document.querySelector('#drop-content .drop-label');
+      if (cat === 'at_curriculum') {
+        label.innerHTML = '<span class="required-dot"></span> 교안 콘텐츠 문서 (한글/워드/PDF/TXT)';
+      } else {
+        label.innerHTML = '<span class="required-dot"></span> 제안서 콘텐츠 문서 (한글/워드/PDF/TXT)';
+      }
+    }
 
     function onFileSelect(input, type) {
       const file = input.files[0];
       if (!file) return;
       
-      files[type] = file;
+      state.content = file;
       document.getElementById(`${type}-selected`).style.display = 'flex';
       document.getElementById(`${type}-name`).textContent = file.name;
       document.getElementById(`${type}-name-display`).textContent = file.name;
@@ -742,7 +839,7 @@
     }
 
     function removeFile(type) {
-      files[type] = null;
+      state.content = null;
       document.getElementById(`${type}-file`).value = '';
       document.getElementById(`${type}-selected`).style.display = 'none';
       document.getElementById(`${type}-name-display`).textContent = '선택된 파일 없음';
@@ -771,7 +868,7 @@
     }
 
     async function generate() {
-      if (!files.content) {
+      if (!state.content) {
         showError('콘텐츠 문서 파일을 업로드해주세요.');
         return;
       }
@@ -784,7 +881,8 @@
       document.getElementById('progress-section').classList.add('visible');
 
       const formData = new FormData();
-      formData.append('content_file', files.content);
+      formData.append('content_file', state.content);
+      formData.append('category', state.category);
       
       const instructions = document.getElementById('instructions').value.trim();
       if (instructions) formData.append('instructions', instructions);
