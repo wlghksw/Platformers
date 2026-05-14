@@ -219,5 +219,6 @@ def preview():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=os.environ.get("FLASK_DEBUG", "false").lower() == "true")
+    # Railway 등 환경에서 PORT 환경변수를 우선 사용
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
