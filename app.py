@@ -48,104 +48,92 @@ def health():
     return jsonify({"status": "ok", "timestamp": datetime.utcnow().isoformat()})
 
 
-@app.route("/api/generate", methods=["POST"])
-def generate():
-    """
-    PPT 생성 엔드포인트
-
-    Form data:
-        content_file: 콘텐츠 문서 (PDF, DOCX, PPTX, TXT)
-        template_file: 양식 파일 (PPTX, 선택)
-        instructions: 추가 지시사항 (텍스트, 선택)
-    """
-    from utils.file_parser import extract_text, get_template_info, extract_images_from_pdf
-    from utils.claude_api import generate_slides
-    from utils.pptx_builder import build_presentation
-
-    # ── 1. 파일 수신 (콘텐츠 문서만 필수로 받음) ──
-    if "content_file" not in request.files:
-        return jsonify({"error": "콘텐츠 파일을 업로드해주세요."}), 400
-
-    content_file = request.files["content_file"]
+    # ── 1. 파일 수신 (여러 파일 가능) ──
+    content_files = request.files.getlist("content_file")
     instructions = request.form.get("instructions", "").strip()
     category = request.form.get("category", "proposal")
 
-    if not content_file.filename:
-        return jsonify({"error": "파일을 선택해주세요."}), 400
+    if not content_files or not content_files[0].filename:
+        return jsonify({"error": "콘텐츠 파일을 업로드해주세요."}), 400
 
-    if not allowed_content(content_file.filename):
-        return jsonify({"error": f"지원하지 않는 파일 형식입니다. ({', '.join(ALLOWED_CONTENT_EXTENSIONS)})"}), 400
-
-    # ── 2. 파일 저장 ──
     session_id = str(uuid.uuid4())[:8]
-    content_ext = Path(content_file.filename).suffix.lower()
-    content_path = UPLOAD_DIR / f"{session_id}_content{content_ext}"
-    content_file.save(str(content_path))
+    all_document_texts = []
+    has_image_pdf = False
+    
+    # ── 2. 모든 파일 순회하며 텍스트 추출 ──
+    for content_file in content_files:
+        content_ext = Path(content_file.filename).suffix.lower()
+        content_path = UPLOAD_DIR / f"{session_id}_{content_file.filename}"
+        content_file.save(str(content_path))
+        
+        print(f"[*] Extracting text from: {content_file.filename} ({content_ext})")
+        try:
+            document_text = extract_text(str(content_path))
+            if not document_text or not document_text.strip():
+                if content_ext == ".pdf":
+                    has_image_pdf = True
+                    print(f"[*] Detected image-based PDF: {content_file.filename}")
+                continue
+            
+            all_document_texts.append(f"### [FILE: {content_file.filename}]\n{document_text}")
+        except Exception as e:
+            print(f"[!] Failed to parse {content_file.filename}: {e}")
 
-    # ── 3. 텍스트 추출 ──
-    print(f"[*] Extracting text from: {content_file.filename} ({content_ext})")
+    # 모든 텍스트 병합
+    combined_text = "\n\n".join(all_document_texts)
+    
+    # 만약 텍스트가 하나도 없고 이미지 PDF가 있다면 Vision 모드로 전환
     use_vision = False
-    document_text = ""
-    try:
-        document_text = extract_text(str(content_path))
-        if not document_text or not document_text.strip():
-            print(f"[!] Empty text extracted — will try Vision AI for: {content_file.filename}")
-            use_vision = True
-        else:
-            print(f"[*] Successfully extracted {len(document_text)} characters.")
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({"error": f"파일 파싱 실패 ({content_ext}): {str(e)}"}), 500
+    if not combined_text.strip() and has_image_pdf:
+        use_vision = True
+    elif not combined_text.strip():
+        return jsonify({"error": "업로드한 파일들에서 텍스트를 추출할 수 없습니다. 내용이 비어있거나 지원하지 않는 형식인지 확인해주세요."}), 400
 
-    # ── 3-b. Vision 폴백: PDF가 이미지로만 구성된 경우 ──
+    # ── 3-b. Vision 폴백: PDF가 이미지로만 구성된 경우 (첫 번째 이미지 PDF 기준) ──
     if use_vision:
-        if content_ext != ".pdf":
-            return jsonify({"error": f"이미지 문서 분석은 PDF 형식만 지원합니다. (현재: {content_ext})"}), 400
         try:
             from utils.file_parser import extract_pdf_as_images
             from utils.claude_api import generate_slides_from_images
-            print("[*] Switching to Vision AI mode...")
-            pages = extract_pdf_as_images(str(content_path), max_pages=15)
+            
+            # 텍스트가 없는 첫 번째 PDF를 찾아 Vision 분석 진행
+            target_pdf = None
+            for f in content_files:
+                if f.filename.lower().endswith(".pdf"):
+                    target_pdf = UPLOAD_DIR / f"{session_id}_{f.filename}"
+                    break
+            
+            if not target_pdf:
+                return jsonify({"error": "이미지 기반 분석을 위한 PDF 파일을 찾을 수 없습니다."}), 400
+
+            print(f"[*] Switching to Vision AI mode for: {target_pdf.name}")
+            pages = extract_pdf_as_images(str(target_pdf), max_pages=15)
             if not pages:
                 return jsonify({"error": "PDF에서 이미지를 추출할 수 없습니다."}), 400
+                
             print(f"[*] Sending {len(pages)} page images to Vision AI...")
             slides_data = generate_slides_from_images(pages, custom_instructions=instructions, category=category)
             data_path = OUTPUT_DIR / f"{session_id}_data.json"
             with open(data_path, "w", encoding="utf-8") as f:
                 json.dump({"slides_data": slides_data, "images": [], "category": category}, f, ensure_ascii=False)
             return jsonify({"redirect": f"/viewer/{session_id}"})
-        except Exception as e:
-            traceback.print_exc()
-            return jsonify({"error": f"Vision AI 분석 실패: {str(e)}"}), 500
-
-    # ── 4. 콘텐츠 PDF 이미지 추출 (제안서 내 사진 활용) ──
-    images = []
-    if content_ext == ".pdf":
-        try:
-            img_dir = str(UPLOAD_DIR / f"{session_id}_imgs")
-            images = extract_images_from_pdf(str(content_path), img_dir)
-        except Exception:
-            images = []
-
-    # ── 5. Claude API로 슬라이드 구조 생성 (크레용스쿨 표준 양식 적용) ──
+    # ── 5. Claude API로 슬라이드 구조 생성 ──
     try:
-        # 카테고리 정보와 함께 슬라이드 구성 요청
         slides_data = generate_slides(
-            document_text=document_text,
+            document_text=combined_text,
             template_info=None,
             custom_instructions=instructions,
             category=category
         )
     except Exception as e:
         traceback.print_exc()
-        return jsonify({"error": f"슬라이드 구조 생성 실패: {str(e)}"}), 500
+        return jsonify({"error": f"슬라이드 생성 실패: {str(e)}"}), 500
 
     # ── 6. 데이터 저장 및 뷰어로 리다이렉트 ──
     data_path = OUTPUT_DIR / f"{session_id}_data.json"
     with open(data_path, "w", encoding="utf-8") as f:
         json.dump({
             "slides_data": slides_data,
-            "images": images,
+            "images": [], # 멀티 파일 환경에서는 이미지 추출 우선 생략
             "category": category
         }, f, ensure_ascii=False)
 

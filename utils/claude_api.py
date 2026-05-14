@@ -74,6 +74,13 @@ Analyze the given document and generate a structured PPT slide plan in JSON form
 - data: Numbers, statistics, KPIs
 - closing: Final slide — conclusion or call to action
 
+## Business Rules for Career Education Proposals (STRICT)
+- **NO "Coding"**: Never use the term "Coding" (코딩) for curriculum or program names.
+- **AI-Era Focus**: Replace any mention of "Coding education" with phrases like "Algorithm Design: Essential Skill for the AI Era" (AI 시대 필수 능력 알고리즘 설계).
+- **Professional Tone**: The content must feel futuristic, essential, and high-value for elementary/middle school students.
+- **Cross-Document Synthesis**: When multiple documents (Proposal, DB, Intro) are provided, prioritize the "Draft Proposal" (1안) as the main structure, and use DB/Intro to fill in the gaps and enhance detail.
+- **Visual Accuracy**: Ensure all tables and data from the provided documents are translated into clear, structured slide formats (data layout).
+
 ## Constraints
 - Each slide must be self-explanatory without context from other slides
 - Keep text concise per slide — no walls of text

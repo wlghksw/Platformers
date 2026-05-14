@@ -724,17 +724,15 @@
             제안서 콘텐츠 문서 (한글/워드/PDF/TXT/엑셀)
           </div>
           <div class="drop-zone" id="content-zone">
-            <input type="file" id="content-file" hidden accept=".pdf,.docx,.txt,.xlsx,.xls" onchange="onFileSelect(this, 'content')">
+            <input type="file" id="content-file" hidden accept=".pdf,.docx,.txt,.xlsx,.xls,.pptx" multiple onchange="onFileSelect(this)">
             <div class="drop-zone-content" onclick="document.getElementById('content-file').click()">
               <div class="drop-icon">📄</div>
               <div class="drop-text">파일을 드래그하거나 클릭하여 업로드</div>
               <div class="file-name" id="content-name-display">선택된 파일 없음</div>
             </div>
           </div>
-          <div class="file-selected" id="content-selected" style="display:none;">
-            <span>📎</span>
-            <span class="file-name" id="content-name"></span>
-            <span class="file-remove" onclick="removeFile('content')">✕</span>
+          <div class="file-selected" id="content-selected" style="display:none; padding:15px; background:rgba(255,255,255,0.03); border-radius:12px; margin-top:10px;">
+            <div id="file-list-items"></div>
           </div>
         </div>
 
@@ -810,7 +808,7 @@
 
   <script>
     const state = {
-      content: null,
+      files: [], // 여러 파일 저장
       category: 'proposal'
     };
 
@@ -821,29 +819,63 @@
       
       const label = document.querySelector('#drop-content .drop-label');
       if (cat === 'at_curriculum') {
-        label.innerHTML = '<span class="required-dot"></span> 교안 콘텐츠 문서 (한글/워드/PDF/TXT)';
+        label.innerHTML = '<span class="required-dot"></span> 교안/참조 문서 (여러 파일 선택 가능)';
       } else {
-        label.innerHTML = '<span class="required-dot"></span> 제안서 콘텐츠 문서 (한글/워드/PDF/TXT)';
+        label.innerHTML = '<span class="required-dot"></span> 제안서/참조 문서 (여러 파일 선택 가능)';
       }
     }
 
-    function onFileSelect(input, type) {
-      const file = input.files[0];
-      if (!file) return;
+    function onFileSelect(input) {
+      const newFiles = Array.from(input.files);
+      if (newFiles.length === 0) return;
       
-      state.content = file;
-      document.getElementById(`${type}-selected`).style.display = 'flex';
-      document.getElementById(`${type}-name`).textContent = file.name;
-      document.getElementById(`${type}-name-display`).textContent = file.name;
-      document.getElementById(`${type}-zone`).classList.add('has-file');
+      // 기존 파일 목록에 추가 (중복 제외 가능하지만 여기선 단순 추가)
+      state.files = [...state.files, ...newFiles];
+      renderFileList();
+      
+      document.getElementById(`content-zone`).classList.add('has-file');
     }
 
-    function removeFile(type) {
-      state.content = null;
-      document.getElementById(`${type}-file`).value = '';
-      document.getElementById(`${type}-selected`).style.display = 'none';
-      document.getElementById(`${type}-name-display`).textContent = '선택된 파일 없음';
-      document.getElementById(`${type}-zone`).classList.remove('has-file');
+    function renderFileList() {
+      const container = document.getElementById('content-selected');
+      const listContainer = document.getElementById('file-list-items');
+      
+      if (state.files.length > 0) {
+        container.style.display = 'block';
+        listContainer.innerHTML = '';
+        
+        state.files.forEach((file, index) => {
+          const item = document.createElement('div');
+          item.className = 'file-item';
+          item.style.display = 'flex';
+          item.style.alignItems = 'center';
+          item.style.justifyContent = 'space-between';
+          item.style.padding = '8px 12px';
+          item.style.background = 'rgba(255,255,255,0.05)';
+          item.style.borderRadius = '8px';
+          item.style.marginBottom = '8px';
+          
+          item.innerHTML = `
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span>📎</span>
+              <span style="font-size:14px; color:var(--text-main);">${file.name}</span>
+            </div>
+            <span class="file-remove" onclick="removeFile(${index})" style="cursor:pointer; color:var(--accent-red);">✕</span>
+          `;
+          listContainer.appendChild(item);
+        });
+        
+        document.getElementById('content-name-display').textContent = `${state.files.length}개의 파일 선택됨`;
+      } else {
+        container.style.display = 'none';
+        document.getElementById('content-name-display').textContent = '선택된 파일 없음';
+        document.getElementById(`content-zone`).classList.remove('has-file');
+      }
+    }
+
+    function removeFile(index) {
+      state.files.splice(index, 1);
+      renderFileList();
     }
 
     function setStep(step, status) {
@@ -883,8 +915,8 @@
     }
 
     async function generate() {
-      if (!state.content) {
-        showError('콘텐츠 문서 파일을 업로드해주세요.');
+      if (state.files.length === 0) {
+        showError('콘텐츠 문서 파일을 하나 이상 업로드해주세요.');
         return;
       }
 
@@ -896,7 +928,9 @@
       document.getElementById('progress-section').classList.add('visible');
 
       const formData = new FormData();
-      formData.append('content_file', state.content);
+      state.files.forEach(file => {
+        formData.append('content_file', file);
+      });
       formData.append('category', state.category);
       
       const instructions = document.getElementById('instructions').value.trim();
