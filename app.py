@@ -48,6 +48,12 @@ def health():
     return jsonify({"status": "ok", "timestamp": datetime.utcnow().isoformat()})
 
 
+@app.route("/api/generate", methods=["POST"])
+def generate():
+    """PPT 생성 엔드포인트 (멀티 파일 지원)"""
+    from utils.file_parser import extract_text
+    from utils.claude_api import generate_slides
+    
     # ── 1. 파일 수신 (여러 파일 가능) ──
     content_files = request.files.getlist("content_file")
     instructions = request.form.get("instructions", "").strip()
