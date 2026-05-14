@@ -858,13 +858,28 @@
     function delay(ms) { return new Promise(res => setTimeout(res, ms)); }
 
     function hideAll() {
+      document.getElementById('progress-section').classList.remove('visible');
       document.getElementById('result-section').classList.remove('visible');
+      if (document.getElementById('error-section')) {
+        document.getElementById('error-section').classList.remove('visible');
+      }
     }
 
     function showError(msg) {
-      alert(msg);
-      document.getElementById('btn-generate').disabled = false;
-      document.getElementById('btn-text').textContent = 'PPT 생성하기';
+      const el = document.getElementById('error-section');
+      if (el) {
+        el.textContent = '오류: ' + msg;
+        el.classList.add('visible');
+      } else {
+        alert(msg);
+      }
+      // 버튼 복구
+      const btn = document.getElementById('btn-generate');
+      if (btn) {
+        btn.disabled = false;
+        document.getElementById('btn-text').textContent = 'PPT 생성하기';
+      }
+      document.getElementById('progress-section').classList.remove('visible');
     }
 
     async function generate() {
@@ -935,19 +950,6 @@
       }
     }
 
-    function hideAll() {
-      document.getElementById('progress-section').classList.remove('visible');
-      document.getElementById('result-section').classList.remove('visible');
-      document.getElementById('error-section').classList.remove('visible');
-    }
-
-    function showError(msg) {
-      const el = document.getElementById('error-section');
-      el.textContent = '오류: ' + msg;
-      el.classList.add('visible');
-    }
-
-    function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
   </script>
 </body>
 
