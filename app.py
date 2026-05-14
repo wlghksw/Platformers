@@ -116,6 +116,10 @@ def health():
             with open(data_path, "w", encoding="utf-8") as f:
                 json.dump({"slides_data": slides_data, "images": [], "category": category}, f, ensure_ascii=False)
             return jsonify({"redirect": f"/viewer/{session_id}"})
+        except Exception as e:
+            traceback.print_exc()
+            return jsonify({"error": f"Vision AI 분석 실패: {str(e)}"}), 500
+
     # ── 5. Claude API로 슬라이드 구조 생성 ──
     try:
         slides_data = generate_slides(
