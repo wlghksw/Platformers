@@ -257,12 +257,21 @@ Analyze this document content and generate a slide structure.
     )
 
     raw_text = response.content[0].text.strip()
+    
+    # JSON 추출 및 정제
     clean_text = re.sub(r"```(?:json)?\s*|\s*```", "", raw_text).strip()
-
+    
     try:
         return json.loads(clean_text)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Claude API response parse failed: {e}\nResponse: {raw_text[:500]}")
+    except json.JSONDecodeError:
+        # 사소한 문법 오류(쉼표 누락 등) 복구 시도
+        try:
+            # 1. 객체/배열 사이의 누락된 쉼표 복구 (예: } "key" -> }, "key")
+            fixed_text = re.sub(r'}\s*"', '}, "', clean_text)
+            fixed_text = re.sub(r']\s*"', '], "', fixed_text)
+            return json.loads(fixed_text)
+        except Exception:
+            raise ValueError(f"Claude JSON 파싱 실패. 문법 오류가 있습니다.\nResponse: {raw_text[:500]}...")
 
 
 def generate_slides_from_images(
@@ -277,38 +286,29 @@ def generate_slides_from_images(
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
     total_pages = len(pages)
-    min_slides = max(5, total_pages)
-    max_slides = min(30, total_pages * 2)
+    # 이미지 분석 시에는 텍스트보다 정보량이 적을 수 있으므로 슬라이드 수 조절
+    min_slides = max(8, total_pages)
+    max_slides = min(25, total_pages * 2)
 
     # 카테고리별 지시사항
+    category_note = ""
     if category == "at_curriculum":
         category_note = f"""
 ## [CATEGORY: AT Center Curriculum]
-1. Structure:
-   - Must divide the presentation into clearly numbered Chapters (01, 02, etc.).
-   - EVERY Chapter MUST start with a "chapter" layout slide.
-2. Chapter Slide Rules (CRITICAL):
-   - For "chapter" layout slides, the "tag" field MUST be the zero-padded chapter number: "01", "02", "03".
-   - For "chapter" layout slides, the "title" field MUST be the chapter title WITHOUT the number prefix.
-3. Tone: Educational, clear, instructional.
-4. Goal: Generate around {min_slides} to {max_slides} slides.
+1. Structure: Clearly numbered Chapters (01, 02, etc.).
+2. Chapter Slides: Use "chapter" layout. "tag" must be "01", "02".
+3. Goal: Generate around {min_slides} to {max_slides} slides.
 """
     else:
         category_note = f"""
 ## [CATEGORY: Education Proposal]
-1. Structure: Professional proposal flow (Overview -> Problem -> Solution -> Strategy -> Conclusion).
-2. Layouts: Do NOT use "chapter" layout. Stick to title, content, two_column, data, closing.
-3. Tone: Persuasive, professional, corporate.
-4. Goal: Generate around {min_slides} to {max_slides} slides.
+1. Structure: Overview -> Problem -> Solution -> Strategy -> Conclusion.
+2. Goal: Generate around {min_slides} to {max_slides} slides.
 """
 
-    # 이미지 콘텐츠 블록 구성 (각 페이지를 이미지로 전달)
     content_blocks = []
     for p in pages:
-        content_blocks.append({
-            "type": "text",
-            "text": f"[페이지 {p['page']}]"
-        })
+        content_blocks.append({"type": "text", "text": f"[페이지 {p['page']}]"})
         content_blocks.append({
             "type": "image",
             "source": {
@@ -319,8 +319,8 @@ def generate_slides_from_images(
         })
 
     instruction_text = f"""{category_note}
-위 이미지들은 문서의 각 페이지입니다.
-각 페이지의 내용을 꼼꼼히 읽고, 핵심 내용을 슬라이드 구조로 변환해주세요.
+위 이미지들을 보고 핵심 내용을 추출하여 유효한 JSON 형식으로만 응답하세요.
+**중요: 모든 JSON 객체와 필드 사이에 반드시 쉼표(,)를 누락하지 마세요.**
 Generate between {min_slides} and {max_slides} slides.
 """
     if custom_instructions:
@@ -331,7 +331,7 @@ Generate between {min_slides} and {max_slides} slides.
     response = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=8192,
-        system=SYSTEM_PROMPT,
+        system=SYSTEM_PROMPT + "\nIMPORTANT: Ensure the JSON is perfectly valid and all strings/objects are closed properly.",
         messages=[{"role": "user", "content": content_blocks}],
     )
 
@@ -339,12 +339,18 @@ Generate between {min_slides} and {max_slides} slides.
     clean_text = re.sub(r"```(?:json)?\s*|\s*```", "", raw_text).strip()
 
     try:
+        # 첫 번째 시도: 일반 파싱
         result = json.loads(clean_text)
-        # 페이지 번호 재정렬
-        slides = result.get("slides", [])
-        for idx, slide in enumerate(slides, 1):
-            slide["page"] = idx
-        result["total_pages"] = len(slides)
-        return result
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Vision API response parse failed: {e}\nResponse: {raw_text[:500]}")
+    except json.JSONDecodeError:
+        # 두 번째 시도: 쉼표 복구 후 파싱
+        try:
+            fixed_text = re.sub(r'}\s*"', '}, "', clean_text)
+            result = json.loads(fixed_text)
+        except Exception:
+            raise ValueError("Vision API가 생성한 JSON에 문법 오류가 있습니다. 다시 시도해 주세요.")
+
+    slides = result.get("slides", [])
+    for idx, slide in enumerate(slides, 1):
+        slide["page"] = idx
+    result["total_pages"] = len(slides)
+    return result
