@@ -123,8 +123,8 @@ def generate_slides(
     text_length = len(document_text)
     min_slides, max_slides = _estimate_slide_count(text_length)
     
-    # 청크 크기 최적화 (20장 내외면 보통 1~2청크면 충분)
-    chunks = _chunk_text(document_text, chunk_size=15000)
+    # 청크 크기 최적화 (한 번에 너무 많이 생성하면 잘리므로 크기를 줄임)
+    chunks = _chunk_text(document_text, chunk_size=5000)
 
     # 스타일 컨텍스트 문자열 (공통)
     style_block = ""
@@ -151,8 +151,8 @@ def generate_slides(
         is_last = (i == len(chunks) - 1)
         
         # 전체 20장 내외가 되도록 청크당 개수 배분
-        chunk_min = max(3, min_slides // len(chunks))
-        chunk_max = max(5, max_slides // len(chunks) + (2 if is_last else 0))
+        chunk_min = max(2, min_slides // len(chunks))
+        chunk_max = max(4, max_slides // len(chunks) + (1 if is_last else 0))
 
         try:
             result = _call_api(
@@ -240,7 +240,8 @@ def _call_api(client, text: str, style_block: str, custom_instructions: str,
 
     user_content = f"""{category_note}
 
-Analyze this document content and generate a slide structure.
+Analyze this document content and generate a slide structure in JSON.
+**CRITICAL: Be concise. Summarize effectively. Avoid long sentences.**
 {continuation_note}
 {style_block}
 ## Document Content
@@ -261,33 +262,35 @@ Analyze this document content and generate a slide structure.
     # JSON 추출 및 정제
     clean_text = re.sub(r"```(?:json)?\s*|\s*```", "", raw_text).strip()
     
-    def try_parse(text):
+    def robust_parse(text):
         try:
             return json.loads(text)
         except json.JSONDecodeError:
-            # 쉼표 누락 복구
-            text = re.sub(r'}\s*"', '}, "', text)
-            text = re.sub(r']\s*"', '], "', text)
-            try:
-                return json.loads(text)
+            # 1. 쉼표 누락 복구
+            t = re.sub(r'}\s*"', '}, "', text)
+            t = re.sub(r']\s*"', '], "', t)
+            try: return json.loads(t)
             except:
+                # 2. 잘린 문자열 및 괄호 복구 시도 (공격적 복구)
+                # 따옴표가 안 닫혔을 가능성 고려
+                for i in range(1, 10):
+                    # 따옴표 닫고 중괄호 닫기 시도
+                    try: return json.loads(t + '"' + '}' * i)
+                    except: pass
+                    try: return json.loads(t + '"' + ']}' * i)
+                    except: pass
+                    # 그냥 중괄호 닫기 시도
+                    try: return json.loads(t + '}' * i)
+                    except: pass
+                    try: return json.loads(t + ']}' * i)
+                    except: pass
                 return None
 
-    result = try_parse(clean_text)
-    if result: return result
-
-    # 만약 잘린 JSON이라면 강제로 닫기 시도
-    for i in range(1, 5):
-        try:
-            test_text = clean_text + ("\n" + "}" * i)
-            result = try_parse(test_text)
-            if result: return result
-            test_text = clean_text + ("\n" + " ] }" * i)
-            result = try_parse(test_text)
-            if result: return result
-        except: continue
-
-    raise ValueError(f"Claude JSON 파싱 실패. 답변이 너무 길어 중간에 잘렸을 수 있습니다. (길이: {len(clean_text)})")
+    result = robust_parse(clean_text)
+    if not result:
+        raise ValueError(f"Claude JSON 파싱 실패. 답변이 너무 길어 중간에 잘렸을 수 있습니다. (길이: {len(clean_text)})")
+    
+    return result
 
 
 def generate_slides_from_images(
