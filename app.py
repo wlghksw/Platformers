@@ -83,12 +83,18 @@ def generate():
     content_file.save(str(content_path))
 
     # ── 3. 텍스트 추출 ──
+    print(f"[*] Extracting text from: {content_file.filename} ({content_ext})")
     try:
         document_text = extract_text(str(content_path))
-        if not document_text.strip():
-            return jsonify({"error": "문서에서 텍스트를 추출할 수 없습니다."}), 400
+        if not document_text or not document_text.strip():
+            print(f"[!] Extraction resulted in empty text for {content_file.filename}")
+            return jsonify({
+                "error": f"문서({content_ext})에서 텍스트를 추출할 수 없습니다. 내용이 비어있거나 스캔된 이미지 문서인지 확인해주세요."
+            }), 400
+        print(f"[*] Successfully extracted {len(document_text)} characters.")
     except Exception as e:
-        return jsonify({"error": f"파일 파싱 실패: {str(e)}"}), 500
+        traceback.print_exc()
+        return jsonify({"error": f"파일 파싱 실패 ({content_ext}): {str(e)}"}), 500
 
     # ── 4. 콘텐츠 PDF 이미지 추출 (제안서 내 사진 활용) ──
     images = []
