@@ -119,7 +119,7 @@ def generate_slides(
     Claude API로 슬라이드 구조 생성
     긴 문서는 청크별로 처리 후 병합
     """
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"), timeout=300.0)
     text_length = len(document_text)
     min_slides, max_slides = _estimate_slide_count(text_length)
     
@@ -283,7 +283,7 @@ def generate_slides_from_images(
     이미지 PDF(스캔본)를 Claude Vision API로 직접 분석해 슬라이드 생성.
     pages: extract_pdf_as_images()의 반환값
     """
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"), timeout=300.0)
 
     total_pages = len(pages)
     # 이미지 분석 시에는 텍스트보다 정보량이 적을 수 있으므로 슬라이드 수 조절
