@@ -261,17 +261,33 @@ Analyze this document content and generate a slide structure.
     # JSON 추출 및 정제
     clean_text = re.sub(r"```(?:json)?\s*|\s*```", "", raw_text).strip()
     
-    try:
-        return json.loads(clean_text)
-    except json.JSONDecodeError:
-        # 사소한 문법 오류(쉼표 누락 등) 복구 시도
+    def try_parse(text):
         try:
-            # 1. 객체/배열 사이의 누락된 쉼표 복구 (예: } "key" -> }, "key")
-            fixed_text = re.sub(r'}\s*"', '}, "', clean_text)
-            fixed_text = re.sub(r']\s*"', '], "', fixed_text)
-            return json.loads(fixed_text)
-        except Exception:
-            raise ValueError(f"Claude JSON 파싱 실패. 문법 오류가 있습니다.\nResponse: {raw_text[:500]}...")
+            return json.loads(text)
+        except json.JSONDecodeError:
+            # 쉼표 누락 복구
+            text = re.sub(r'}\s*"', '}, "', text)
+            text = re.sub(r']\s*"', '], "', text)
+            try:
+                return json.loads(text)
+            except:
+                return None
+
+    result = try_parse(clean_text)
+    if result: return result
+
+    # 만약 잘린 JSON이라면 강제로 닫기 시도
+    for i in range(1, 5):
+        try:
+            test_text = clean_text + ("\n" + "}" * i)
+            result = try_parse(test_text)
+            if result: return result
+            test_text = clean_text + ("\n" + " ] }" * i)
+            result = try_parse(test_text)
+            if result: return result
+        except: continue
+
+    raise ValueError(f"Claude JSON 파싱 실패. 답변이 너무 길어 중간에 잘렸을 수 있습니다. (길이: {len(clean_text)})")
 
 
 def generate_slides_from_images(
@@ -288,7 +304,7 @@ def generate_slides_from_images(
     total_pages = len(pages)
     # 이미지 분석 시에는 텍스트보다 정보량이 적을 수 있으므로 슬라이드 수 조절
     min_slides = max(8, total_pages)
-    max_slides = min(25, total_pages * 2)
+    max_slides = min(22, total_pages * 2)
 
     # 카테고리별 지시사항
     category_note = ""
@@ -296,8 +312,7 @@ def generate_slides_from_images(
         category_note = f"""
 ## [CATEGORY: AT Center Curriculum]
 1. Structure: Clearly numbered Chapters (01, 02, etc.).
-2. Chapter Slides: Use "chapter" layout. "tag" must be "01", "02".
-3. Goal: Generate around {min_slides} to {max_slides} slides.
+2. Goal: Generate around {min_slides} to {max_slides} slides.
 """
     else:
         category_note = f"""
@@ -320,7 +335,8 @@ def generate_slides_from_images(
 
     instruction_text = f"""{category_note}
 위 이미지들을 보고 핵심 내용을 추출하여 유효한 JSON 형식으로만 응답하세요.
-**중요: 모든 JSON 객체와 필드 사이에 반드시 쉼표(,)를 누락하지 마세요.**
+**CRITICAL: Keep the content concise to avoid output truncation. Each slide should have 2-3 main points only.**
+**DO NOT repeat the entire document text. Summarize effectively.**
 Generate between {min_slides} and {max_slides} slides.
 """
     if custom_instructions:
@@ -331,23 +347,32 @@ Generate between {min_slides} and {max_slides} slides.
     response = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=8192,
-        system=SYSTEM_PROMPT + "\nIMPORTANT: Ensure the JSON is perfectly valid and all strings/objects are closed properly.",
+        system=SYSTEM_PROMPT + "\nIMPORTANT: Be concise. Ensure the JSON is valid. If it gets long, stop early but close the JSON properly.",
         messages=[{"role": "user", "content": content_blocks}],
     )
 
     raw_text = response.content[0].text.strip()
     clean_text = re.sub(r"```(?:json)?\s*|\s*```", "", raw_text).strip()
 
-    try:
-        # 첫 번째 시도: 일반 파싱
-        result = json.loads(clean_text)
-    except json.JSONDecodeError:
-        # 두 번째 시도: 쉼표 복구 후 파싱
-        try:
-            fixed_text = re.sub(r'}\s*"', '}, "', clean_text)
-            result = json.loads(fixed_text)
-        except Exception:
-            raise ValueError("Vision API가 생성한 JSON에 문법 오류가 있습니다. 다시 시도해 주세요.")
+    # 복구 가능한 파싱 시도
+    def robust_json_load(text):
+        try: return json.loads(text)
+        except:
+            # 쉼표 복구
+            text = re.sub(r'}\s*"', '}, "', text)
+            try: return json.loads(text)
+            except:
+                # 잘린 괄호 복구 (최대 10개까지 닫아봄)
+                for j in range(1, 10):
+                    try: return json.loads(text + "}" * j)
+                    except: 
+                        try: return json.loads(text + "]}" * j)
+                        except: continue
+                return None
+
+    result = robust_json_load(clean_text)
+    if not result:
+        raise ValueError("Vision API 답변이 너무 길어 처리에 실패했습니다. 조금 더 짧은 문서로 시도해 주세요.")
 
     slides = result.get("slides", [])
     for idx, slide in enumerate(slides, 1):
