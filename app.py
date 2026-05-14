@@ -18,8 +18,8 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# 파일 크기 제한 (50MB)
-app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
+# 파일 크기 제한 (200MB - 멀티 파일 환경 대응)
+app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024
 
 UPLOAD_DIR = Path("/tmp/uploads")
 OUTPUT_DIR = Path("/tmp/outputs")
