@@ -9,7 +9,7 @@ import traceback
 from pathlib import Path
 from datetime import datetime
 
-from flask import Flask, request, jsonify, send_file, render_template
+from flask import Flask, request, jsonify, send_file, render_template, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -61,6 +61,11 @@ def generate():
 
     if not content_files or not content_files[0].filename:
         return jsonify({"error": "콘텐츠 파일을 업로드해주세요."}), 400
+
+    # 허용되지 않는 파일 형식 검사
+    for cf in content_files:
+        if not allowed_content(cf.filename):
+            return jsonify({"error": f"지원하지 않는 파일 형식입니다: {cf.filename}"}), 400
 
     session_id = str(uuid.uuid4())[:8]
     all_document_texts = []
@@ -177,7 +182,6 @@ def viewer(session_id):
         category=data.get("category", "proposal")
     )
 
-from flask import send_from_directory
 @app.route("/api/images/<session_id>/<filename>")
 def serve_image(session_id, filename):
     img_dir = UPLOAD_DIR / f"{session_id}_imgs"
@@ -211,7 +215,9 @@ def preview():
         document_text = extract_text(str(content_path))
         slides_data = generate_slides(
             document_text=document_text,
+            template_info=None,
             custom_instructions=instructions,
+            category="proposal"
         )
         return jsonify(slides_data)
     except Exception as e:
