@@ -26,7 +26,7 @@ OUTPUT_DIR = Path("/tmp/outputs")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-ALLOWED_CONTENT_EXTENSIONS = {".pdf", ".docx", ".pptx", ".txt"}
+ALLOWED_CONTENT_EXTENSIONS = {".pdf", ".docx", ".pptx", ".txt", ".xlsx", ".xls"}
 ALLOWED_TEMPLATE_EXTENSIONS = {".pdf"}
 
 

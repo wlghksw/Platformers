@@ -20,6 +20,8 @@ def extract_text(filepath: str) -> str:
     elif ext == ".txt":
         with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
             return f.read()
+    elif ext in (".xlsx", ".xls"):
+        return _extract_excel(filepath)
     else:
         raise ValueError(f"지원하지 않는 파일 형식: {ext}")
 
@@ -119,6 +121,48 @@ def _extract_pptx(filepath: str) -> str:
             slides_text.append(f"[슬라이드 {slide_num}]\n" + "\n".join(texts))
 
     return "\n\n".join(slides_text)
+
+
+def _extract_excel(filepath: str) -> str:
+    """
+    엑셀 파일에서 텍스트 추출
+    모든 시트의 데이터를 행 기반 텍스트로 변환
+    """
+    import pandas as pd
+
+    result_parts = []
+    try:
+        # .xls는 xlrd 엔진, .xlsx는 openpyxl 엔진 자동 선택
+        ext = Path(filepath).suffix.lower()
+        engine = "xlrd" if ext == ".xls" else "openpyxl"
+        xl = pd.ExcelFile(filepath, engine=engine)
+    except Exception as e:
+        raise ValueError(f"엑셀 파일을 열 수 없습니다: {e}")
+
+    for sheet_name in xl.sheet_names:
+        try:
+            df = xl.parse(sheet_name, header=None, dtype=str)
+            # 완전히 빈 행 제거
+            df.dropna(how="all", inplace=True)
+            if df.empty:
+                continue
+
+            sheet_lines = [f"[시트: {sheet_name}]"]
+            for _, row in df.iterrows():
+                # 셀을 '|'로 구분하고 빈 값 제외
+                cells = [str(c).strip() for c in row if str(c).strip() not in ("", "nan", "None")]
+                if cells:
+                    sheet_lines.append(" | ".join(cells))
+
+            if len(sheet_lines) > 1:  # 헤더 외 데이터가 있을 때만 추가
+                result_parts.append("\n".join(sheet_lines))
+        except Exception:
+            continue
+
+    if not result_parts:
+        raise ValueError("엑셀 파일에서 텍스트를 추출할 수 없습니다. 시트에 데이터가 있는지 확인해주세요.")
+
+    return "\n\n".join(result_parts)
 
 
 def get_template_info(filepath: str) -> dict:

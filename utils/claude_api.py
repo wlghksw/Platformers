@@ -210,9 +210,14 @@ def _call_api(client, text: str, style_block: str, custom_instructions: str,
    - Must divide the presentation into clearly numbered Chapters (01, 02, etc.).
    - EVERY Chapter MUST start with a "chapter" layout slide.
    - Example slide sequence: title -> chapter (01) -> content -> content -> chapter (02) -> content -> closing.
-2. Tone: Educational, clear, instructional, and structured for learners.
-3. Content: Focus on learning objectives and step-by-step concepts.
-4. Goal: Generate around {min_slides} to {max_slides} slides.
+2. Chapter Slide Rules (CRITICAL):
+   - For "chapter" layout slides, the "tag" field MUST be the zero-padded chapter number ONLY: "01", "02", "03".
+   - For "chapter" layout slides, the "title" field MUST be the chapter title WITHOUT the number prefix.
+   - WRONG: {{"layout": "chapter", "tag": "CHAPTER", "title": "01 농수산물유통안정법의 역사"}}
+   - CORRECT: {{"layout": "chapter", "tag": "01", "title": "농수산물유통안정법의 역사"}}
+3. Tone: Educational, clear, instructional, and structured for learners.
+4. Content: Focus on learning objectives and step-by-step concepts.
+5. Goal: Generate around {min_slides} to {max_slides} slides.
 """
     else:
         category_note = f"""

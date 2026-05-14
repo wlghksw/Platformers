@@ -220,43 +220,146 @@
     }
 
     /* ── AT 센터 교안 추가 스타일 ── */
+
+    /* 표지 슬라이드 */
+    .at-cover-bg {
+      background-image: url('/static/img/at_cover.png');
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+    .at-cover-subtitle {
+      position: absolute;
+      top: 110px;
+      left: 80px;
+      font-size: 20px;
+      font-weight: 500;
+      color: #888;
+    }
+    .at-cover-title {
+      position: absolute;
+      top: 230px;
+      left: 80px;
+      font-size: 64px;
+      font-weight: 900;
+      color: #2550e8;
+      line-height: 1.2;
+      max-width: 640px;
+    }
+
+    /* 챕터 구분 슬라이드 */
     .at-chapter-bg {
       background-image: url('/static/img/at_chapter.png');
       background-size: cover;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding-left: 120px;
       position: relative;
     }
     .at-chapter-num {
+      position: absolute;
+      top: 240px;
+      left: 120px;
       font-size: 100px;
       font-weight: 800;
       color: #2550e8;
       line-height: 1;
-      margin-bottom: 20px;
     }
     .at-chapter-title {
-      font-size: 64px;
+      position: absolute;
+      top: 375px;
+      left: 120px;
+      font-size: 58px;
       font-weight: 800;
       color: #1a1a1a;
-      line-height: 1.2;
+      line-height: 1.25;
+      max-width: 900px;
     }
+
+    /* 본문 슬라이드 */
     .at-content-bg {
       background-image: url('/static/img/at_content_bg.png');
       background-size: cover;
+      position: relative;
     }
-    .at-header-info {
+    .at-right-header {
       position: absolute;
-      top: 35px;
-      left: 120px;
-      font-size: 18px;
-      color: #777;
+      top: 0;
+      right: 0;
+      height: 160px;
+      width: auto;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .at-header-left {
+      position: absolute;
+      top: 88px;
+      left: 60px;
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 12px;
+      font-size: 17px;
+      color: #555;
+      font-weight: 500;
+      z-index: 5;
     }
-    .at-header-info b { color: #333; font-weight: 700; }
+    .at-header-left .chap-num {
+      font-size: 34px;
+      font-weight: 900;
+      color: #333;
+      line-height: 1;
+    }
+    .at-header-left .pipe { color: #bbb; font-size: 22px; }
+    .at-content-area {
+      position: absolute;
+      top: 178px;
+      left: 60px;
+      right: 60px;
+      bottom: 56px;
+      overflow: hidden;
+    }
+    .at-slide-title {
+      font-size: 38px;
+      font-weight: 900;
+      color: #1a1a1a;
+      margin-bottom: 24px;
+      line-height: 1.2;
+    }
+    .at-bullet-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .at-bullet-list li {
+      font-size: 22px;
+      color: #333;
+      line-height: 1.6;
+      margin-bottom: 10px;
+      padding-left: 24px;
+      position: relative;
+    }
+    .at-bullet-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 13px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2550e8;
+    }
+    .at-sub-text {
+      font-size: 16px;
+      color: #888;
+      margin-top: 16px;
+      line-height: 1.5;
+    }
+    .at-page-num {
+      position: absolute;
+      bottom: 26px;
+      right: 46px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #bbb;
+      z-index: 5;
+    }
   </style>
 </head>
 <body>
@@ -271,54 +374,54 @@
   
   {# 1. AT 센터 교안 레이아웃 #}
   {% if category == 'at_curriculum' %}
+
     {% if slide.layout == 'title' %}
-      <section class="slide" style="padding:0;">
-        <img src="/static/img/at_cover.png" alt="AT센터 표지" style="width:100%; height:100%; object-fit:cover;">
+      <!-- 표지: 배경 이미지 + 텍스트 오버레이 -->
+      <section class="slide at-cover-bg">
+        <div class="at-cover-subtitle">{{ slide.subtitle | default('') }}</div>
+        <div class="at-cover-title">{{ slide.title }}</div>
       </section>
+
     {% elif slide.layout == 'chapter' %}
+      <!-- 챕터 구분: tag=챕터번호, title=챕터제목 -->
       <section class="slide at-chapter-bg">
-        <div class="at-chapter-num">{{ slide.title[:2] }}</div>
-        <div class="at-chapter-title">{{ slide.title[2:] | trim }}</div>
+        <div class="at-chapter-num">{{ slide.tag }}</div>
+        <div class="at-chapter-title">{{ slide.title }}</div>
       </section>
+
     {% else %}
+      <!-- 본문 슬라이드: 배경 + right_header 고정 + 텍스트 -->
       <section class="slide at-content-bg">
-        <div class="at-header-info">
-           <b>{{ slide.tag }}</b> | {{ slide.subtitle | default(title) }}
+        <!-- 우측 상단 로고 헤더 고정 -->
+        <img src="/static/img/right_header.png" class="at-right-header" alt="헤더 로고">
+        <!-- 좌측 헤더: 챕터번호 | 슬라이드 부제 -->
+        <div class="at-header-left">
+          <span class="chap-num">{{ slide.tag }}</span>
+          <span class="pipe">|</span>
+          <span>{{ slide.subtitle | default(title) }}</span>
         </div>
-        <div class="slide-content" style="margin-top: 100px;">
-          <div class="header" style="margin-bottom: 20px;">
-            <div class="header-text-group">
-              <div class="header-title" style="font-size: 48px; border-bottom: none; margin-bottom: 0;">{{ slide.title }}</div>
-            </div>
-          </div>
-          <div class="content-flex-container" style="display: flex; gap: 40px; height: calc(100% - 200px); position: relative; z-index: 1;">
-            <div class="content-body" style="flex: 1; overflow-y: hidden;">
-              {% if slide.content %}
-                {% if slide.content.main_points %}
-                  <ul>
-                    {% for point in slide.content.main_points %}
-                      <li>{{ point }}</li>
-                    {% endfor %}
-                  </ul>
-                {% endif %}
-                {% if slide.content.sub_text %}
-                  <p style="font-size: 0.9em; color: #666; margin-top: 20px;">{{ slide.content.sub_text }}</p>
-                {% endif %}
-              {% endif %}
-            </div>
-            {% set img_index = loop.index0 %}
-            {% if images and img_index >= 0 and img_index < images|length %}
-              <div class="slide-image-wrapper">
-                <img src="{{ images[img_index] }}" alt="추출된 이미지">
-              </div>
+        <!-- 본문 콘텐츠 영역 -->
+        <div class="at-content-area">
+          <div class="at-slide-title">{{ slide.title }}</div>
+          {% if slide.content %}
+            {% if slide.content.main_points %}
+              <ul class="at-bullet-list">
+                {% for point in slide.content.main_points %}
+                  <li>{{ point }}</li>
+                {% endfor %}
+              </ul>
             {% endif %}
-          </div>
+            {% if slide.content.sub_text %}
+              <p class="at-sub-text">{{ slide.content.sub_text }}</p>
+            {% endif %}
+          {% endif %}
         </div>
-        <div style="position: absolute; bottom: 30px; right: 40px; font-size: 14px; font-weight: 700; color: #999;">
-          {{ loop.index }} / {{ slides | length }}
-        </div>
+        <!-- 페이지 번호 -->
+        <div class="at-page-num">{{ loop.index }} / {{ slides | length }}</div>
       </section>
+
     {% endif %}
+
 
   {# 2. 기존 교육 제안서 레이아웃 #}
   {% else %}
