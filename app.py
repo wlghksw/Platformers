@@ -84,17 +84,39 @@ def generate():
 
     # ── 3. 텍스트 추출 ──
     print(f"[*] Extracting text from: {content_file.filename} ({content_ext})")
+    use_vision = False
+    document_text = ""
     try:
         document_text = extract_text(str(content_path))
         if not document_text or not document_text.strip():
-            print(f"[!] Extraction resulted in empty text for {content_file.filename}")
-            return jsonify({
-                "error": f"문서({content_ext})에서 텍스트를 추출할 수 없습니다. 내용이 비어있거나 스캔된 이미지 문서인지 확인해주세요."
-            }), 400
-        print(f"[*] Successfully extracted {len(document_text)} characters.")
+            print(f"[!] Empty text extracted — will try Vision AI for: {content_file.filename}")
+            use_vision = True
+        else:
+            print(f"[*] Successfully extracted {len(document_text)} characters.")
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": f"파일 파싱 실패 ({content_ext}): {str(e)}"}), 500
+
+    # ── 3-b. Vision 폴백: PDF가 이미지로만 구성된 경우 ──
+    if use_vision:
+        if content_ext != ".pdf":
+            return jsonify({"error": f"이미지 문서 분석은 PDF 형식만 지원합니다. (현재: {content_ext})"}), 400
+        try:
+            from utils.file_parser import extract_pdf_as_images
+            from utils.claude_api import generate_slides_from_images
+            print("[*] Switching to Vision AI mode...")
+            pages = extract_pdf_as_images(str(content_path), max_pages=15)
+            if not pages:
+                return jsonify({"error": "PDF에서 이미지를 추출할 수 없습니다."}), 400
+            print(f"[*] Sending {len(pages)} page images to Vision AI...")
+            slides_data = generate_slides_from_images(pages, custom_instructions=instructions, category=category)
+            data_path = OUTPUT_DIR / f"{session_id}_data.json"
+            with open(data_path, "w", encoding="utf-8") as f:
+                json.dump({"slides_data": slides_data, "images": [], "category": category}, f, ensure_ascii=False)
+            return jsonify({"redirect": f"/viewer/{session_id}"})
+        except Exception as e:
+            traceback.print_exc()
+            return jsonify({"error": f"Vision AI 분석 실패: {str(e)}"}), 500
 
     # ── 4. 콘텐츠 PDF 이미지 추출 (제안서 내 사진 활용) ──
     images = []

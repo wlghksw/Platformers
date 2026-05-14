@@ -263,3 +263,88 @@ Analyze this document content and generate a slide structure.
         return json.loads(clean_text)
     except json.JSONDecodeError as e:
         raise ValueError(f"Claude API response parse failed: {e}\nResponse: {raw_text[:500]}")
+
+
+def generate_slides_from_images(
+    pages: list,
+    custom_instructions: str = None,
+    category: str = "proposal"
+) -> dict:
+    """
+    이미지 PDF(스캔본)를 Claude Vision API로 직접 분석해 슬라이드 생성.
+    pages: extract_pdf_as_images()의 반환값
+    """
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+    total_pages = len(pages)
+    min_slides = max(5, total_pages)
+    max_slides = min(30, total_pages * 2)
+
+    # 카테고리별 지시사항
+    if category == "at_curriculum":
+        category_note = f"""
+## [CATEGORY: AT Center Curriculum]
+1. Structure:
+   - Must divide the presentation into clearly numbered Chapters (01, 02, etc.).
+   - EVERY Chapter MUST start with a "chapter" layout slide.
+2. Chapter Slide Rules (CRITICAL):
+   - For "chapter" layout slides, the "tag" field MUST be the zero-padded chapter number: "01", "02", "03".
+   - For "chapter" layout slides, the "title" field MUST be the chapter title WITHOUT the number prefix.
+3. Tone: Educational, clear, instructional.
+4. Goal: Generate around {min_slides} to {max_slides} slides.
+"""
+    else:
+        category_note = f"""
+## [CATEGORY: Education Proposal]
+1. Structure: Professional proposal flow (Overview -> Problem -> Solution -> Strategy -> Conclusion).
+2. Layouts: Do NOT use "chapter" layout. Stick to title, content, two_column, data, closing.
+3. Tone: Persuasive, professional, corporate.
+4. Goal: Generate around {min_slides} to {max_slides} slides.
+"""
+
+    # 이미지 콘텐츠 블록 구성 (각 페이지를 이미지로 전달)
+    content_blocks = []
+    for p in pages:
+        content_blocks.append({
+            "type": "text",
+            "text": f"[페이지 {p['page']}]"
+        })
+        content_blocks.append({
+            "type": "image",
+            "source": {
+                "type": "base64",
+                "media_type": p["media_type"],
+                "data": p["base64"]
+            }
+        })
+
+    instruction_text = f"""{category_note}
+위 이미지들은 문서의 각 페이지입니다.
+각 페이지의 내용을 꼼꼼히 읽고, 핵심 내용을 슬라이드 구조로 변환해주세요.
+Generate between {min_slides} and {max_slides} slides.
+"""
+    if custom_instructions:
+        instruction_text += f"\n## Additional Instructions\n{custom_instructions}\n"
+
+    content_blocks.append({"type": "text", "text": instruction_text})
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=8192,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": content_blocks}],
+    )
+
+    raw_text = response.content[0].text.strip()
+    clean_text = re.sub(r"```(?:json)?\s*|\s*```", "", raw_text).strip()
+
+    try:
+        result = json.loads(clean_text)
+        # 페이지 번호 재정렬
+        slides = result.get("slides", [])
+        for idx, slide in enumerate(slides, 1):
+            slide["page"] = idx
+        result["total_pages"] = len(slides)
+        return result
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Vision API response parse failed: {e}\nResponse: {raw_text[:500]}")

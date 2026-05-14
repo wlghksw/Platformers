@@ -1,9 +1,10 @@
 """
 파일에서 텍스트와 이미지를 추출하는 유틸리티
-지원 형식: PDF, DOCX, PPTX, TXT
+지원 형식: PDF, DOCX, PPTX, TXT, XLSX/XLS
 """
 import os
 import io
+import base64
 from pathlib import Path
 
 
@@ -24,6 +25,34 @@ def extract_text(filepath: str) -> str:
         return _extract_excel(filepath)
     else:
         raise ValueError(f"지원하지 않는 파일 형식: {ext}")
+
+
+def extract_pdf_as_images(filepath: str, max_pages: int = 15, dpi: int = 150) -> list:
+    """
+    이미지 PDF (스캔본 등)를 페이지별 base64 이미지로 변환.
+    Vision AI 분석을 위해 사용.
+    Returns: [{"base64": str, "media_type": "image/png", "page": int}, ...]
+    """
+    import fitz  # PyMuPDF
+
+    doc = fitz.open(filepath)
+    pages_data = []
+    total = min(len(doc), max_pages)
+    zoom = dpi / 72.0  # 기본 72dpi 기준 배율
+
+    for page_num in range(total):
+        page = doc[page_num]
+        mat = fitz.Matrix(zoom, zoom)
+        pix = page.get_pixmap(matrix=mat, alpha=False)
+        img_bytes = pix.tobytes("png")
+        b64 = base64.standard_b64encode(img_bytes).decode("utf-8")
+        pages_data.append({
+            "base64": b64,
+            "media_type": "image/png",
+            "page": page_num + 1
+        })
+
+    return pages_data
 
 
 def extract_images_from_pdf(filepath: str, output_dir: str, min_width: int = 200, min_height: int = 150) -> list:
