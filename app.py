@@ -221,12 +221,30 @@ def generate():
     html_content = build_html(
         slides_data=slides_data,
         images=image_list,
-        category=category
+        category=category,
+        session_id=session_id
     )
 
     html_path = OUTPUT_DIR / f"{session_id}.html"
     save_html(html_content, str(html_path))
     print(f"[*] HTML built successfully: {html_path}")
+
+    # PPTX 빌드 추가 (표준 GPT-4o 흐름)
+    from utils.pptx_builder import build_presentation
+    pptx_path = OUTPUT_DIR / f"{session_id}.pptx"
+    try:
+        build_presentation(
+            slides_data=slides_data,
+            output_path=str(pptx_path),
+            images=image_library,
+            template_info=None,
+            category=category
+        )
+        print(f"[*] PPTX built successfully for standard flow: {pptx_path}")
+    except Exception as pptx_err:
+        import traceback
+        print(f"[!] PPTX build failed: {pptx_err}")
+        traceback.print_exc()
 
     # 세션 데이터 저장
     data_path = OUTPUT_DIR / f"{session_id}_data.json"
@@ -235,7 +253,8 @@ def generate():
             "slides_data": slides_data,
             "images": image_list,
             "category": category,
-            "html_file": f"{session_id}.html"
+            "html_file": f"{session_id}.html",
+            "pptx_file": f"{session_id}.pptx"
         }, f, ensure_ascii=False)
 
     return jsonify({"redirect": f"/viewer/{session_id}"})
@@ -247,6 +266,55 @@ def download_html(session_id):
         OUTPUT_DIR, html_filename,
         as_attachment=True,
         download_name=f"CrayonSchool_Proposal_{session_id}.html"
+    )
+
+@app.route("/download/pptx/<session_id>")
+def download_pptx(session_id):
+    pptx_filename = f"{session_id}.pptx"
+    pptx_path = OUTPUT_DIR / pptx_filename
+    
+    # PPTX 파일이 존재하지 않는 경우 세션 데이터를 이용해 실시간 복구 및 재생성 시도
+    if not pptx_path.exists():
+        data_path = OUTPUT_DIR / f"{session_id}_data.json"
+        if not data_path.exists():
+            return "Session not found", 404
+            
+        with open(data_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        # 로컬 세션 이미지 디렉토리를 참조하여 pptx_builder가 요구하는 로컬 절대 경로 목록 재구성
+        img_dir = UPLOAD_DIR / f"{session_id}_imgs"
+        local_images = []
+        for img in data.get("images", []):
+            if "url" in img:
+                filename = Path(img["url"]).name
+                local_path = img_dir / filename
+                if local_path.exists():
+                    local_images.append({**img, "path": str(local_path)})
+                else:
+                    local_images.append(img)
+            else:
+                local_images.append(img)
+                
+        from utils.pptx_builder import build_presentation
+        try:
+            build_presentation(
+                slides_data=data.get("slides_data", {}),
+                output_path=str(pptx_path),
+                images=local_images,
+                template_info=None,
+                category=data.get("category", "proposal")
+            )
+            print(f"[*] PPTX successfully regenerated on-the-fly: {pptx_path}")
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return f"Failed to regenerate PPTX: {str(e)}", 500
+            
+    return send_from_directory(
+        OUTPUT_DIR, pptx_filename,
+        as_attachment=True,
+        download_name=f"CrayonSchool_Proposal_{session_id}.pptx"
     )
 
 @app.route("/viewer/<session_id>")
@@ -268,7 +336,8 @@ def viewer(session_id):
     html_content = build_html(
         slides_data=data.get("slides_data", {}),
         images=data.get("images", []),
-        category=data.get("category", "proposal")
+        category=data.get("category", "proposal"),
+        session_id=session_id
     )
     save_html(html_content, str(html_path))
     return send_file(str(html_path), mimetype="text/html")

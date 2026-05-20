@@ -683,7 +683,8 @@ _ZOOM_CONTROLS_ASSET = ""
 def build_html(
     slides_data: dict,
     images: list = None,
-    category: str = "proposal"
+    category: str = "proposal",
+    session_id: str = None
 ) -> str:
     """
     슬라이드 JSON → 완전 독립형 HTML 문자열 변환
@@ -692,6 +693,7 @@ def build_html(
         slides_data: generate_slides() 반환값
         images: 이미지 라이브러리 (matched_image_url 포함)
         category: "proposal" | "at_curriculum"
+        session_id: PPTX 다운로드 링크를 위한 세션 ID
 
     Returns:
         독립 실행 가능한 완성형 HTML 문자열
@@ -710,6 +712,52 @@ def build_html(
     slides_html = ""
     for slide in slides:
         slides_html += _render_slide(slide, image_list=images)
+
+    # 뷰어 액션 패널 HTML 생성 (Glassmorphism Floating Panel)
+    if session_id:
+        viewer_actions_html = f"""
+  <div class="viewer-actions">
+    <div class="viewer-actions-brand">
+      <div class="viewer-actions-brand-dot">C</div>
+      <span>CrayonSchool</span>
+    </div>
+    <div class="viewer-actions-divider"></div>
+    <a href="/download/pptx/{session_id}" class="viewer-action-btn viewer-action-btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      <span>PPTX 다운로드</span>
+    </a>
+    <button onclick="window.print()" class="viewer-action-btn viewer-action-btn-secondary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+        <rect x="6" y="14" width="12" height="8"></rect>
+      </svg>
+      <span>PDF 저장/인쇄</span>
+    </button>
+  </div>
+"""
+    else:
+        viewer_actions_html = """
+  <div class="viewer-actions">
+    <div class="viewer-actions-brand">
+      <div class="viewer-actions-brand-dot">C</div>
+      <span>CrayonSchool</span>
+    </div>
+    <div class="viewer-actions-divider"></div>
+    <button onclick="window.print()" class="viewer-action-btn viewer-action-btn-secondary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+        <rect x="6" y="14" width="12" height="8"></rect>
+      </svg>
+      <span>PDF 저장/인쇄</span>
+    </button>
+  </div>
+"""
 
     html = f"""<!DOCTYPE html>
 <html lang="ko">
@@ -731,6 +779,116 @@ def build_html(
   min-height: 100vh;
   background: #2b2b2b;
 }}
+
+/* ── Floating Action Viewer Actions (Glassmorphism Control Panel) ── */
+.viewer-actions {{
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: rgba(18, 43, 70, 0.85); /* Crayon Deep Navy with Glassmorphism */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(254, 190, 16, 0.25); /* Gold outline */
+  border-radius: var(--radius-full);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(18, 43, 70, 0.1);
+  z-index: 99999;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}}
+
+.viewer-actions:hover {{
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(254, 190, 16, 0.2);
+  border-color: rgba(254, 190, 16, 0.45);
+}}
+
+.viewer-actions-brand {{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #FFFFFF;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 1px;
+}}
+
+.viewer-actions-brand-dot {{
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--primary);
+  color: var(--secondary);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}}
+
+.viewer-actions-divider {{
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.15);
+}}
+
+.viewer-action-btn {{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  line-height: 1;
+}}
+
+.viewer-action-btn-primary {{
+  background-color: var(--primary);
+  color: var(--secondary);
+  box-shadow: 0 4px 12px rgba(254, 190, 16, 0.3);
+}}
+
+.viewer-action-btn-primary:hover {{
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(254, 190, 16, 0.4);
+}}
+
+.viewer-action-btn-secondary {{
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}}
+
+.viewer-action-btn-secondary:hover {{
+  background-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}}
+
+.viewer-action-btn svg {{
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  flex-shrink: 0;
+}}
+
+@media print {{
+  .viewer-actions {{
+    display: none !important;
+  }}
+}}
   </style>
 </head>
 <body>
@@ -738,7 +896,7 @@ def build_html(
     {slides_html}
   </div>
   
-  {_ZOOM_CONTROLS_ASSET}
+  {viewer_actions_html}
   
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script>

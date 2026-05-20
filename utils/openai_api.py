@@ -551,29 +551,38 @@ def _call_gpt4o(
         category_note = f"""
 ## [CATEGORY: CrayonSchool B2B Career Education Supply Proposal]
 
-### MANDATORY SLIDE STRUCTURE (Follow this exact chapter flow):
-1. **COVER** (`title`) — Recipient name on cover, clean proposal title extracted from the uploaded document cover.
-2. **PROGRAM OVERVIEW** (`full_text` or `card_grid`) — What this proposal is (school-visiting career education package) based on the uploaded document.
-3. **ELEMENTARY PROGRAM CATALOG** (`catalog_grid`) — One slide listing ALL elementary programs from the uploaded document in a 5-column grid (code | name | features | kit | output).
-4. **MIDDLE SCHOOL PROGRAM CATALOG** (`catalog_grid`) — One slide listing ALL middle school programs from the uploaded document in a 5-column grid.
-5. **KEY SOLUTION HIGHLIGHTS** (`card_grid`) — Highlights of key tools/platforms mentioned in the uploaded document (e.g., AI 커리언트, 스콜라스 입체교구, etc. if present in document).
-6. **ELEMENTARY PROGRAM DETAIL SLIDES** (`curriculum_table`) — One `curriculum_table` slide per individual elementary program (E-L-1, E-L-2, etc.) with their EXACT 6-period breakdown from the uploaded document!
-7. **MIDDLE SCHOOL PROGRAM DETAIL SLIDES** (`curriculum_table`) — One `curriculum_table` slide per individual middle school program (M-1, M-2, M-3) with their EXACT 6-period breakdown from the uploaded document!
-8. **SUPPLY PRICING — ELEMENTARY** (`supply_pricing`) — Pricing structure and rates extracted directly from the uploaded document.
-9. **SUPPLY PRICING — MIDDLE** (`supply_pricing`) — Pricing structure and rates for middle school from the uploaded document.
-10. **SUPPLIER INTRO — Partner A** (`full_text` or `card_grid`) — Partner A profile (e.g., EduAllLab/에듀올랩 or whoever is listed in the document).
-11. **SUPPLIER INTRO — Partner B** (`full_text` or `card_grid`) — Partner B profile (e.g., Jeil Education/제일교육 or whoever is listed in the document).
-12. **CLOSING / CTA** (`closing`)
+### DYNAMIC & ADAPTIVE SLIDE STRUCTURE RULES (CRITICAL):
+Your slide flow MUST dynamically adapt based on the ACTUAL content present in the uploaded document. Do NOT force a rigid chapter sequence if the document is missing specific data. Instead, follow these adaptive guidelines:
+
+1. **COVER & INTRODUCTION** (Always include):
+   - **COVER** (`title`): Recipient name on cover (if specified in brief), proposal title extracted from the document cover.
+   - **PROGRAM OVERVIEW** (`full_text` or `card_grid`): What this proposal is about based on the uploaded document.
+
+2. **ADAPTIVE PROGRAM CATALOGS (`catalog_grid`)**:
+   - Only include catalog overview slides if the document contains a list of multiple programs.
+   - If the document only contains elementary school programs, DO NOT generate a middle school catalog. If there are no structured program catalogs in the document, omit this layout entirely.
+
+3. **ADAPTIVE PROGRAM DETAILS (`curriculum_table` or general layouts)**:
+   - Only generate detailed curriculum tables (`curriculum_table`) if the document explicitly contains session-by-session/period-by-period lesson plans or course content detail.
+   - If lesson plans are present, fill `content.curriculum` with 6 items: `{{period, topic, method, kit, detail}}` and `content.equipment` with required equipment.
+   - **If the document has programs but no period breakdown/lesson plans**, DO NOT force `curriculum_table`. Instead, describe the individual programs using standard layouts like `card_grid`, `split_v`, or `full_text` to outline their core highlights and features.
+
+4. **ADAPTIVE PRICING & TARIFFS (`supply_pricing` or `data_focus` or `comparison`)**:
+   - Only include pricing slides if the document contains pricing grids, rates, or budget structures.
+   - If pricing is present, use `supply_pricing` and fill `content.pricing_cards` with `{{title, amount, desc}}`.
+   - **If the document contains no pricing or rates**, OMIT this section entirely. Do NOT hallucinate dummy price structures or empty price cards.
+
+5. **ADAPTIVE SUPPLIER PROFILE**:
+   - Only include partner/supplier intro slides (e.g., EduAllLab, 제일교육, or others) if they are explicitly mentioned in the uploaded document or brief.
+
+6. **CLOSING** (Always include):
+   - **CLOSING / CTA** (`closing`): Persuasive call to action slide.
 
 ### STRICT B2B GROUNDING RULES:
-- YOU MUST extract all program details, lesson plans (periods 1-6), kits, and pricing strictly from the uploaded document!
-- The examples shown in layout descriptions (like "AI 커리언트", "만공 한국사", "모가비", "강사료 100,000원") are structural formatting guidelines only. If the uploaded document has different content or pricing, you MUST use the document's content. Do NOT copy the examples!
-
-### B2B LAYOUT USAGE RULES (CRITICAL):
-- `catalog_grid` MUST be used when listing multiple programs of the same grade level. Fill `content.catalog_rows` with `{{code, name, features, kit, output}}`.
-- `curriculum_table` MUST be used for each individual program's lesson plan. Fill `content.curriculum` with 6 items `{{period, topic, method, kit, detail}}` and `content.equipment` with required device/media info.
-- `supply_pricing` MUST be used for all pricing slides. Fill `content.pricing_cards` with `{{title, amount, desc}}` and `content.condition`.
-- Generate EXACTLY {min_slides} to {max_slides} slides. Long documents (3000+ tokens) must produce 20-30 slides.
+- YOU MUST extract all program details, lesson plans, kits, and pricing strictly from the uploaded document!
+- NEVER hallucinate any course names, lesson steps, kit lists, or price figures that are not mentioned in the source document.
+- If the uploaded document contains different layout structures or generic business proposal contents, adapt your slide topics to match the document's sections organically, utilizing standard layouts (`card_grid`, `split_v`, `full_text`, `data_focus`, `comparison`) for maximum professional visual impact.
+- Generate EXACTLY {min_slides} to {max_slides} slides based on the content volume of the uploaded text.
 """
 
     continuation_note = ""

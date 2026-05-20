@@ -167,6 +167,16 @@ def build_presentation(
             _render_split_h(slide, slide_info, W, H, palette, current_img, ratio)
         elif l_type == "data_focus":
             _render_data(slide, slide_info, W, H, palette, current_img)
+        elif l_type in ("card_grid", "two_column"):
+            _render_card_grid(slide, slide_info, W, H, palette)
+        elif l_type == "catalog_grid":
+            _render_catalog_grid(slide, slide_info, W, H, palette)
+        elif l_type == "curriculum_table":
+            _render_curriculum_table(slide, slide_info, W, H, palette)
+        elif l_type == "supply_pricing":
+            _render_supply_pricing(slide, slide_info, W, H, palette)
+        elif l_type == "comparison":
+            _render_comparison(slide, slide_info, W, H, palette)
         else:
             # full_text or default
             _render_content(slide, slide_info, W, H, palette, current_img)
@@ -323,6 +333,12 @@ def _insert_image(slide, img_info: dict, left, top, width, height):
         top = int(top)
         width = int(width)
         height = int(height)
+        
+        # 이미지 크기 음수 방지 예외 처리
+        if width <= 0:
+            width = Inches(1.0)
+        if height <= 0:
+            height = Inches(1.0)
         
         # python-pptx는 path만 주면 원본 크기로 삽입함
         pic = slide.shapes.add_picture(img_info["path"], left, top)
@@ -533,6 +549,10 @@ def _render_content(slide, slide_info: dict, W, H, palette: dict, img_info: dict
 
 def _render_split_v(slide, slide_info: dict, W, H, palette: dict, img_info: dict, ratio: float):
     """좌우 수직 분할 레이아웃 (ratio: 텍스트 너비 비율)"""
+    # 1.0 또는 0.0 이하일 때 기본 ratio값 안전장치 (텍스트/이미지 영역 겹침 및 음수 방지)
+    if ratio >= 1.0 or ratio <= 0.0:
+        ratio = 0.55
+
     content = slide_info.get("content", {})
     page_idx = slide_info.get("page", 1)
     _add_title_block(slide, slide_info.get("title", ""), slide_info.get("subtitle", ""), W, palette, page_idx=page_idx)
@@ -569,6 +589,10 @@ def _render_split_v(slide, slide_info: dict, W, H, palette: dict, img_info: dict
 
 def _render_split_h(slide, slide_info: dict, W, H, palette: dict, img_info: dict, ratio: float):
     """상하 수평 분할 레이아웃 (ratio: 텍스트 높이 비율)"""
+    # 1.0 또는 0.0 이하일 때 기본 ratio값 안전장치 (텍스트/이미지 영역 겹침 및 음수 방지)
+    if ratio >= 1.0 or ratio <= 0.0:
+        ratio = 0.5
+
     content = slide_info.get("content", {})
     page_idx = slide_info.get("page", 1)
     _add_title_block(slide, slide_info.get("title", ""), slide_info.get("subtitle", ""), W, palette, page_idx=page_idx)
@@ -755,3 +779,432 @@ def _render_closing(slide, slide_info: dict, W, H, palette: dict):
         run2.font.size = Pt(17)
         run2.font.color.rgb = RGBColor(0xCA, 0xDC, 0xFC)
         run2.font.name = "Malgun Gothic"
+
+
+# ─── B2B Premium Layouts ──────────────────────────────────────────────────────
+def _render_card_grid(slide, slide_info: dict, W, H, palette: dict):
+    """파스텔 카드 그리드 슬라이드 (가로형 배치)"""
+    page_idx = slide_info.get("page", 1)
+    _add_title_block(slide, slide_info.get("title", ""), slide_info.get("subtitle", ""), W, palette, page_idx=page_idx)
+
+    content = slide_info.get("content", {})
+    cards = content.get("cards", [])
+
+    # 만약 cards가 없으면 main_points를 카드로 변환
+    if not cards:
+        cards = [{"title": str(pt), "body": ""} for pt in content.get("main_points", [])]
+
+    if not cards:
+        return
+
+    num_cards = min(len(cards), 3)  # 최대 3개 배치
+    margin = Inches(0.6)
+    gap = Inches(0.3)
+    total_w = W - margin * 2
+    card_w = (total_w - (num_cards - 1) * gap) / num_cards
+    card_h = Inches(4.5)
+    card_top = Inches(1.8)
+
+    # 연령 그룹별 / 카드 스타일별 색상 매핑
+    color_map = {
+        "card-feature-rose":   ("#FFF0F0", "#FFD6D6"),
+        "card-feature-yellow": ("#FFFBE8", "#FFEFA6"),
+        "card-feature-teal":   ("#E8F6F8", "#C9ECEF"),
+        "card-feature-mint":   ("#EAF7F0", "#CDEFD8"),
+        "card-feature-coral":  ("#FFF0EA", "#FFD8C9"),
+        "card-feature-sky":    ("#EBF5FA", "#D1E6F3"),
+    }
+
+    for idx, card in enumerate(cards[:num_cards]):
+        card_left = margin + idx * (card_w + gap)
+        
+        # 색상 세트 결정
+        color_cls = card.get("color_class") or "card-feature-teal"
+        bg_hex, border_hex = color_map.get(color_cls, ("#F4F7FC", "#D0DCEF"))
+
+        # 카드 도형 추가
+        shape = slide.shapes.add_shape(1, card_left, card_top, card_w, card_h)
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = hex_to_rgb(bg_hex)
+        shape.line.color.rgb = hex_to_rgb(border_hex)
+        shape.line.width = Pt(1)
+
+        # 텍스트 박스 오버레이 생성
+        tx = slide.shapes.add_textbox(card_left + Inches(0.15), card_top + Inches(0.15), card_w - Inches(0.3), card_h - Inches(0.3))
+        tf = tx.text_frame
+        tf.word_wrap = True
+
+        c_badge = card.get("badge", card.get("tag", ""))
+        c_title = card.get("title", "")
+        c_body = card.get("body", card.get("description", ""))
+        c_meta = card.get("meta", "")
+
+        p_idx = 0
+        # 1. Badge
+        if c_badge:
+            p = tf.paragraphs[0]
+            p_idx += 1
+            p.text = f"[{remove_emoji(c_badge)}]"
+            p.font.size = Pt(10.5)
+            p.font.bold = True
+            p.font.color.rgb = palette["accent"]
+            p.font.name = "Malgun Gothic"
+            p.space_after = Pt(6)
+
+        # 2. Title
+        if p_idx == 0:
+            p = tf.paragraphs[0]
+        else:
+            p = tf.add_paragraph()
+        p_idx += 1
+        p.text = remove_emoji(c_title)
+        p.font.size = Pt(15)
+        p.font.bold = True
+        p.font.color.rgb = palette["title_text"]
+        p.font.name = "Malgun Gothic"
+        p.space_after = Pt(10)
+
+        # 3. Body
+        p_body = tf.add_paragraph()
+        p_body.text = remove_emoji(c_body)
+        p_body.font.size = Pt(11.5)
+        p_body.font.color.rgb = palette["body_text"]
+        p_body.font.name = "Malgun Gothic"
+        p_body.space_after = Pt(12)
+
+        # 4. Meta
+        if c_meta:
+            p_sep = tf.add_paragraph()
+            p_sep.text = "--------------------------------------"
+            p_sep.font.size = Pt(8)
+            p_sep.font.color.rgb = palette["page_num"]
+            p_sep.space_after = Pt(4)
+
+            p_meta = tf.add_paragraph()
+            p_meta.text = remove_emoji(c_meta)
+            p_meta.font.size = Pt(10.5)
+            p_meta.font.bold = True
+            p_meta.font.color.rgb = palette["accent"]
+            p_meta.font.name = "Malgun Gothic"
+
+
+def _render_catalog_grid(slide, slide_info: dict, W, H, palette: dict):
+    """전체 프로그램 요약 표 (카탈로그 그리드)"""
+    page_idx = slide_info.get("page", 1)
+    _add_title_block(slide, slide_info.get("title", ""), slide_info.get("subtitle", ""), W, palette, page_idx=page_idx)
+
+    content = slide_info.get("content", {})
+    rows = content.get("catalog_rows", [])
+
+    if not rows:
+        return
+
+    # 표 위치 설정
+    left = Inches(0.6)
+    top = Inches(1.8)
+    width = W - Inches(1.2)
+    height = Inches(4.5)
+
+    num_rows = 1 + len(rows)
+    num_cols = 5
+
+    table_shape = slide.shapes.add_table(num_rows, num_cols, left, top, width, height)
+    table = table_shape.table
+
+    # 열 너비 설정
+    table.columns[0].width = Inches(0.8)
+    table.columns[1].width = Inches(2.5)
+    table.columns[2].width = Inches(4.5)
+    table.columns[3].width = Inches(2.3)
+    table.columns[4].width = Inches(2.0)
+
+    # 헤더 행 작성
+    headers = ["코드", "프로그램명 (대상)", "교육 특징 및 내용", "6차시 구성 교구", "최종 결과물"]
+    for col_idx, text in enumerate(headers):
+        cell = table.cell(0, col_idx)
+        cell.fill.solid()
+        cell.fill.fore_color.rgb = palette["primary"]
+        tf = cell.text_frame
+        tf.word_wrap = True
+        p = tf.paragraphs[0]
+        p.text = text
+        p.alignment = PP_ALIGN.CENTER
+        p.font.size = Pt(11.5)
+        p.font.bold = True
+        p.font.color.rgb = RGBColor(255, 255, 255)
+        p.font.name = "Malgun Gothic"
+
+    # 본문 행 작성
+    for row_idx, r in enumerate(rows):
+        data_cols = [
+            r.get("code", ""),
+            r.get("name", ""),
+            r.get("features", ""),
+            r.get("kit", ""),
+            r.get("output", "")
+        ]
+
+        is_even = (row_idx % 2 == 0)
+        row_bg = RGBColor(0xFA, 0xF8, 0xED) if is_even else RGBColor(0xFF, 0xFF, 0xFF)
+
+        for col_idx, val in enumerate(data_cols):
+            cell = table.cell(row_idx + 1, col_idx)
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = row_bg
+            tf = cell.text_frame
+            tf.word_wrap = True
+            p = tf.paragraphs[0]
+            p.text = remove_emoji(str(val))
+            p.alignment = PP_ALIGN.CENTER if col_idx in (0, 4) else PP_ALIGN.LEFT
+            p.font.size = Pt(10)
+            p.font.color.rgb = palette["body_text"]
+            p.font.name = "Malgun Gothic"
+
+
+def _render_curriculum_table(slide, slide_info: dict, W, H, palette: dict):
+    """6차시 커리큘럼 테이블 + 좌측 사이드바(장비) 레이아웃"""
+    page_idx = slide_info.get("page", 1)
+    _add_title_block(slide, slide_info.get("title", ""), slide_info.get("subtitle", ""), W, palette, page_idx=page_idx)
+
+    content = slide_info.get("content", {})
+    equipment = content.get("equipment", "미디어 시설 및 교구재")
+    curriculum = content.get("curriculum", [])
+
+    sidebar_left = Inches(0.6)
+    sidebar_top = Inches(1.8)
+    sidebar_w = Inches(3.2)
+    sidebar_h = Inches(4.5)
+
+    # 1. 좌측 사이드바 배경 카드
+    sidebar_bg = slide.shapes.add_shape(1, sidebar_left, sidebar_top, sidebar_w, sidebar_h)
+    sidebar_bg.fill.solid()
+    sidebar_bg.fill.fore_color.rgb = RGBColor(0xFA, 0xF8, 0xED)
+    sidebar_bg.line.color.rgb = palette["accent"]
+    sidebar_bg.line.width = Pt(1)
+
+    # 사이드바 텍스트
+    tx = slide.shapes.add_textbox(sidebar_left + Inches(0.15), sidebar_top + Inches(0.15), sidebar_w - Inches(0.3), sidebar_h - Inches(0.3))
+    tf = tx.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
+    p.text = "필요 인력 및 장비"
+    p.font.size = Pt(13)
+    p.font.bold = True
+    p.font.color.rgb = palette["primary"]
+    p.font.name = "Malgun Gothic"
+    p.space_after = Pt(10)
+
+    p2 = tf.add_paragraph()
+    p2.text = remove_emoji(equipment)
+    p2.font.size = Pt(10.5)
+    p2.font.color.rgb = palette["body_text"]
+    p2.font.name = "Malgun Gothic"
+    p2.space_after = Pt(6)
+
+    # 2. 우측 커리큘럼 테이블
+    table_left = Inches(4.1)
+    table_top = Inches(1.8)
+    table_w = W - table_left - Inches(0.6)
+    table_h = Inches(4.5)
+
+    if curriculum:
+        num_rows = 1 + len(curriculum)
+        num_cols = 5
+        table_shape = slide.shapes.add_table(num_rows, num_cols, table_left, table_top, table_w, table_h)
+        table = table_shape.table
+
+        # 열 너비 설정
+        table.columns[0].width = Inches(0.6)
+        table.columns[1].width = Inches(1.8)
+        table.columns[2].width = Inches(1.2)
+        table.columns[3].width = Inches(1.8)
+        table.columns[4].width = table_w - Inches(5.4)
+
+        # 헤더
+        headers = ["차시", "주제", "교육방법", "활용교구", "활동 내용"]
+        for col_idx, text in enumerate(headers):
+            cell = table.cell(0, col_idx)
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = palette["primary"]
+            tf_h = cell.text_frame
+            tf_h.word_wrap = True
+            p_h = tf_h.paragraphs[0]
+            p_h.text = text
+            p_h.alignment = PP_ALIGN.CENTER
+            p_h.font.size = Pt(11.5)
+            p_h.font.bold = True
+            p_h.font.color.rgb = RGBColor(255, 255, 255)
+            p_h.font.name = "Malgun Gothic"
+
+        # 본문
+        for row_idx, c in enumerate(curriculum):
+            chasi = str(c.get("period", row_idx+1))
+            topic = c.get("topic", "")
+            method = c.get("method", "이론·실습")
+            kit = c.get("kit", "")
+            detail = c.get("detail", "")
+
+            data_cols = [chasi, topic, method, kit, detail]
+            is_even = (row_idx % 2 == 0)
+            row_bg = RGBColor(0xFA, 0xF8, 0xED) if is_even else RGBColor(0xFF, 0xFF, 0xFF)
+
+            for col_idx, val in enumerate(data_cols):
+                cell = table.cell(row_idx + 1, col_idx)
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = row_bg
+                tf_c = cell.text_frame
+                tf_c.word_wrap = True
+                p_c = tf_c.paragraphs[0]
+                p_c.text = remove_emoji(str(val))
+                p_c.alignment = PP_ALIGN.CENTER if col_idx in (0, 2) else PP_ALIGN.LEFT
+                p_c.font.size = Pt(9.5)
+                p_c.font.color.rgb = palette["body_text"]
+                p_c.font.name = "Malgun Gothic"
+
+
+def _render_supply_pricing(slide, slide_info: dict, W, H, palette: dict):
+    """B2B 공급 조건 및 견적 대형 카드 슬라이드"""
+    page_idx = slide_info.get("page", 1)
+    _add_title_block(slide, slide_info.get("title", ""), slide_info.get("subtitle", ""), W, palette, page_idx=page_idx)
+
+    content = slide_info.get("content", {})
+    cards = content.get("pricing_cards", [])
+    condition = content.get("condition", "최소 1학급 25명 공급 기준")
+
+    if not cards:
+        return
+
+    num_cards = min(len(cards), 3)
+    margin = Inches(0.6)
+    gap = Inches(0.3)
+    total_w = W - margin * 2
+    card_w = (total_w - (num_cards - 1) * gap) / num_cards
+    card_h = Inches(3.5)
+    card_top = Inches(1.8)
+
+    for idx, card in enumerate(cards[:num_cards]):
+        card_left = margin + idx * (card_w + gap)
+        
+        # 단가 카드 도형 생성
+        shape = slide.shapes.add_shape(1, card_left, card_top, card_w, card_h)
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = RGBColor(0xFF, 0xFB, 0xE8)  # soft yellow card
+        shape.line.color.rgb = palette["highlight"]
+        shape.line.width = Pt(1.5)
+
+        tx = slide.shapes.add_textbox(card_left + Inches(0.15), card_top + Inches(0.15), card_w - Inches(0.3), card_h - Inches(0.3))
+        tf = tx.text_frame
+        tf.word_wrap = True
+
+        c_title = card.get("title", "")
+        amount = card.get("amount", "")
+        desc = card.get("desc", "")
+
+        # 카드 제목
+        p = tf.paragraphs[0]
+        p.text = remove_emoji(c_title)
+        p.font.size = Pt(13.5)
+        p.font.bold = True
+        p.font.color.rgb = palette["title_text"]
+        p.font.name = "Malgun Gothic"
+        p.space_after = Pt(12)
+        p.alignment = PP_ALIGN.CENTER
+
+        # 금액 (Outfit 체 적용 대형 텍스트)
+        p2 = tf.add_paragraph()
+        p2.text = remove_emoji(amount)
+        p2.font.size = Pt(30)
+        p2.font.bold = True
+        p2.font.color.rgb = palette["primary"]
+        p2.font.name = "Outfit"
+        p2.space_after = Pt(12)
+        p2.alignment = PP_ALIGN.CENTER
+
+        # 설명
+        p3 = tf.add_paragraph()
+        p3.text = remove_emoji(desc)
+        p3.font.size = Pt(11)
+        p3.font.color.rgb = palette["body_text"]
+        p3.font.name = "Malgun Gothic"
+        p3.alignment = PP_ALIGN.CENTER
+
+    # 하단 전체 너비 단가 원칙 박스
+    fn_top = Inches(5.6)
+    fn_w = W - Inches(1.2)
+    fn_h = Inches(0.6)
+
+    fn_shape = slide.shapes.add_shape(1, Inches(0.6), fn_top, fn_w, fn_h)
+    fn_shape.fill.solid()
+    fn_shape.fill.fore_color.rgb = RGBColor(0xFA, 0xF8, 0xED)
+    fn_shape.line.color.rgb = palette["highlight"]
+    fn_shape.line.width = Pt(1)
+
+    tx_fn = slide.shapes.add_textbox(Inches(0.75), fn_top + Inches(0.08), fn_w - Inches(0.3), fn_h - Inches(0.15))
+    tf_fn = tx_fn.text_frame
+    tf_fn.word_wrap = True
+    p_fn = tf_fn.paragraphs[0]
+    p_fn.text = f"■ 단가 책정 원칙: {remove_emoji(condition)}"
+    p_fn.font.size = Pt(12)
+    p_fn.font.bold = True
+    p_fn.font.color.rgb = palette["primary"]
+    p_fn.font.name = "Malgun Gothic"
+    p_fn.alignment = PP_ALIGN.CENTER
+
+
+def _render_comparison(slide, slide_info: dict, W, H, palette: dict):
+    """비교 테이블 슬라이드"""
+    page_idx = slide_info.get("page", 1)
+    _add_title_block(slide, slide_info.get("title", ""), slide_info.get("subtitle", ""), W, palette, page_idx=page_idx)
+
+    content = slide_info.get("content", {})
+    headers = content.get("table_headers", [])
+    rows = content.get("table_rows", [])
+
+    if not headers and not rows:
+        return
+
+    left = Inches(0.6)
+    top = Inches(1.8)
+    width = W - Inches(1.2)
+    height = Inches(4.5)
+
+    num_rows = 1 + len(rows)
+    num_cols = len(headers) if headers else (len(rows[0]) if rows and isinstance(rows[0], list) else 1)
+
+    table_shape = slide.shapes.add_table(num_rows, num_cols, left, top, width, height)
+    table = table_shape.table
+
+    # 헤더 작성
+    if headers:
+        for col_idx, text in enumerate(headers):
+            cell = table.cell(0, col_idx)
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = palette["primary"]
+            tf = cell.text_frame
+            tf.word_wrap = True
+            p = tf.paragraphs[0]
+            p.text = text
+            p.alignment = PP_ALIGN.CENTER
+            p.font.size = Pt(12)
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(255, 255, 255)
+            p.font.name = "Malgun Gothic"
+
+    # 행 작성
+    for row_idx, row in enumerate(rows):
+        cells = row if isinstance(row, list) else [row]
+        is_even = (row_idx % 2 == 0)
+        row_bg = RGBColor(0xFA, 0xF8, 0xED) if is_even else RGBColor(0xFF, 0xFF, 0xFF)
+
+        for col_idx, cell_val in enumerate(cells[:num_cols]):
+            cell = table.cell(row_idx + 1, col_idx)
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = row_bg
+            tf = cell.text_frame
+            tf.word_wrap = True
+            p = tf.paragraphs[0]
+            p.text = remove_emoji(str(cell_val))
+            p.alignment = PP_ALIGN.CENTER
+            p.font.size = Pt(11)
+            p.font.color.rgb = palette["body_text"]
+            p.font.name = "Malgun Gothic"
