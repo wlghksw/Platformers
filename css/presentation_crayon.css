@@ -1,0 +1,567 @@
+/* ==========================================================================
+   CRAYONSCHOOL Presentation Theme CSS v2.0 - Premium Edition
+   Inspired by platformers_v3 with high-contrast light mode & dynamic micro-interactions.
+   ========================================================================== */
+
+:root {
+  /* ── Core Color Tokens ── */
+  --bg-ivory: #FAF8ED;            /* Base slide canvas background */
+  --bg-card: #FFFFFF;             /* Pure white container backgrounds */
+  --primary: #FEBE10;             /* Crayon Gold Yellow (Main accent, badges, pills - 공식 홈페이지 색상) */
+  --primary-hover: #FF9F0F;       /* Active / Hover state for primary buttons (공식 홈페이지 Hover 색상) */
+  --primary-light: #FFFBE8;       /* Saturated soft yellow tint for chips */
+  --secondary: #122B46;           /* Academic Deep Navy (Slide title text, strong border - 공식 홈페이지 헤딩 색상) */
+  --secondary-hover: #0B1A2B;     /* Hover state for secondary actions */
+  --accent: #42839F;              /* Sky Blue (Sub-actions, inline links - 공식 홈페이지 엑센트 스카이블루) */
+  --accent-gradient: linear-gradient(135deg, #FEBE10 0%, #122B46 100%); /* 크레용 옐로우-네이비 프리미엄 그라디언트 */
+  
+  --text-primary: #122B46;        /* High contrast main text (공식 홈페이지 제목 텍스트 색상) */
+  --text-secondary: #4D5C6D;      /* Slate-like dark gray for body texts (공식 홈페이지 본문 회색) */
+  --text-muted: #94A3B8;          /* Cool gray for sub-texts and page numbers */
+  
+  --success: #059669;             /* Success (green) */
+  --warning: #D97706;             /* Warning (orange) */
+  --danger: #DC2626;              /* Danger (red) */
+  
+  /* ── Child-Friendly Pastel Tints ── */
+  --pastel-teal: #E8F6F8;
+  --pastel-coral: #FFF0ED;
+  --pastel-rose: #FFF0F5;
+  --pastel-yellow: #FFFBE8;
+  --pastel-mint: #EAF7F0;
+
+  /* ── Border Radius Scale ── */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;              /* Standard info-cards */
+  --radius-lg: 24px;              /* Standard visual frames & slide outlines */
+  --radius-xl: 32px;              /* Extreme rounded corners */
+  --radius-full: 9999px;
+
+  /* ── Slide Geometry (Fixed 16:9 Standard) ── */
+  --slide-w: 1280px;
+  --slide-h: 720px;
+  --slide-pad: 40px 60px;
+  --slide-zoom: 0.85;
+}
+
+/* ── Global Layout Reset & Print Configuration ── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Noto Sans KR', 'Outfit', sans-serif;
+  background-color: #2b2b2b; /* Presentation preview mode backdrop */
+  margin: 0;
+  padding: 0;
+}
+
+.slide {
+  width: var(--slide-w);
+  height: var(--slide-h);
+  zoom: var(--slide-zoom, 1);
+  background-color: var(--bg-card); /* Pure white base for premium feel */
+  padding: 40px 60px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(33, 94, 128, 0.08); /* Premium soft shadow */
+  border-radius: var(--radius-lg);
+  page-break-after: always;
+  break-after: page;
+  flex-shrink: 0;
+}
+
+/* ── Premium Radial Glow Background ── */
+.slide::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 600px 400px at 10% 90%, rgba(254, 190, 16, 0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 300px at 90% 10%, rgba(66, 131, 159, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.slide > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Grid Lines Decoration ── */
+.grid-deco {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(33, 94, 128, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(33, 94, 128, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Print/PDF Export Target Geometry (No breaks, no container borders) ── */
+@media print {
+  @page {
+    size: 33.87cm 19.05cm; /* 16:9 physical slide aspect ratio */
+    margin: 0;
+  }
+  body {
+    background-color: transparent;
+    padding: 0;
+    gap: 0;
+  }
+  .slide {
+    box-shadow: none;
+    page-break-after: always;
+    break-after: page;
+    border-radius: 0 !important;
+    zoom: 1 !important;
+  }
+  /* Fix PDF font character spacing bug by using reliable system local fonts */
+  * {
+    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif !important;
+    letter-spacing: normal !important;
+    text-rendering: optimizeLegibility !important;
+  }
+}
+
+/* ── Typography Styling ── */
+.hero-display {
+  font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -1.5px;
+  color: var(--secondary);
+}
+
+.heading-1 {
+  font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+  color: var(--secondary);
+  border-bottom: 3.5px solid var(--primary);
+  display: inline-block;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.heading-2 {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.body-md {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.body-sm {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ── Interactive Pill Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  border-radius: var(--radius-full);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--text-primary);
+  box-shadow: 0 4px 14px rgba(255, 192, 0, 0.2);
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-blue {
+  background-color: var(--accent);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(65, 137, 179, 0.2);
+}
+.btn-blue:hover {
+  background-color: #337094;
+  transform: translateY(-1px);
+}
+
+/* ── Brand Mark (platformers_v3 스타일) ── */
+.brand-mark {
+  position: absolute;
+  top: 24px;
+  left: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.7;
+  z-index: 10;
+}
+.brand-mark-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--accent-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  color: #fff;
+  font-size: 14px;
+}
+.brand-mark-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--secondary);
+}
+
+/* ── Slide Tag (Badge Chip) ── */
+.slide-tag {
+  display: inline-block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+/* ── Title Accent ── */
+.hero-display .accent, .heading-1 .accent, .slide-title .accent {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Cards & Panels ── */
+.card-base {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  border: 1px solid rgba(18, 43, 70, 0.08);
+  box-shadow: 0 4px 16px rgba(18, 43, 70, 0.03);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card-base:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(18, 43, 70, 0.06);
+}
+
+.card-feature {
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.015);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card-feature:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(33, 94, 128, 0.06);
+}
+
+.card-feature-yellow { background-color: var(--pastel-yellow); color: var(--text-primary); border-left: 5px solid var(--primary); }
+.card-feature-teal   { background-color: var(--pastel-teal);   color: var(--text-primary); border-left: 5px solid var(--accent); }
+.card-feature-coral  { background-color: var(--pastel-coral);  color: var(--text-primary); border-left: 5px solid #FF8D7A; }
+.card-feature-rose   { background-color: var(--pastel-rose);   color: var(--text-primary); border-left: 5px solid #FF8DAF; }
+
+/* ── Status Badges & Category Tags ── */
+.badge {
+  display: inline-flex;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.5px;
+}
+
+.badge-tag-yellow { background-color: var(--primary-light); color: #8F6B00; border: 1px solid rgba(255, 192, 0, 0.15); }
+.badge-tag-blue   { background-color: #EBF5FA; color: var(--secondary); border: 1px solid rgba(65, 137, 179, 0.15); }
+.badge-tag-coral  { background-color: var(--pastel-coral); color: #B33C2B; border: 1px solid rgba(232, 58, 37, 0.15); }
+.badge-success    { background-color: #EAF7F0; color: #1E6B43; border: 1px solid rgba(5, 150, 105, 0.15); }
+
+/* ── Slide layout helpers (2-Col splits) ── */
+.slide-content-flex {
+  display: flex;
+  gap: 40px;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  align-items: stretch;
+}
+
+.content-body {
+  flex: 1.2;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.slide-image-wrapper {
+  flex: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.slide-image-wrapper img {
+  max-width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(33, 94, 128, 0.08);
+  border: 1px solid rgba(33, 94, 128, 0.06);
+}
+
+/* ── KPI & Stats (platformers_v3 스타일) ── */
+.kpi-mega {
+  font-family: 'Outfit', sans-serif;
+  font-size: 82px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -2px;
+  margin-bottom: 12px;
+}
+.kpi-mega.danger { color: var(--danger); }
+.kpi-mega.success { color: var(--success); }
+.kpi-mega.primary {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Signature Tables ── */
+.comparison-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: var(--bg-card);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid rgba(33, 94, 128, 0.1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+}
+.comparison-table th {
+  background-color: var(--bg-ivory);
+  font-weight: 700;
+  color: var(--secondary);
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 2px solid rgba(33, 94, 128, 0.1);
+}
+.comparison-table td {
+  padding: 10px 16px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+}
+.comparison-table tr:last-child td {
+  border-bottom: none;
+}
+.comparison-table tbody tr:hover td {
+  background-color: rgba(255, 192, 0, 0.02);
+}
+
+/* ── Page Number Indicator ── */
+.page-number {
+  position: absolute;
+  bottom: 24px;
+  right: 32px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+}
+
+/* ==========================================================================
+   B2B PROPOSAL SPECIFIC LAYOUT FRAMES (Premium Edition)
+   ========================================================================== */
+
+/* ── 1. Curriculum Table (6-Period) ── */
+.curriculum-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background-color: var(--bg-card);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid rgba(33, 94, 128, 0.1);
+  box-shadow: 0 6px 18px rgba(33,94,128,0.04);
+}
+.curriculum-table th {
+  background-color: var(--pastel-teal);
+  font-weight: 700;
+  color: var(--secondary);
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 2px solid rgba(33, 94, 128, 0.15);
+  font-size: 13px;
+}
+.curriculum-table td {
+  padding: 8px 12px;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 13px;
+  vertical-align: top;
+  line-height: 1.45;
+}
+.curriculum-table tr:last-child td {
+  border-bottom: none;
+}
+.curriculum-table td:first-child {
+  font-weight: 800;
+  color: var(--accent);
+  width: 60px;
+  text-align: center;
+}
+.curriculum-table tbody tr:hover td {
+  background-color: rgba(65, 137, 179, 0.02);
+}
+
+/* ── 2. Tag Chips ── */
+.chip-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  background-color: var(--primary-light);
+  color: var(--secondary);
+  margin-right: 4px;
+  margin-bottom: 4px;
+  border: 1px solid rgba(255, 192, 0, 0.15);
+}
+
+/* ── 3. Sidebar Box (Required Equipment) ── */
+.sidebar-box {
+  background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-ivory) 100%);
+  border: 1px solid rgba(33, 94, 128, 0.1);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  height: 100%;
+  box-shadow: 0 4px 16px rgba(33, 94, 128, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--secondary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── 4. Pricing Cards (B2B Rates) ── */
+.pricing-card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  border: 1px solid rgba(33, 94, 128, 0.12);
+  box-shadow: 0 8px 24px rgba(33,94,128,0.04);
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.pricing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(33, 94, 128, 0.08);
+}
+.price-amount {
+  font-family: 'Outfit', sans-serif;
+  font-size: 38px;
+  font-weight: 800;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 10px 0;
+  line-height: 1;
+}
+.price-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+/* ── 5. Catalog Grid (Overview) ── */
+.catalog-grid {
+  display: grid;
+  grid-template-columns: 80px 180px 1fr 1fr 1fr;
+  gap: 0;
+  background-color: var(--bg-card);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid rgba(33, 94, 128, 0.1);
+  box-shadow: 0 6px 18px rgba(33,94,128,0.04);
+}
+.catalog-header {
+  background-color: var(--pastel-teal);
+  font-weight: 700;
+  color: var(--secondary);
+  padding: 14px 16px;
+  font-size: 14px;
+  text-align: center;
+  border-bottom: 2px solid rgba(33, 94, 128, 0.15);
+}
+.catalog-cell {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+}
+.catalog-cell:last-child {
+  border-right: none;
+}
+.catalog-code {
+  font-weight: 800;
+  color: #B33C2B;
+  background-color: var(--pastel-coral);
+  border-radius: var(--radius-xs);
+  padding: 4px 10px;
+  display: inline-block;
+  font-size: 12px;
+  border: 1px solid rgba(232, 58, 37, 0.15);
+}

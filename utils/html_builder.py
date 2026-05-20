@@ -10,9 +10,19 @@ from pathlib import Path
 
 
 # ─── CSS / JS 자산 로드 경로 ──────────────────────────────────────────────────
-_BASE_DIR = Path(__file__).parent.parent.parent  # PPT_maker/../ = 사업 폴더
-_CSS_PATH = _BASE_DIR / "css" / "presentation_crayon.css"
-_JS_PATH  = _BASE_DIR / "js"  / "charts_crayon.js"
+_REPO_DIR = Path(__file__).parent.parent  # PPT_maker 폴더 (깃 저장소 루트)
+_PARENT_DIR = Path(__file__).parent.parent.parent  # 사업 폴더 (로컬 상위 폴더)
+
+# Railway 배포 환경(깃 루트 내부)과 로컬 개발 환경(상위 폴더) 모두 작동할 수 있도록 Fallback 설계
+if (_REPO_DIR / "css" / "presentation_crayon.css").exists():
+    _CSS_PATH = _REPO_DIR / "css" / "presentation_crayon.css"
+else:
+    _CSS_PATH = _PARENT_DIR / "css" / "presentation_crayon.css"
+
+if (_REPO_DIR / "js" / "charts_crayon.js").exists():
+    _JS_PATH = _REPO_DIR / "js" / "charts_crayon.js"
+else:
+    _JS_PATH = _PARENT_DIR / "js" / "charts_crayon.js"
 
 # 구글 폰트 임베드
 _GOOGLE_FONTS = (
