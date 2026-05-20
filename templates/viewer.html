@@ -16,13 +16,9 @@
     }
 
     /* ── 전역 설정 ── */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background-color: #2c2c2c; /* 뷰어 바깥 배경 */
+      background-color: #2c2c2c;
       font-family: 'Noto Sans KR', sans-serif;
       display: flex;
       flex-direction: column;
@@ -31,13 +27,7 @@
       gap: 40px;
     }
 
-    /* ── PDF 저장 플로팅 버튼 ── */
-    .controls {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1000;
-    }
+    .controls { position: fixed; top: 20px; right: 20px; z-index: 1000; }
     .btn-pdf {
       background: var(--primary-yellow);
       color: var(--text-black);
@@ -48,13 +38,8 @@
       border-radius: 8px;
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: transform 0.2s;
-    }
-    .btn-pdf:hover {
-      transform: translateY(-2px);
     }
 
-    /* ── 슬라이드 공통 ── */
     .slide {
       width: var(--slide-width);
       height: var(--slide-height);
@@ -62,471 +47,177 @@
       position: relative;
       overflow: hidden;
       box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-      /* 라인아트 배경 (CSS 도형으로 심플하게 묘사) */
-      background-image: 
-        radial-gradient(circle at 80% 20%, transparent 0%, transparent 100%),
-        linear-gradient(to right, transparent 0%, transparent 100%);
     }
 
-    /* 배경 장식 (구름) */
-    .cloud {
-      position: absolute;
-      border: 2px solid #ccc;
-      border-radius: 50px;
-      background: transparent;
-      opacity: 0.5;
-    }
-    .cloud-1 { top: 15%; right: 25%; width: 120px; height: 40px; }
-    .cloud-2 { top: 25%; right: 10%; width: 80px; height: 30px; }
+    /* ── 레이아웃 스타일 ── */
+    .slide-content { padding: 60px 80px; }
+    .header { display: flex; align-items: flex-start; margin-bottom: 40px; position: relative; }
+    .header-number { font-size: 80px; font-weight: 900; color: var(--text-black); line-height: 0.8; margin-right: 20px; }
+    .header-text-group { flex: 1; }
+    .header-title { font-size: 40px; font-weight: 900; color: var(--text-black); padding-bottom: 10px; border-bottom: 4px solid var(--text-black); display: inline-block; margin-bottom: 10px; }
+    .header-subtitle { font-size: 20px; font-weight: 500; color: var(--text-gray); }
 
-    /* ── 표지 슬라이드 (TITLE) ── */
-    .slide-title {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding-left: 120px;
-    }
-    .title-logo-top {
-      position: absolute;
-      top: 100px;
-      left: 120px;
-      font-size: 32px;
-      font-weight: 900;
-      color: #E83A25; /* 임시 로고 텍스트 */
-    }
-    .title-logo-top span { color: #1A9C6B; }
-    .title-logo-top span:last-child { color: var(--primary-yellow); }
+    .content-body { font-size: 24px; color: var(--text-black); line-height: 1.6; }
+    .content-body ul { margin-left: 30px; margin-bottom: 20px; }
+    .content-body li { margin-bottom: 12px; }
 
-    .title-tag {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--text-gray);
-      margin-bottom: 20px;
-    }
-    .title-main {
-      font-size: 80px;
-      font-weight: 900;
-      color: var(--text-black);
-      line-height: 1.2;
-    }
-    .title-footer {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 80px;
-      background-color: var(--primary-yellow);
-      display: flex;
-      align-items: center;
-      padding: 0 120px;
-    }
-    .title-footer-text {
-      color: #333;
-      font-weight: 500;
-      font-size: 18px;
-    }
+    .slide-image-wrapper { display: flex; align-items: center; justify-content: center; z-index: 10; }
+    .slide-image-wrapper img { max-width: 100%; max-height: 400px; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
 
-    /* ── 본문 슬라이드 (CONTENT) ── */
-    .slide-content {
-      padding: 60px 80px;
-    }
-    .header {
-      display: flex;
-      align-items: flex-start;
-      margin-bottom: 40px;
-      position: relative;
-    }
-    .header-number {
-      font-size: 80px;
-      font-weight: 900;
-      color: var(--text-black);
-      line-height: 0.8;
-      margin-right: 20px;
-    }
-    .header-text-group {
-      flex: 1;
-    }
-    .header-title {
-      font-size: 40px;
-      font-weight: 900;
-      color: var(--text-black);
-      padding-bottom: 10px;
-      border-bottom: 4px solid var(--text-black); /* 굵은 검은색 밑줄 */
-      display: inline-block;
-      margin-bottom: 10px;
-    }
-    .header-subtitle {
-      font-size: 20px;
-      font-weight: 500;
-      color: var(--text-gray);
-    }
-    .header-logo {
-      position: absolute;
-      top: 0;
-      right: 0;
-      font-size: 24px;
-      font-weight: 900;
-      color: #E83A25;
-    }
-
-    .content-body {
-      font-size: 24px;
-      color: var(--text-black);
-      line-height: 1.6;
-    }
-    .content-body ul {
-      margin-left: 30px;
-      margin-bottom: 20px;
-    }
-    .content-body li {
-      margin-bottom: 12px;
-    }
-
-    /* 추출된 이미지 표시 영역 */
-    .slide-image-wrapper {
-      flex: 0 0 450px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-    }
-    .slide-image-wrapper img {
-      max-width: 100%;
-      max-height: 400px;
-      object-fit: contain;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    }
-
-    /* ── 인쇄 설정 (@media print) ── */
     @media print {
-      @page {
-        size: 33.87cm 19.05cm; /* 16:9 비율 강제 */
-        margin: 0;
-      }
-      body {
-        background-color: transparent;
-        padding: 0;
-        gap: 0;
-      }
-      .controls {
-        display: none !important;
-      }
-      .slide {
-        box-shadow: none;
-        page-break-after: always; /* 슬라이드 한 장마다 강제 줄바꿈 */
-        break-after: page;
-      }
+      @page { size: 33.87cm 19.05cm; margin: 0; }
+      body { background-color: transparent; padding: 0; gap: 0; }
+      .controls { display: none !important; }
+      .slide { box-shadow: none; page-break-after: always; break-after: page; }
     }
 
-    /* ── AT 센터 교안 추가 스타일 ── */
-
-    /* 표지 슬라이드 */
-    .at-cover-bg {
-      background-image: url('/static/img/at_cover.png');
-      background-size: cover;
-      background-position: center;
-      position: relative;
-    }
-    .at-cover-subtitle {
-      position: absolute;
-      top: 110px;
-      left: 80px;
-      font-size: 20px;
-      font-weight: 500;
-      color: #888;
-    }
-    .at-cover-title {
-      position: absolute;
-      top: 230px;
-      left: 80px;
-      font-size: 64px;
-      font-weight: 900;
-      color: #2550e8;
-      line-height: 1.2;
-      max-width: 640px;
-    }
-
-    /* 챕터 구분 슬라이드 */
-    .at-chapter-bg {
-      background-image: url('/static/img/at_chapter.png');
-      background-size: cover;
-      position: relative;
-    }
-    .at-chapter-num {
-      position: absolute;
-      top: 240px;
-      left: 120px;
-      font-size: 100px;
-      font-weight: 800;
-      color: #2550e8;
-      line-height: 1;
-    }
-    .at-chapter-title {
-      position: absolute;
-      top: 375px;
-      left: 120px;
-      font-size: 58px;
-      font-weight: 800;
-      color: #1a1a1a;
-      line-height: 1.25;
-      max-width: 900px;
-    }
-
-    /* 본문 슬라이드 */
-    .at-content-bg {
-      background-image: url('/static/img/at_content_bg.png');
-      background-size: cover;
-      position: relative;
-    }
-    .at-right-header {
-      position: absolute;
-      top: 0;
-      right: 0;
-      height: 160px;
-      width: auto;
-      z-index: 10;
-      pointer-events: none;
-    }
-    .at-header-left {
-      position: absolute;
-      top: 88px;
-      left: 60px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 17px;
-      color: #555;
-      font-weight: 500;
-      z-index: 5;
-    }
-    .at-header-left .chap-num {
-      font-size: 34px;
-      font-weight: 900;
-      color: #333;
-      line-height: 1;
-    }
-    .at-header-left .pipe { color: #bbb; font-size: 22px; }
-    .at-content-area {
-      position: absolute;
-      top: 178px;
-      left: 60px;
-      right: 60px;
-      bottom: 56px;
-      overflow: hidden;
-    }
-    .at-slide-title {
-      font-size: 38px;
-      font-weight: 900;
-      color: #1a1a1a;
-      margin-bottom: 24px;
-      line-height: 1.2;
-    }
-    .at-bullet-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .at-bullet-list li {
-      font-size: 22px;
-      color: #333;
-      line-height: 1.6;
-      margin-bottom: 10px;
-      padding-left: 24px;
-      position: relative;
-    }
-    .at-bullet-list li::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 13px;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #2550e8;
-    }
-    .at-sub-text {
-      font-size: 16px;
-      color: #888;
-      margin-top: 16px;
-      line-height: 1.5;
-    }
-    .at-page-num {
-      position: absolute;
-      bottom: 26px;
-      right: 46px;
-      font-size: 14px;
-      font-weight: 700;
-      color: #bbb;
-      z-index: 5;
-    }
+    /* AT 센터 전용 스타일 */
+    .at-cover-bg { background-image: url('/static/img/at_cover.png'); background-size: cover; background-position: center; position: relative; }
+    .at-cover-title { position: absolute; top: 230px; left: 80px; font-size: 64px; font-weight: 900; color: #2550e8; line-height: 1.2; max-width: 640px; }
+    .at-chapter-bg { background-image: url('/static/img/at_chapter.png'); background-size: cover; position: relative; }
+    .at-chapter-num { position: absolute; top: 240px; left: 120px; font-size: 100px; font-weight: 800; color: #2550e8; }
+    .at-chapter-title { position: absolute; top: 375px; left: 120px; font-size: 58px; font-weight: 800; }
+    .at-content-bg { background-image: url('/static/img/at_content_bg.png'); background-size: cover; position: relative; }
+    .at-content-area { position: absolute; top: 178px; left: 60px; right: 60px; bottom: 56px; overflow: hidden; }
   </style>
 </head>
 <body>
 
-  <!-- 컨트롤 바 -->
-  <div class="controls">
+  <div class="controls" style="display: flex; gap: 10px;">
     <button class="btn-pdf" onclick="window.print()">📥 PDF로 저장</button>
+    <a href="/download/{{ session_id }}" class="btn-pptx" style="text-decoration: none;">
+      <button class="btn-pdf" style="background-color: #2550e8; color: white;">📊 PPTX 다운로드</button>
+    </a>
   </div>
 
-  <!-- 슬라이드 렌더링 -->
   {% for slide in slides %}
   
-  {# 1. AT 센터 교안 레이아웃 #}
   {% if category == 'at_curriculum' %}
-
     {% if slide.layout == 'title' %}
-      <!-- 표지: 배경 이미지 + 텍스트 오버레이 -->
       <section class="slide at-cover-bg">
-        <div class="at-cover-subtitle">{{ slide.subtitle | default('') }}</div>
         <div class="at-cover-title">{{ slide.title }}</div>
       </section>
-
     {% elif slide.layout == 'chapter' %}
-      <!-- 챕터 구분: tag=챕터번호, title=챕터제목 -->
       <section class="slide at-chapter-bg">
         <div class="at-chapter-num">{{ slide.tag }}</div>
         <div class="at-chapter-title">{{ slide.title }}</div>
       </section>
-
     {% else %}
-      <!-- 본문 슬라이드: 배경 + right_header 고정 + 텍스트 -->
       <section class="slide at-content-bg">
-        <!-- 우측 상단 로고 헤더 고정 -->
-        <img src="/static/img/right_header.png" class="at-right-header" alt="헤더 로고">
-        <!-- 좌측 헤더: 챕터번호 | 슬라이드 부제 -->
-        <div class="at-header-left">
-          <span class="chap-num">{{ slide.tag }}</span>
-          <span class="pipe">|</span>
-          <span>{{ slide.subtitle | default(title) }}</span>
-        </div>
-        <!-- 본문 콘텐츠 영역 -->
         <div class="at-content-area">
-          <div class="at-slide-title">{{ slide.title }}</div>
-          {% if slide.content %}
-            {% if slide.content.main_points %}
-              <ul class="at-bullet-list">
-                {% for point in slide.content.main_points %}
-                  <li>{{ point }}</li>
-                {% endfor %}
-              </ul>
-            {% endif %}
-            {% if slide.content.sub_text %}
-              <p class="at-sub-text">{{ slide.content.sub_text }}</p>
-            {% endif %}
+          <div style="font-size: 38px; font-weight: 900; margin-bottom: 24px;">{{ slide.title }}</div>
+          {% if slide.content and slide.content.main_points %}
+            <ul style="list-style: none; padding: 0;">
+              {% for point in slide.content.main_points %}
+                <li style="font-size: 22px; margin-bottom: 10px; padding-left: 20px; position: relative;">• {{ point }}</li>
+              {% endfor %}
+            </ul>
           {% endif %}
         </div>
-        <!-- 페이지 번호 -->
-        <div class="at-page-num">{{ loop.index }} / {{ slides | length }}</div>
       </section>
-
     {% endif %}
 
-
-  {# 2. 기존 교육 제안서 레이아웃 #}
   {% else %}
-  <!-- 본문 슬라이드 -->
-  <section class="slide slide-content" style="position: relative;">
-    <!-- 상단 고정 배경 이미지 (사용자가 제공한 이미지) -->
-    <img src="/static/img/header_bg.png" alt="상단 배경" style="position: absolute; top: 0; left: 0; width: 100%; height: auto; z-index: 0;" onerror="this.style.display='none'">
+  
+  {# 2-a. 표지 슬라이드 디자인 (Proposal Title) #}
+  {% if slide.layout == 'title' or slide.layout_type == 'title' %}
+  <section class="slide slide-title" style="display: flex; flex-direction: column; justify-content: center; padding-left: 120px; position: relative;">
+    <div class="title-logo-top" style="position: absolute; top: 100px; left: 120px; font-size: 32px; font-weight: 900; color: #E83A25;">
+      EDU<span>ALL</span><span>LAB</span>
+    </div>
+    
+    <div class="title-main" style="font-size: 72px; font-weight: 900; color: var(--text-black); line-height: 1.1; margin-top: 30px; max-width: 1000px; word-break: keep-all;">
+      {{ slide.title | safe }}
+    </div>
+    <div class="title-tag" style="font-size: 24px; font-weight: 700; color: var(--text-gray); margin-top: 20px;">
+      {{ slide.subtitle | default('') }}
+    </div>
 
-    <div class="cloud cloud-1"></div>
-    <div class="cloud cloud-2"></div>
+    {# 하단 노란색 포인트 바 #}
+    <div class="title-footer" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 80px; background-color: var(--primary-yellow); display: flex; align-items: center; padding: 0 120px;">
+      <div class="title-footer-text" style="color: #333; font-weight: 500; font-size: 18px;">
+        © ㈜에듀올랩 | 크레용스쿨 전문 운영 파트너십
+      </div>
+    </div>
+  </section>
+
+  {# 2-b. 일반 본문 슬라이드 #}
+  {% else %}
+  <section class="slide slide-content" style="position: relative; display: flex; flex-direction: column;">
+    <img src="/static/img/header_bg.png" alt="상단 배경" style="position: absolute; top: 0; left: 0; width: 100%; height: auto; z-index: 0;" onerror="this.style.display='none'">
 
     <div class="header" style="position: relative; z-index: 1;">
       <div class="header-number">{{ loop.index }}</div>
       <div class="header-text-group">
         <div class="header-title">{{ slide.title }}</div>
-        <div class="header-subtitle">{{ slide.subtitle | default('세부 내용을 입력하세요') }}</div>
+        <div class="header-subtitle">{{ slide.subtitle | default('') }}</div>
       </div>
-      <!-- 기존 텍스트 로고 삭제 (배경 이미지에 로고가 포함되어 있음) -->
     </div>
 
-    <div class="content-flex-container" style="display: flex; gap: 40px; height: calc(100% - 160px); position: relative; z-index: 1;">
-      <div class="content-body" style="flex: 1; overflow-y: hidden;">
+    {# ── 다이나믹 레이아웃 변수 조립 ── #}
+    {% set l_type = slide.layout_type | default('full_text') %}
+    {% set ratio_parts = (slide.layout_ratio | default('1:0')).split(':') %}
+    {% set t_ratio = (ratio_parts[0]|float / (ratio_parts[0]|float + ratio_parts[1]|float)) if ratio_parts|length == 2 else 1.0 %}
+    {% set f_dir = 'column' if l_type == 'split_h' else 'row' %}
+    
+    {# ── IDE의 CSS 검사기를 우회하기 위해 style 속성 전체를 Jinja2로 조립 ── #}
+    {% set container_style_str = "display: flex; gap: 40px; flex: 1; position: relative; z-index: 1; flex-direction: " ~ f_dir ~ ";" %}
+    {% set body_style_str = "flex: " ~ t_ratio ~ "; overflow-y: hidden;" %}
+    {% set img_wrapper_style_str = "flex: " ~ (1.0 - t_ratio) ~ ";" %}
+
+    {# 백엔드에서 미리 매칭된 이미지 URL 사용 #}
+    {% set target_img = slide.matched_image_url %}
+
+    <div class="content-flex-container" {{ ('style="' ~ container_style_str ~ '"') | safe }}>
+      <div class="content-body" {{ ('style="' ~ body_style_str ~ '"') | safe }}>
         {% if slide.content %}
-          
-          {# 1. 하이라이트 박스 #}
-          {% if slide.content.highlight %}
-            <div style="display:inline-block; padding:8px 16px; background-color:var(--primary-yellow); color:var(--text-black); font-weight:700; border-radius:8px; margin-bottom:20px; font-size:0.85em;">
-              {{ slide.content.highlight }}
+          {% if slide.content.highlight_data %}
+            <div style="display:inline-block; padding:8px 16px; background-color:var(--primary-yellow); color:var(--text-black); font-weight:700; border-radius:8px; margin-bottom:20px; font-size:1.2em;">
+              {{ slide.content.highlight_data }}
             </div>
           {% endif %}
-
-          {# 2. Two Column (좌우 분할) #}
-          {% if slide.content.left_column or slide.content.right_column %}
-            <div style="display:flex; flex-wrap:wrap; gap:40px;">
-              <div style="flex:1 1 250px;">
-                {% if slide.content.left_column %}
-                  <ul>
-                    {% for point in slide.content.left_column %}
-                      <li>{{ point }}</li>
-                    {% endfor %}
-                  </ul>
-                {% endif %}
-              </div>
-              <div style="flex:1 1 250px;">
-                {% if slide.content.right_column %}
-                  <ul>
-                    {% for point in slide.content.right_column %}
-                      <li>{{ point }}</li>
-                    {% endfor %}
-                  </ul>
-                {% endif %}
-              </div>
-            </div>
-          {% endif %}
-
-          {# 3. 기본 리스트 (main_points) #}
           {% if slide.content.main_points %}
-            <div>
-              <ul>
-                {% for point in slide.content.main_points %}
-                  <li>{{ point }}</li>
-                {% endfor %}
-              </ul>
-            </div>
+            <ul>
+              {% for point in slide.content.main_points %}
+                <li>{{ point }}</li>
+              {% endfor %}
+            </ul>
           {% endif %}
-          
-          {# 4. 부가 설명 (sub_text) #}
           {% if slide.content.sub_text %}
-            <p style="margin-top:20px; color:var(--text-gray); font-size:0.85em;">{{ slide.content.sub_text }}</p>
+            <p style="margin-top:20px; color:var(--text-gray); font-size:0.85em; font-style: italic;">{{ slide.content.sub_text }}</p>
           {% endif %}
-          
-        {% else %}
-          <p style="color:var(--text-gray);">여기에 본문 내용을 입력하세요.</p>
         {% endif %}
       </div>
 
-      {# 이미지 렌더링 (추출된 이미지가 있으면 하나씩 순서대로 배치) #}
-      {% set img_index = loop.index0 - 1 %}
-      {% if images and img_index >= 0 and img_index < images|length %}
-        <div class="slide-image-wrapper">
-          <img src="{{ images[img_index] }}" alt="추출된 슬라이드 이미지">
+      {% if target_img %}
+        <div class="slide-image-wrapper" {{ ('style="' ~ img_wrapper_style_str ~ '"') | safe }}>
+          <img src="{{ target_img }}" alt="{{ slide.image_tag }}" 
+               onerror="this.parentElement.style.display='none'; this.closest('.content-flex-container').querySelector('.content-body').style.flex='1';">
         </div>
       {% endif %}
     </div>
 
-    <!-- 하단 페이지 번호 -->
     <div style="position: absolute; bottom: 30px; right: 40px; font-size: 14px; font-weight: 700; color: #999;">
       {{ loop.index }} / {{ slides | length }}
     </div>
   </section>
   {% endif %}
+  {% endif %}
   {% endfor %}
 
-  <!-- 글씨 자동 축소 스크립트 (스크롤바 방지) -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const bodies = document.querySelectorAll('.content-body');
-      bodies.forEach(body => {
-        let fontSize = 24; // 초기 CSS 폰트 사이즈
-        // 스크롤바가 생길 정도로 내용이 넘치면 글씨 크기를 1px씩 줄임 (최소 12px)
-        while(body.scrollHeight > body.clientHeight && fontSize > 12) {
-          fontSize -= 1;
-          body.style.fontSize = fontSize + 'px';
-          // 내부의 모든 텍스트 요소(ul, li, p 등)도 비율에 맞게 줄이기 위해 상속을 활용
-        }
+      // 폰트 로딩이 완료된 후 계산을 시작하여 정확도 100% 확보
+      document.fonts.ready.then(() => {
+        const bodies = document.querySelectorAll('.content-body');
+        bodies.forEach(body => {
+          let fontSize = 24;
+          // scrollHeight 측정의 정확성을 위해 강제 레이아웃 업데이트
+          while(body.scrollHeight > body.clientHeight && fontSize > 12) {
+            fontSize -= 1;
+            body.style.fontSize = fontSize + 'px';
+          }
+        });
       });
     });
   </script>

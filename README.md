@@ -1,23 +1,23 @@
-# SlideForge — AI PPT 자동 생성기
+# CrayonSchool AI HTML 제안서 자동 생성기
 
-Claude AI를 사용해 문서(PDF, DOCX, PPTX, TXT)를 자동으로 프레젠테이션으로 변환합니다.
+GPT-4o를 사용해 다양한 문서(PDF, DOCX, PPTX, TXT, XLSX, MD)를 CrayonSchool 브랜드 디자인의 독립형 HTML 슬라이드로 변환합니다.
 
 ## 필수 생성 규칙 (항상 적용)
-- **Tag**: 슬라이드 성격 표시 (SERVICE, STRATEGY, OVERVIEW 등)
+- **Tag**: 슬라이드 성격 표시 (유치, 초등, SOLUTION, BRAND 등 뱃지용)
 - **Title**: 핵심 메시지를 담은 대제목
-- **Page Number**: 우측 하단 페이지 번호
 - **이모지 절대 사용 금지**
+- **다크모드 절대 금지 (밝은 아이보리 테마 고정)**
 
 ---
 
 ## 프로젝트 구조
 ```
-ppt-generator/
+PPT_maker/
 ├── app.py                  # Flask 메인 서버
 ├── utils/
-│   ├── file_parser.py      # PDF/DOCX/PPTX 텍스트 추출
-│   ├── claude_api.py       # Claude API 슬라이드 구조 생성
-│   └── pptx_builder.py     # PPTX 파일 빌드
+│   ├── file_parser.py      # PDF/DOCX/PPTX 텍스트 및 이미지 추출
+│   ├── openai_api.py       # GPT-4o API 슬라이드 구조 생성 (Design 주입)
+│   └── html_builder.py     # CrayonSchool HTML 빌더
 ├── templates/
 │   └── index.html          # 웹 UI
 ├── requirements.txt

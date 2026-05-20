@@ -4,10 +4,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SlideForge — AI PPT 생성기</title>
+  <title>크레용스쿨 AI 제안서 생성기</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Outfit:wght@400;700;800&display=swap"
     rel="stylesheet" />
   <style>
     *,
@@ -19,16 +20,45 @@
     }
 
     :root {
-      --ink: #0d0f1a;
-      --paper: #f5f4ef;
-      --blue: #2550e8;
-      --blue-light: #d6e0ff;
-      --slate: #6b7280;
-      --border: #d1cec4;
-      --red: #e83a25;
-      --success: #1a9c6b;
-      --radius: 12px;
-      --font-display: 'Syne', sans-serif;
+      /* ── CrayonSchool Core Color Tokens ── */
+      --bg-ivory: #FAF8ED;
+      /* Base canvas background */
+      --bg-card: #FFFFFF;
+      /* Container backgrounds */
+      --primary: #FFC000;
+      /* Crayon Yellow (Main Accent) */
+      --primary-hover: #E0A800;
+      /* Active state for primary actions */
+      --primary-light: #FFFBE8;
+      /* Yellow tag light tint */
+      --secondary: #215E80;
+      /* Academic Deep Navy (Main Titles, borders) */
+      --secondary-hover: #17435C;
+      /* Hover state for navy elements */
+      --accent: #4189B3;
+      /* Sky Blue (Sub-actions, badges) */
+      --text-black: #111111;
+      /* Ink Black for maximum readability */
+      --text-gray: #555555;
+      /* Medium gray for body texts */
+      --text-muted: #999999;
+      /* Muted gray for non-active metadata */
+      --border: rgba(33, 94, 128, 0.12);
+      /* Deep Navy transparent border */
+
+      /* ── Child-Friendly Pastel Tints (From design spec) ── */
+      --pastel-rose: #FFF0F5;
+      --pastel-teal: #E8F6F8;
+      --pastel-coral: #FFF0ED;
+      --pastel-yellow: #FFFBE8;
+      --pastel-mint: #EAF7F0;
+
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+
+      --font-display: 'Outfit', sans-serif;
       --font-body: 'Noto Sans KR', sans-serif;
     }
 
@@ -37,11 +67,13 @@
     }
 
     body {
-      background: var(--paper);
-      color: var(--ink);
+      background: var(--bg-ivory);
+      color: var(--text-black);
       font-family: var(--font-body);
       min-height: 100vh;
       overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     /* ── HEADER ── */
@@ -50,8 +82,9 @@
       align-items: center;
       justify-content: space-between;
       padding: 1.25rem 2.5rem;
-      border-bottom: 1.5px solid var(--border);
-      background: var(--paper);
+      border-bottom: 1px solid var(--border);
+      background: rgba(250, 248, 237, 0.8);
+      backdrop-filter: blur(10px);
       position: sticky;
       top: 0;
       z-index: 100;
@@ -59,171 +92,314 @@
 
     .logo {
       font-family: var(--font-display);
-      font-size: 1.4rem;
+      font-size: 1.6rem;
       font-weight: 800;
-      letter-spacing: -0.03em;
-      color: var(--ink);
+      letter-spacing: -0.02em;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
     .logo span {
-      color: var(--blue);
+      color: var(--primary);
     }
 
-    .badge {
-      background: var(--blue);
-      color: white;
-      font-size: 0.65rem;
+    .header-badge {
+      background: var(--secondary);
+      color: #FFFFFF;
+      font-family: var(--font-display);
+      font-size: 0.7rem;
       font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 0.25rem 0.6rem;
-      border-radius: 999px;
+      letter-spacing: 0.08em;
+      padding: 0.3rem 0.75rem;
+      border-radius: var(--radius-full);
     }
 
     /* ── HERO ── */
     .hero {
       text-align: center;
-      padding: 5rem 2rem 3rem;
+      padding: 4.5rem 2rem 2.5rem;
     }
 
     .hero-eyebrow {
       display: inline-block;
-      font-size: 0.72rem;
+      font-family: var(--font-display);
+      font-size: 0.75rem;
       font-weight: 700;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: var(--blue);
-      border: 1.5px solid var(--blue-light);
-      background: var(--blue-light);
-      border-radius: 999px;
-      padding: 0.3rem 0.9rem;
+      color: var(--secondary);
+      border: 1px solid var(--border);
+      background: var(--primary-light);
+      border-radius: var(--radius-full);
+      padding: 0.35rem 1rem;
       margin-bottom: 1.5rem;
     }
 
     .hero h1 {
-      font-family: var(--font-display);
-      font-size: clamp(2.2rem, 5vw, 3.8rem);
-      font-weight: 800;
-      letter-spacing: -0.04em;
-      line-height: 1.1;
-      color: var(--ink);
-      max-width: 700px;
+      font-size: clamp(2rem, 4.5vw, 3.2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+      color: var(--secondary);
+      max-width: 800px;
       margin: 0 auto 1.2rem;
     }
 
     .hero h1 em {
       font-style: normal;
-      color: var(--blue);
+      color: var(--accent);
+      border-bottom: 4px solid var(--primary);
     }
 
     .hero p {
       font-size: 1.05rem;
-      color: var(--slate);
-      max-width: 480px;
+      color: var(--text-gray);
+      max-width: 540px;
       margin: 0 auto;
-      line-height: 1.7;
-      font-weight: 300;
+      line-height: 1.65;
+      font-weight: 400;
+    }
+
+    /* ── RULES STRIP ── */
+    .rules-strip {
+      max-width: 780px;
+      margin: 0 auto 2.5rem;
+      padding: 0 1.5rem;
+    }
+
+    .rules-inner {
+      background: var(--secondary);
+      color: #FFFFFF;
+      border-radius: var(--radius-md);
+      padding: 1.2rem 1.8rem;
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      box-shadow: 0 8px 24px rgba(33, 94, 128, 0.12);
+    }
+
+    .rules-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    .rule-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .rule-tag {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #FFFFFF;
+      font-size: 0.78rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+    }
+
+    .rule-tag.highlight {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--text-black);
+      font-weight: 700;
     }
 
     /* ── MAIN CARD ── */
     .card-wrap {
       max-width: 780px;
-      margin: 0 auto 5rem;
+      margin: 0 auto 4rem;
       padding: 0 1.5rem;
+      width: 100%;
     }
 
     .card {
-      background: white;
-      border: 1.5px solid var(--border);
-      border-radius: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
       overflow: hidden;
-      box-shadow: 0 4px 40px rgba(13, 15, 26, 0.07);
-    }
-
-    .card-tabs {
-      display: flex;
-      border-bottom: 1.5px solid var(--border);
-      background: #fafaf8;
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 1rem;
-      background: none;
-      border: none;
-      border-bottom: 2.5px solid transparent;
-      font-family: var(--font-body);
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--slate);
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-bottom: -1.5px;
-    }
-
-    .tab-btn.active {
-      color: var(--blue);
-      border-bottom-color: var(--blue);
-      background: white;
-    }
-
-    .tab-btn:hover:not(.active) {
-      color: var(--ink);
+      box-shadow: 0 12px 36px rgba(33, 94, 128, 0.05);
     }
 
     .card-body {
-      padding: 2.2rem;
+      padding: 2.5rem;
     }
 
-    /* ── DROP ZONES ── */
-    .drop-section {
-      margin-bottom: 1.6rem;
-    }
-
+    /* ── LABELS ── */
     .drop-label {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 0.8rem;
+      font-size: 0.9rem;
       font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--slate);
-      margin-bottom: 0.6rem;
+      color: var(--secondary);
+      margin-bottom: 0.75rem;
     }
 
     .required-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: var(--red);
+      background: var(--primary);
     }
 
     .optional-tag {
-      font-size: 0.65rem;
-      background: #f0f0ea;
-      color: var(--slate);
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
-      font-weight: 500;
-      letter-spacing: 0.05em;
+      font-size: 0.7rem;
+      background: var(--bg-ivory);
+      color: var(--secondary);
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+    }
+
+    /* ── CATEGORY SELECTOR ── */
+    .category-section {
+      margin-bottom: 2rem;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    .category-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.4rem;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      background: var(--bg-card);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      position: relative;
+    }
+
+    .category-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(33, 94, 128, 0.04);
+    }
+
+    .category-card.active {
+      border-color: var(--secondary);
+      background: var(--primary-light);
+      box-shadow: 0 6px 20px rgba(255, 192, 0, 0.15);
+    }
+
+    .category-card.active::after {
+      content: '✓';
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      color: var(--secondary);
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .cat-icon {
+      font-size: 1.6rem;
+    }
+
+    .cat-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--secondary);
+    }
+
+    .cat-desc {
+      font-size: 0.8rem;
+      color: var(--text-gray);
+      line-height: 1.45;
+    }
+
+    /* ── TOGGLE CONTROL ── */
+    .knowledge-toggle-wrap {
+      margin-bottom: 2.2rem;
+      padding: 1.4rem;
+      background: var(--pastel-teal);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 52px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #cbd5e1;
+      transition: .3s;
+      border-radius: var(--radius-full);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    .switch input:checked+.slider {
+      background-color: var(--secondary);
+    }
+
+    .switch input:checked+.slider:before {
+      transform: translateX(24px);
+    }
+
+    /* ── DROP ZONES ── */
+    .drop-section {
+      margin-bottom: 2rem;
     }
 
     .drop-zone {
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
-      padding: 2rem 1.5rem;
+      border: 2px dashed rgba(33, 94, 128, 0.2);
+      border-radius: var(--radius-md);
+      padding: 2.5rem 1.5rem;
       text-align: center;
       cursor: pointer;
-      transition: all 0.2s;
-      background: #fafaf8;
+      transition: all 0.2s ease;
+      background: var(--bg-ivory);
       position: relative;
     }
 
     .drop-zone:hover,
     .drop-zone.drag-over {
-      border-color: var(--blue);
-      background: #f0f4ff;
+      border-color: var(--secondary);
+      background: var(--primary-light);
     }
 
     .drop-zone input[type="file"] {
@@ -236,192 +412,132 @@
     }
 
     .drop-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      background: var(--blue-light);
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-full);
+      background: var(--bg-card);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 0.75rem;
-      font-size: 1.2rem;
+      margin: 0 auto 0.85rem;
+      font-size: 1.3rem;
+      box-shadow: 0 4px 12px rgba(33, 94, 128, 0.05);
     }
 
     .drop-text-main {
-      font-size: 0.92rem;
-      font-weight: 600;
-      color: var(--ink);
-      margin-bottom: 0.25rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--secondary);
+      margin-bottom: 0.3rem;
     }
 
     .drop-text-sub {
-      font-size: 0.78rem;
-      color: var(--slate);
+      font-size: 0.8rem;
+      color: var(--text-gray);
     }
 
+    /* ── SELECTED FILES ── */
     .file-selected {
       display: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.2rem;
+      margin-top: 0.85rem;
+    }
+
+    .file-item {
+      display: flex;
       align-items: center;
-      gap: 0.6rem;
-      background: #f0f7ff;
-      border: 1.5px solid var(--blue-light);
-      border-radius: 8px;
-      padding: 0.7rem 1rem;
-      margin-top: 0.6rem;
-      font-size: 0.84rem;
-      color: var(--ink);
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg-ivory);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      border: 1px solid rgba(33, 94, 128, 0.04);
     }
 
-    .file-selected .file-name {
-      font-weight: 500;
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .file-item:last-child {
+      margin-bottom: 0;
     }
 
-    .file-selected .file-remove {
+    .file-remove {
       cursor: pointer;
-      color: var(--slate);
-      font-size: 1rem;
-      flex-shrink: 0;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      font-weight: 700;
+      transition: color 0.15s;
     }
 
-    .file-selected .file-remove:hover {
-      color: var(--red);
+    .file-remove:hover {
+      color: #E83A25;
     }
 
-    /* ── INSTRUCTIONS ── */
-    .instructions-wrap {
-      margin-bottom: 1.6rem;
-    }
-
+    /* ── TEXTAREA ── */
     .instructions-textarea {
       width: 100%;
-      min-height: 90px;
-      padding: 0.9rem 1rem;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
+      min-height: 110px;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
       font-family: var(--font-body);
-      font-size: 0.9rem;
-      color: var(--ink);
-      background: #fafaf8;
+      font-size: 0.92rem;
+      color: var(--text-black);
+      background: var(--bg-ivory);
       resize: vertical;
       outline: none;
-      transition: border-color 0.2s;
+      transition: all 0.2s ease;
     }
 
     .instructions-textarea:focus {
-      border-color: var(--blue);
-      background: white;
+      border-color: var(--secondary);
+      background: var(--bg-card);
+      box-shadow: 0 4px 16px rgba(33, 94, 128, 0.04);
     }
 
     .instructions-textarea::placeholder {
-      color: #b0afa9;
+      color: var(--text-muted);
     }
 
-    /* ── CATEGORY SELECTOR ── */
-    .category-section {
-      margin-bottom: 2rem;
-    }
-
-    .category-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-
-    .category-card {
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      background: white;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      position: relative;
-    }
-
-    .category-card:hover {
-      border-color: var(--blue-light);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-
-    .category-card.active {
-      border-color: var(--blue);
-      background: #f0f4ff;
-      box-shadow: 0 4px 20px rgba(37, 80, 232, 0.1);
-    }
-
-    .category-card.active::after {
-      content: '✓';
-      position: absolute;
-      top: 10px;
-      right: 12px;
-      color: var(--blue);
-      font-weight: 800;
-      font-size: 0.9rem;
-    }
-
-    .cat-icon {
-      font-size: 1.5rem;
-      margin-bottom: 0.2rem;
-    }
-
-    .cat-title {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--ink);
-    }
-
-    .cat-desc {
-      font-size: 0.75rem;
-      color: var(--slate);
-      line-height: 1.4;
-    }
-
-    /* ── GENERATE BUTTON ── */
+    /* ── BUTTONS ── */
     .btn-generate {
       width: 100%;
-      padding: 1rem;
-      background: var(--blue);
-      color: white;
+      padding: 1.1rem;
+      background: var(--secondary);
+      color: #FFFFFF;
       border: none;
-      border-radius: var(--radius);
-      font-family: var(--font-display);
-      font-size: 1rem;
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 1.05rem;
       font-weight: 700;
-      letter-spacing: -0.01em;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
+      box-shadow: 0 6px 20px rgba(33, 94, 128, 0.15);
     }
 
     .btn-generate:hover:not(:disabled) {
-      background: #1a3fd4;
+      background: var(--secondary-hover);
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(37, 80, 232, 0.3);
+      box-shadow: 0 8px 24px rgba(33, 94, 128, 0.25);
     }
 
     .btn-generate:disabled {
       opacity: 0.6;
       cursor: not-allowed;
       transform: none;
+      box-shadow: none;
     }
 
     /* ── PROGRESS ── */
     .progress-section {
       display: none;
-      margin-top: 1.8rem;
-      padding-top: 1.8rem;
-      border-top: 1.5px solid var(--border);
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
     }
 
     .progress-section.visible {
@@ -431,53 +547,56 @@
     .progress-steps {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 1rem;
     }
 
     .step {
       display: flex;
       align-items: center;
-      gap: 0.9rem;
-      font-size: 0.88rem;
+      gap: 1rem;
+      font-size: 0.92rem;
     }
 
     .step-icon {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      background: #eeecea;
+      background: var(--bg-ivory);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       font-weight: 700;
-      color: var(--slate);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
       flex-shrink: 0;
       transition: all 0.3s;
     }
 
     .step.active .step-icon {
-      background: var(--blue-light);
-      color: var(--blue);
+      background: var(--primary-light);
+      color: var(--secondary);
+      border-color: var(--secondary);
       animation: pulse 1.2s infinite;
     }
 
     .step.done .step-icon {
-      background: #d1f5e8;
-      color: var(--success);
+      background: var(--pastel-mint);
+      color: #1E6B43;
+      border-color: #1E6B43;
     }
 
     .step-text {
-      color: var(--slate);
+      color: var(--text-gray);
     }
 
     .step.active .step-text {
-      color: var(--ink);
-      font-weight: 500;
+      color: var(--secondary);
+      font-weight: 700;
     }
 
     .step.done .step-text {
-      color: var(--slate);
+      color: var(--text-muted);
       text-decoration: line-through;
     }
 
@@ -485,78 +604,82 @@
 
       0%,
       100% {
-        box-shadow: 0 0 0 0 rgba(37, 80, 232, 0.3);
+        box-shadow: 0 0 0 0 rgba(33, 94, 128, 0.2);
       }
 
       50% {
-        box-shadow: 0 0 0 6px rgba(37, 80, 232, 0);
+        box-shadow: 0 0 0 8px rgba(33, 94, 128, 0);
       }
     }
 
     /* ── RESULT ── */
     .result-section {
       display: none;
-      margin-top: 1.8rem;
-      padding: 1.5rem;
-      background: #f0faf5;
-      border: 1.5px solid #a8e6cc;
-      border-radius: var(--radius);
+      margin-top: 2rem;
+      padding: 2rem;
+      background: var(--pastel-mint);
+      border: 1px solid #a8e6cc;
+      border-radius: var(--radius-md);
       text-align: center;
+      box-shadow: 0 8px 24px rgba(30, 107, 67, 0.05);
     }
 
     .result-section.visible {
       display: block;
+      animation: fadeIn 0.4s ease;
     }
 
     .result-icon {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+      font-size: 2.2rem;
+      margin-bottom: 0.6rem;
     }
 
     .result-title {
-      font-family: var(--font-display);
       font-weight: 700;
-      font-size: 1.1rem;
-      color: var(--success);
-      margin-bottom: 0.4rem;
+      font-size: 1.2rem;
+      color: #1E6B43;
+      margin-bottom: 0.5rem;
     }
 
     .result-sub {
-      font-size: 0.84rem;
-      color: var(--slate);
-      margin-bottom: 1.2rem;
+      font-size: 0.9rem;
+      color: var(--text-gray);
+      margin-bottom: 1.5rem;
     }
 
     .btn-download {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.8rem;
-      background: var(--success);
-      color: white;
+      gap: 0.6rem;
+      padding: 0.85rem 2.2rem;
+      background: #1E6B43;
+      color: #FFFFFF;
       border: none;
-      border-radius: 8px;
+      border-radius: var(--radius-full);
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       cursor: pointer;
       text-decoration: none;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 16px rgba(30, 107, 67, 0.2);
     }
 
     .btn-download:hover {
-      background: #158558;
+      background: #154c30;
+      box-shadow: 0 8px 20px rgba(30, 107, 67, 0.35);
     }
 
     /* ── ERROR ── */
     .error-section {
       display: none;
-      margin-top: 1.2rem;
-      padding: 1rem 1.2rem;
-      background: #fff0ee;
-      border: 1.5px solid #f5bdb6;
-      border-radius: var(--radius);
-      font-size: 0.86rem;
-      color: #c0392b;
+      margin-top: 1.5rem;
+      padding: 1.2rem;
+      background: #FFF0ED;
+      border: 1px solid #f5bdb6;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      color: #B33C2B;
+      line-height: 1.5;
     }
 
     .error-section.visible {
@@ -568,98 +691,67 @@
       max-width: 780px;
       margin: 0 auto 5rem;
       padding: 0 1.5rem;
+      width: 100%;
     }
 
     .section-label {
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.18em;
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: var(--blue);
+      color: var(--secondary);
       margin-bottom: 1.5rem;
+      text-align: center;
     }
 
     .steps-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 1rem;
+      gap: 1.25rem;
     }
 
     .how-step {
-      background: white;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.4rem 1.2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.6rem 1.4rem;
+      box-shadow: 0 8px 24px rgba(33, 94, 128, 0.02);
     }
 
     .how-num {
       font-family: var(--font-display);
-      font-size: 2rem;
+      font-size: 2.2rem;
       font-weight: 800;
-      color: var(--blue-light);
+      color: var(--primary);
       line-height: 1;
-      margin-bottom: 0.6rem;
+      margin-bottom: 0.75rem;
+      opacity: 0.8;
     }
 
     .how-title {
-      font-size: 0.88rem;
+      font-size: 0.95rem;
       font-weight: 700;
-      color: var(--ink);
-      margin-bottom: 0.3rem;
+      color: var(--secondary);
+      margin-bottom: 0.4rem;
     }
 
     .how-desc {
-      font-size: 0.78rem;
-      color: var(--slate);
+      font-size: 0.8rem;
+      color: var(--text-gray);
       line-height: 1.5;
     }
 
-    /* ── RULES BADGE ── */
-    .rules-strip {
-      max-width: 780px;
-      margin: 0 auto 3rem;
-      padding: 0 1.5rem;
-    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
 
-    .rules-inner {
-      background: var(--ink);
-      color: white;
-      border-radius: var(--radius);
-      padding: 1.2rem 1.8rem;
-      display: flex;
-      align-items: center;
-      gap: 1.2rem;
-      flex-wrap: wrap;
-    }
-
-    .rules-title {
-      font-family: var(--font-display);
-      font-size: 0.85rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      opacity: 0.5;
-      white-space: nowrap;
-    }
-
-    .rule-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-
-    .rule-tag {
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: white;
-      font-size: 0.75rem;
-      padding: 0.3rem 0.7rem;
-      border-radius: 6px;
-      font-weight: 500;
-    }
-
-    .rule-tag.highlight {
-      background: var(--blue);
-      border-color: var(--blue);
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
@@ -668,27 +760,27 @@
 
   <!-- HEADER -->
   <header>
-    <div class="logo">Slide<span>Forge</span></div>
-    <span class="badge">Claude AI</span>
+    <div class="logo">Crayon<span>School</span></div>
+    <span class="header-badge">HTML GENERATOR</span>
   </header>
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-eyebrow">AI-Powered Presentation</div>
-    <h1>문서를 <em>슬라이드</em>로,<br>몇 초 만에</h1>
-    <p>보고서·제안서·PDF를 올리면 Claude AI가 자동으로<br>구조화된 프레젠테이션을 만들어드립니다.</p>
+    <div class="hero-eyebrow">Interactive Slide Generator</div>
+    <h1>B2B 교육제안서를 <em>인쇄 규격 웹 슬라이드</em>로</h1>
+    <p>보유하신 한글, 워드, PDF, 엑셀 문서를 올리시면<br>크레용스쿨 디자인 자산을 완전 적용한 HTML 슬라이드로 빌드합니다.</p>
   </section>
 
   <!-- RULES STRIP -->
   <div class="rules-strip">
     <div class="rules-inner">
-      <span class="rules-title">필수 생성 규칙</span>
+      <span class="rules-title">디자인 시스템 강제 검증</span>
       <div class="rule-tags">
-        <span class="rule-tag highlight">TAG 표시</span>
-        <span class="rule-tag highlight">핵심 Title</span>
-        <span class="rule-tag highlight">Page Number (우측 하단)</span>
-        <span class="rule-tag">이모지 사용 금지</span>
-        <span class="rule-tag">슬라이드 10–35장</span>
+        <span class="rule-tag highlight">아이보리 캔버스 (#FAF8ED)</span>
+        <span class="rule-tag highlight">16:9 가로 인쇄 규격</span>
+        <span class="rule-tag">이모지 절대 금지</span>
+        <span class="rule-tag">다크모드 절대 금지</span>
+        <span class="rule-tag">연령별 파스텔 자동 테밍</span>
       </div>
     </div>
   </div>
@@ -697,41 +789,47 @@
   <div class="card-wrap">
     <div class="card">
       <div class="card-body">
+
         <!-- 카테고리 선택 -->
         <div class="category-section">
           <div class="drop-label">
             <span class="required-dot"></span>
-            PPT 유형 선택
+            제안서 유형 선택
           </div>
           <div class="category-grid">
             <div class="category-card active" id="cat-proposal" onclick="selectCategory('proposal')">
-              <div class="cat-icon">📁</div>
-              <div class="cat-title">교육 제안서 PPT</div>
-              <div class="cat-desc">사업 제안, 소개서, 회사 소개서 제작에 최적화</div>
+              <div class="cat-icon">🎨</div>
+              <div class="cat-title">크레용스쿨 B2B 제안서</div>
+              <div class="cat-desc">기관 소개, LMS 안내, 강좌 매칭, 정산 specs에 특화</div>
             </div>
             <div class="category-card" id="cat-at" onclick="selectCategory('at_curriculum')">
-              <div class="cat-icon">🏫</div>
-              <div class="cat-title">AT 센터 교안 PPT</div>
-              <div class="cat-desc">교안 전용 디자인 및 챕터 구분 시스템 적용</div>
+              <div class="cat-icon">🎒</div>
+              <div class="cat-title">AT 센터 강좌 소개서</div>
+              <div class="cat-desc">넘버링 연령구분 대표 강좌, 커리큘럼 챕터화 적용</div>
             </div>
           </div>
         </div>
+
 
         <!-- 콘텐츠 파일 업로드 -->
         <div class="drop-section" id="drop-content">
           <div class="drop-label">
             <span class="required-dot"></span>
-            제안서 콘텐츠 문서 (한글/워드/PDF/TXT/엑셀)
+            제안서 콘텐츠 파일 (PDF/DOCX/PPTX/TXT/XLSX/MD/JPG/PNG)
           </div>
-          <div class="drop-zone" id="content-zone">
-            <input type="file" id="content-file" hidden accept=".pdf,.docx,.txt,.xlsx,.xls,.pptx" multiple onchange="onFileSelect(this)">
+          <div class="drop-zone" id="content-zone" ondragover="this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')">
+            <input type="file" id="content-file" hidden accept=".pdf,.docx,.txt,.xlsx,.xls,.pptx,.md,.jpg,.jpeg,.png"
+              multiple onchange="onFileSelect(this)">
             <div class="drop-zone-content" onclick="document.getElementById('content-file').click()">
-              <div class="drop-icon">📄</div>
-              <div class="drop-text">파일을 드래그하거나 클릭하여 업로드</div>
-              <div class="file-name" id="content-name-display">선택된 파일 없음</div>
+              <div class="drop-icon">📂</div>
+              <div class="drop-text-main">파일들을 드래그하거나 클릭하여 선택하세요</div>
+              <div class="drop-text-sub">교구 사진 등 이미지 파일을 추가하면 분석하여 슬라이드에 반영합니다.</div>
+              <div class="drop-text-sub" id="content-name-display"
+                style="margin-top: 8px; font-weight: 700; color: var(--secondary);">선택된 파일 없음</div>
             </div>
           </div>
-          <div class="file-selected" id="content-selected" style="display:none; padding:15px; background:rgba(255,255,255,0.03); border-radius:12px; margin-top:10px;">
+          <div class="file-selected" id="content-selected">
             <div id="file-list-items"></div>
           </div>
         </div>
@@ -739,13 +837,12 @@
         <!-- 추가 지시사항 -->
         <div class="instructions-wrap" style="margin-top: 30px;">
           <div class="drop-label">추가 지시사항 <span class="optional-tag">선택</span></div>
-          <textarea class="instructions-textarea" id="instructions"
-            placeholder="예: 청중은 임원진입니다. 숫자 데이터를 강조해주세요. 슬라이드는 20장 이상으로 만들어주세요."></textarea>
+          <textarea class="instructions-textarea" id="instructions"></textarea>
         </div>
 
         <!-- GENERATE BTN -->
         <button class="btn-generate" id="btn-generate" onclick="generate()">
-          <span id="btn-text">PPT 생성하기</span>
+          <span id="btn-text">HTML 슬라이드 생성하기</span>
         </button>
 
         <!-- PROGRESS -->
@@ -753,123 +850,123 @@
           <div class="progress-steps">
             <div class="step" id="step-1">
               <div class="step-icon">1</div>
-              <div class="step-text">콘텐츠 분석 중...</div>
+              <div class="step-text">콘텐츠 및 교구 이미지(Vision) 정밀 분석 중...</div>
             </div>
             <div class="step" id="step-2">
               <div class="step-icon">2</div>
-              <div class="step-text">Claude AI가 슬라이드 구조 설계 중...</div>
+              <div class="step-text">크레용스쿨 디자인 자산을 참고하여 슬라이드 구조(JSON) 설계 중...</div>
             </div>
             <div class="step" id="step-3">
               <div class="step-icon">3</div>
-              <div class="step-text">크레용스쿨 표준 양식 적용 완료!</div>
+              <div class="step-text">크레용스쿨 인라인 CSS / Chart.js 웹 제안서 렌더링 완료!</div>
             </div>
           </div>
         </div>
+
+        <!-- ERROR MESSAGE -->
+        <div class="error-section" id="error-section"></div>
+
       </div>
     </div>
   </div>
 
-  <!-- RESULT MODAL -->
-  <div class="result-section" id="result-section">
-    <div class="result-card">
+  <!-- RESULT PANEL -->
+  <div class="card-wrap" style="margin-top: -2rem;">
+    <div class="result-section" id="result-section">
       <div class="result-icon">🎉</div>
-      <h2 class="result-title">생성이 완료되었습니다!</h2>
-      <p class="result-desc">표준 양식이 적용된 웹 뷰어에서 내용을 확인하고 수정할 수 있습니다.</p>
-      <a id="download-btn" class="btn-download" target="_blank">웹 뷰어 열기 🚀</a>
+      <h2 class="result-title">제안서 생성이 완료되었습니다!</h2>
+      <p class="result-sub">인쇄와 검수가 모두 가능한 CrayonSchool HTML 웹 슬라이드가 준비되었습니다.</p>
+      <a id="download-btn" class="btn-download" target="_blank">웹 슬라이드 열기 🚀</a>
     </div>
   </div>
 
   <!-- HOW IT WORKS -->
   <div class="how-section">
-    <div class="section-label">How it works</div>
+    <div class="section-label">HOW IT WORKS</div>
     <div class="steps-grid">
       <div class="how-step">
         <div class="how-num">01</div>
-        <div class="how-title">문서 업로드</div>
-        <div class="how-desc">보고서, 기획서, PDF 등 PPT로 만들 문서를 올립니다.</div>
+        <div class="how-title">멀티자료 업로드</div>
+        <div class="how-desc">기존 기획서 문서들과 함께 강좌 교구 사진들을 동시에 자유롭게 올립니다.</div>
       </div>
       <div class="how-step">
         <div class="how-num">02</div>
-        <div class="how-title">양식 적용</div>
-        <div class="how-desc">크레용스쿨 표준 양식이 자동으로 적용됩니다.</div>
+        <div class="how-title">스마트 비전 매칭</div>
+        <div class="how-desc">교구재 이미지를 분석하여 적절한 연령구분 슬라이드 영역에 배치합니다.</div>
       </div>
       <div class="how-step">
         <div class="how-num">03</div>
-        <div class="how-title">AI 분석</div>
-        <div class="how-desc">Claude AI가 핵심 내용을 추출하고 슬라이드 구조를 설계합니다.</div>
+        <div class="how-title">디자인 자산 연동</div>
+        <div class="how-desc">crayonschool_design_assets.md의 토큰을 직접 참고하여 최적의 레이아웃을 고릅니다.</div>
       </div>
       <div class="how-step">
         <div class="how-num">04</div>
-        <div class="how-title">확인 및 수정</div>
-        <div class="how-desc">완성된 PPT를 웹 뷰어에서 확인하고 수정할 수 있습니다.</div>
+        <div class="how-title">독립형 HTML 서빙</div>
+        <div class="how-desc">완성된 슬라이드는 단일 HTML 파일로 즉시 뷰어로 열거나 로컬에 다운로드할 수 있습니다.</div>
       </div>
     </div>
   </div>
 
   <script>
     const state = {
-      files: [], // 여러 파일 저장
+      files: [],
       category: 'proposal'
     };
 
     function selectCategory(cat) {
       state.category = cat;
       document.querySelectorAll('.category-card').forEach(card => card.classList.remove('active'));
-      document.getElementById(`cat-${cat === 'proposal' ? 'proposal' : 'at'}`).classList.add('active');
-      
+
+      const targetId = cat === 'proposal' ? 'cat-proposal' : 'cat-at';
+      const el = document.getElementById(targetId);
+      if (el) el.classList.add('active');
+
       const label = document.querySelector('#drop-content .drop-label');
       if (cat === 'at_curriculum') {
-        label.innerHTML = '<span class="required-dot"></span> 교안/참조 문서 (여러 파일 선택 가능)';
+        label.innerHTML = '<span class="required-dot"></span> 교안/참조 문서 및 이미지';
       } else {
-        label.innerHTML = '<span class="required-dot"></span> 제안서/참조 문서 (여러 파일 선택 가능)';
+        label.innerHTML = '<span class="required-dot"></span> 제안서/참조 문서 및 이미지';
       }
     }
 
     function onFileSelect(input) {
       const newFiles = Array.from(input.files);
       if (newFiles.length === 0) return;
-      
-      // 기존 파일 목록에 추가 (중복 제외 가능하지만 여기선 단순 추가)
+
       state.files = [...state.files, ...newFiles];
       renderFileList();
-      
-      document.getElementById(`content-zone`).classList.add('has-file');
     }
 
     function renderFileList() {
       const container = document.getElementById('content-selected');
       const listContainer = document.getElementById('file-list-items');
-      
+
       if (state.files.length > 0) {
         container.style.display = 'block';
         listContainer.innerHTML = '';
-        
+
         state.files.forEach((file, index) => {
           const item = document.createElement('div');
           item.className = 'file-item';
-          item.style.display = 'flex';
-          item.style.alignItems = 'center';
-          item.style.justifyContent = 'space-between';
-          item.style.padding = '8px 12px';
-          item.style.background = 'rgba(255,255,255,0.05)';
-          item.style.borderRadius = '8px';
-          item.style.marginBottom = '8px';
-          
+
+          // 이미지 파일인지 판별해 이모지 다르게 지정
+          const isImg = /\.(jpg|jpeg|png|gif)$/i.test(file.name);
+          const icon = isImg ? '🖼️' : '📄';
+
           item.innerHTML = `
             <div style="display:flex; align-items:center; gap:10px;">
-              <span>📎</span>
-              <span style="font-size:14px; color:var(--text-main);">${file.name}</span>
+              <span>${icon}</span>
+              <span style="font-size:14px; font-weight:500; color:var(--secondary);">${file.name}</span>
             </div>
-            <span class="file-remove" onclick="removeFile(${index})" style="cursor:pointer; color:var(--accent-red);">✕</span>
+            <span class="file-remove" onclick="removeFile(${index})">✕</span>
           `;
           listContainer.appendChild(item);
         });
-        
+
         document.getElementById('content-name-display').textContent = `${state.files.length}개의 파일 선택됨`;
       } else {
         container.style.display = 'none';
         document.getElementById('content-name-display').textContent = '선택된 파일 없음';
-        document.getElementById(`content-zone`).classList.remove('has-file');
       }
     }
 
@@ -880,7 +977,7 @@
 
     function setStep(step, status) {
       const el = document.getElementById(`step-${step}`);
-      el.className = `step ${status}`;
+      if (el) el.className = `step ${status}`;
     }
 
     function resetSteps() {
@@ -892,37 +989,36 @@
     function hideAll() {
       document.getElementById('progress-section').classList.remove('visible');
       document.getElementById('result-section').classList.remove('visible');
-      if (document.getElementById('error-section')) {
-        document.getElementById('error-section').classList.remove('visible');
-      }
+      const err = document.getElementById('error-section');
+      if (err) err.classList.remove('visible');
     }
 
     function showError(msg) {
       const el = document.getElementById('error-section');
       if (el) {
-        el.textContent = '오류: ' + msg;
+        el.textContent = '오류가 발생했습니다: ' + msg;
         el.classList.add('visible');
       } else {
         alert(msg);
       }
-      // 버튼 복구
+
       const btn = document.getElementById('btn-generate');
       if (btn) {
         btn.disabled = false;
-        document.getElementById('btn-text').textContent = 'PPT 생성하기';
+        document.getElementById('btn-text').textContent = 'HTML 슬라이드 생성하기';
       }
       document.getElementById('progress-section').classList.remove('visible');
     }
 
     async function generate() {
       if (state.files.length === 0) {
-        showError('콘텐츠 문서 파일을 하나 이상 업로드해주세요.');
+        showError('분석 대상 문서 또는 이미지를 1개 이상 업로드해주세요.');
         return;
       }
 
       const btn = document.getElementById('btn-generate');
       btn.disabled = true;
-      document.getElementById('btn-text').textContent = '생성 중...';
+      document.getElementById('btn-text').textContent = '제안서 분석 및 생성 중...';
       hideAll();
       resetSteps();
       document.getElementById('progress-section').classList.add('visible');
@@ -932,13 +1028,13 @@
         formData.append('content_file', file);
       });
       formData.append('category', state.category);
-      
+
       const instructions = document.getElementById('instructions').value.trim();
       if (instructions) formData.append('instructions', instructions);
 
       try {
         setStep(1, 'active');
-        await delay(500);
+        await delay(300);
 
         const response = await fetch('/api/generate', {
           method: 'POST',
@@ -949,12 +1045,12 @@
         setStep(2, 'active');
 
         if (!response.ok) {
-          const data = await response.json().catch(() => ({ error: '서버 오류' }));
+          const data = await response.json().catch(() => ({ error: '서버 분석 오류가 발생했습니다.' }));
           throw new Error(data.error || `HTTP ${response.status}`);
         }
 
         const data = await response.json();
-        
+
         setStep(2, 'done');
         setStep(3, 'active');
         await delay(500);
@@ -962,28 +1058,27 @@
         if (data.redirect) {
           setStep(3, 'done');
           document.getElementById('result-section').classList.add('visible');
+
           const downloadBtn = document.getElementById('download-btn');
           downloadBtn.href = data.redirect;
-          downloadBtn.textContent = '웹 뷰어 열기 🚀';
-          downloadBtn.target = '_blank'; // 새 탭에서 열기
+          downloadBtn.textContent = '웹 슬라이드 열기 🚀';
 
-          // 1초 뒤 자동 이동
+          // 생성 완료 시 부드러운 자동 팝업 열기
           setTimeout(() => {
             window.open(data.redirect, '_blank');
           }, 1000);
         } else {
-          throw new Error("서버 응답 오류: 리다이렉트 URL이 없습니다.");
+          throw new Error("서버 응답 오류: 리다이렉트 경로가 유실되었습니다.");
         }
 
       } catch (err) {
-        [1, 2, 3].forEach(n => setStep(n, null));
-        showError(err.message || '알 수 없는 오류가 발생했습니다.');
+        [1, 2, 3].forEach(n => setStep(n, ''));
+        showError(err.message || '알 수 없는 에러가 발생했습니다.');
       } finally {
         btn.disabled = false;
-        document.getElementById('btn-text').textContent = 'PPT 생성하기';
+        document.getElementById('btn-text').textContent = 'HTML 슬라이드 생성하기';
       }
     }
-
   </script>
 </body>
 

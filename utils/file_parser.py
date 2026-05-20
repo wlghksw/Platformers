@@ -21,8 +21,14 @@ def extract_text(filepath: str) -> str:
     elif ext == ".txt":
         with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
             return f.read()
-    elif ext in (".xlsx", ".xls"):
-        return _extract_excel(filepath)
+    elif ext in [".xlsx", ".xls"]:
+        import pandas as pd
+        # 모든 시트를 읽어서 데이터 누락 방지 (완벽 모드)
+        all_sheets = pd.read_excel(filepath, sheet_name=None)
+        combined_data = []
+        for sheet_name, df in all_sheets.items():
+            combined_data.append(f"--- [SHEET: {sheet_name}] ---\n{df.to_string()}")
+        return "\n\n".join(combined_data)
     else:
         raise ValueError(f"지원하지 않는 파일 형식: {ext}")
 
@@ -55,7 +61,7 @@ def extract_pdf_as_images(filepath: str, max_pages: int = 15, dpi: int = 150) ->
     return pages_data
 
 
-def extract_images_from_pdf(filepath: str, output_dir: str, min_width: int = 200, min_height: int = 150) -> list:
+def extract_images_from_pdf(filepath: str, output_dir: str, min_width: int = 400, min_height: int = 300) -> list:
     """
     PDF에서 유효한 이미지를 추출하여 파일로 저장
     Returns: [{"path": str, "page": int, "width": int, "height": int}]
@@ -122,7 +128,8 @@ def _extract_docx(filepath: str) -> str:
     paragraphs = []
     for para in doc.paragraphs:
         if para.text.strip():
-            if para.style.name.startswith("Heading"):
+            style_name = getattr(para.style, "name", "") or ""
+            if style_name.startswith("Heading"):
                 paragraphs.append(f"\n## {para.text.strip()}")
             else:
                 paragraphs.append(para.text.strip())
@@ -150,6 +157,59 @@ def _extract_pptx(filepath: str) -> str:
             slides_text.append(f"[슬라이드 {slide_num}]\n" + "\n".join(texts))
 
     return "\n\n".join(slides_text)
+
+
+def extract_images_from_pptx(filepath: str, output_dir: str, min_width: int = 400, min_height: int = 300) -> list:
+    """
+    PPTX 파일에서 이미지를 추출하여 저장
+    Returns: [{"path": str, "slide": int, "width": int, "height": int}]
+    """
+    from pptx import Presentation
+    from pptx.enum.shapes import MSO_SHAPE_TYPE
+
+    os.makedirs(output_dir, exist_ok=True)
+    prs = Presentation(filepath)
+    results = []
+    img_count = 0
+
+    def _extract_from_shape(shape, results_list, img_counter):
+        if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
+            for child in shape.shapes:
+                img_counter = _extract_from_shape(child, results_list, img_counter)
+        elif hasattr(shape, "image") and shape.image:
+            try:
+                image = shape.image
+                ext = image.ext  # e.g. 'png', 'jpg'
+                
+                # 원본 크기 확인 (EMU 단위 -> 픽셀 대략 변환)
+                w_px = int(shape.width / 9525) if shape.width else 0
+                h_px = int(shape.height / 9525) if shape.height else 0
+                
+                if w_px >= min_width and h_px >= min_height:
+                    img_counter += 1
+                    img_path = os.path.join(output_dir, f"pptx_s{slide_num}_{img_counter}.{ext}")
+                    
+                    with open(img_path, "wb") as f:
+                        f.write(image.blob)
+
+                    results_list.append({
+                        "path": img_path,
+                        "slide": slide_num,
+                        "width": w_px,
+                        "height": h_px,
+                        "ext": ext,
+                    })
+            except Exception:
+                pass
+        return img_counter
+
+    for slide_num, slide in enumerate(prs.slides, 1):
+        for shape in slide.shapes:
+            img_count = _extract_from_shape(shape, results, img_count)
+
+    # 크기순 정렬
+    results.sort(key=lambda x: x["width"] * x["height"], reverse=True)
+    return results
 
 
 def _extract_excel(filepath: str) -> str:
