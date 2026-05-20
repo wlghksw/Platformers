@@ -645,6 +645,217 @@ def _render_supply_pricing(slide: dict) -> str:
 """
 
 
+# ─── B2B 프리미엄 레이아웃 3종 HTML 렌더러 ─────────────────────────────────────
+
+def _render_timeline_process(slide: dict) -> str:
+    """[PREMIUM] 가로형 3단 스테이지 카드 + 프로세스 배지 축선"""
+    tag      = _escape(slide.get("tag", ""))
+    title    = _apply_accent(slide.get("title", ""))
+    subtitle = _escape(slide.get("subtitle", ""))
+    content  = slide.get("content", {})
+    steps    = content.get("timeline_steps", [])
+    badges   = content.get("process_badges", [])
+    tbl_hdrs = content.get("table_headers", [])
+    tbl_rows = content.get("table_rows", [])
+    page     = slide.get("page", "")
+    badge_cls = _badge_class(slide.get("tag", ""))
+
+    STAGE_BG    = ["#EAF4FB", "#FFF1E8", "#EFF8E8"]
+    STAGE_BD    = ["#1E6EA8", "#E07B39", "#4DAA3E"]
+    BADGE_COLORS = ["#1E6EA8", "#E07B39", "#2F8FAD", "#4DAA3E"]
+
+    cards_html = ""
+    for idx, step in enumerate(steps[:3]):
+        bg  = STAGE_BG[idx % 3]
+        bd  = STAGE_BD[idx % 3]
+        s_num = _escape(str(step.get("stage_num", idx + 1)))
+        s_ttl = _escape(step.get("title", ""))
+        s_dsc = _escape(step.get("desc", ""))
+        arrow_html = '<div style="font-size:22px;color:#ccc;display:flex;align-items:center;flex-shrink:0;margin:0 4px;">&#9658;</div>' if idx < len(steps[:3]) - 1 else ""
+        cards_html += f"""
+<div style="flex:1;border-radius:10px;background:{bg};border:1.5px solid {bd};overflow:hidden;display:flex;flex-direction:column;">
+  <div style="height:6px;background:{bd};"></div>
+  <div style="padding:16px 14px 14px;">
+    <div style="font-size:10px;font-weight:800;color:{bd};letter-spacing:1px;margin-bottom:6px;">STAGE {s_num}</div>
+    <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:8px;line-height:1.3;">{s_ttl}</div>
+    <div style="font-size:12px;color:var(--text-secondary);line-height:1.55;">{s_dsc}</div>
+  </div>
+</div>
+{arrow_html}"""
+
+    badges_html = ""
+    if badges:
+        badge_items = ""
+        for b_idx, b_text in enumerate(badges[:4]):
+            bc = BADGE_COLORS[b_idx % len(BADGE_COLORS)]
+            badge_items += f'<div style="flex:1;background:{bc};color:#fff;font-weight:700;font-size:12px;text-align:center;padding:8px 4px;border-radius:6px;">{_escape(str(b_text))}</div>'
+        badges_html = f"""
+<div style="margin-top:20px;">
+  <div style="height:2px;background:#ddd;margin-bottom:-10px;"></div>
+  <div style="display:flex;gap:8px;position:relative;">{badge_items}</div>
+</div>"""
+    elif tbl_hdrs and tbl_rows:
+        th_html = "".join(f"<th>{_escape(h)}</th>" for h in tbl_hdrs)
+        tr_html = ""
+        for row in tbl_rows:
+            cells = row if isinstance(row, list) else [row]
+            tr_html += "<tr>" + "".join(f"<td>{_escape(str(c))}</td>" for c in cells) + "</tr>"
+        badges_html = f"""
+<div style="margin-top:16px;overflow:hidden;">
+  <table class="comparison-table"><thead><tr>{th_html}</tr></thead><tbody>{tr_html}</tbody></table>
+</div>"""
+
+    return f"""
+<div class="slide">
+  {_BRAND_MARK}
+  <div style="margin-bottom:8px;margin-top:12px;">
+    <span class="badge {badge_cls}">{tag}</span>
+  </div>
+  <div class="heading-1" style="margin-bottom:6px;">{title}</div>
+  <div class="body-sm" style="color:var(--text-secondary);margin-bottom:18px;">{subtitle}</div>
+  <div style="display:flex;align-items:stretch;gap:8px;flex:1;">
+    {cards_html}
+  </div>
+  {badges_html}
+  <div class="page-number">{page}</div>
+</div>
+"""
+
+
+def _render_split_table_images(slide: dict) -> str:
+    """[PREMIUM] 좌측 65% 커리큘럼 표 + 우측 35% 이미지 적층 + 하단 패키지 노트"""
+    tag        = _escape(slide.get("tag", ""))
+    title      = _apply_accent(slide.get("title", ""))
+    subtitle   = _escape(slide.get("subtitle", ""))
+    content    = slide.get("content", {})
+    curriculum = content.get("curriculum", [])
+    note_text  = _escape(content.get("package_note", content.get("condition", "")))
+    page       = slide.get("page", "")
+    badge_cls  = _badge_class(slide.get("tag", ""))
+    img_url    = slide.get("matched_image_url", "")
+
+    rows_html = ""
+    for idx, c in enumerate(curriculum):
+        period   = _escape(str(c.get("period", idx + 1)))
+        topic    = _escape(c.get("topic", ""))
+        targets  = _escape(c.get("targets", c.get("method", "")))
+        features = _escape(c.get("features", c.get("detail", c.get("kit", ""))))
+        row_bg   = "#EAF4FB" if idx % 2 == 0 else "#fff"
+        rows_html += f'<tr style="background:{row_bg};"><td style="text-align:center;font-weight:700;">{period}</td><td style="font-weight:600;color:var(--secondary);">{topic}</td><td>{targets}</td><td>{features}</td></tr>'
+
+    img_block = ""
+    if img_url:
+        img_block = f"""
+<div style="flex:0 0 35%;display:flex;flex-direction:column;gap:10px;">
+  <img src="{img_url}" style="flex:1;width:100%;object-fit:cover;border-radius:8px;border:1px solid rgba(30,110,168,0.12);" />
+  <div style="flex:1;background:#EAF4FB;border-radius:8px;border:1px dashed #1E6EA8;display:flex;align-items:center;justify-content:center;color:#1E6EA8;font-size:12px;">교육 현장 이미지</div>
+</div>"""
+    else:
+        img_block = """
+<div style="flex:0 0 35%;display:flex;flex-direction:column;gap:10px;">
+  <div style="flex:1;background:#EAF4FB;border-radius:8px;border:1.5px solid #1E6EA8;"></div>
+  <div style="flex:1;background:#EFF8E8;border-radius:8px;border:1.5px solid #4DAA3E;"></div>
+</div>"""
+
+    note_html = f'<div style="margin-top:12px;background:#FFFBE8;border:1px solid #FFC000;border-radius:6px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--secondary);">★ 권장 패키지: {note_text}</div>' if note_text else ""
+
+    return f"""
+<div class="slide">
+  {_BRAND_MARK}
+  <div style="margin-bottom:8px;margin-top:12px;">
+    <span class="badge {badge_cls}">{tag}</span>
+  </div>
+  <div class="heading-1" style="margin-bottom:6px;">{title}</div>
+  <div class="body-sm" style="color:var(--text-secondary);margin-bottom:14px;">{subtitle}</div>
+  <div style="display:flex;gap:16px;flex:1;align-items:stretch;">
+    <div style="flex:1;overflow:hidden;">
+      <table class="curriculum-table" style="height:100%;">
+        <thead>
+          <tr>
+            <th style="background:#1E6EA8;width:8%;text-align:center;">차시</th>
+            <th style="background:#1E6EA8;width:26%;">주제</th>
+            <th style="background:#1E6EA8;width:24%;">대상</th>
+            <th style="background:#1E6EA8;">교육 특징</th>
+          </tr>
+        </thead>
+        <tbody>{rows_html}</tbody>
+      </table>
+    </div>
+    {img_block}
+  </div>
+  {note_html}
+  <div class="page-number">{page}</div>
+</div>
+"""
+
+
+def _render_pricing_table_cards(slide: dict) -> str:
+    """[PREMIUM] 좌측 60% 견적 표 + 우측 40% 단가 카드 + 하단 조건 바"""
+    tag       = _escape(slide.get("tag", ""))
+    title     = _apply_accent(slide.get("title", ""))
+    subtitle  = _escape(slide.get("subtitle", ""))
+    content   = slide.get("content", {})
+    headers   = content.get("table_headers", [])
+    rows      = content.get("table_rows", [])
+    p_cards   = content.get("pricing_cards", [])
+    cond_txt  = _escape(content.get("condition", ""))
+    page      = slide.get("page", "")
+    badge_cls = _badge_class(slide.get("tag", ""))
+
+    # 좌측 견적 표
+    th_html = "".join(f"<th>{_escape(h)}</th>" for h in headers)
+    tr_html = ""
+    for ri, row in enumerate(rows):
+        cells = row if isinstance(row, list) else [row]
+        row_bg = "#FAF8ED" if ri % 2 == 0 else "#fff"
+        tr_html += f'<tr style="background:{row_bg};">' + "".join(f"<td>{_escape(str(c))}</td>" for c in cells) + "</tr>"
+    tbl_html = f'<table class="comparison-table"><thead><tr>{th_html}</tr></thead><tbody>{tr_html}</tbody></table>' if headers else ""
+
+    # 우측 단가 카드
+    CARD_STYLES = [
+        ("#EAF4FB", "#1E6EA8"),
+        ("#FFFBE8", "#FFC000"),
+    ]
+    p_cards_html = ""
+    for pi, pc in enumerate(p_cards[:2]):
+        bg, bd = CARD_STYLES[pi % 2]
+        c_title  = _escape(pc.get("title", ""))
+        c_amount = _escape(pc.get("amount", ""))
+        c_desc   = _escape(pc.get("desc", ""))
+        p_cards_html += f"""
+<div style="flex:1;border-radius:10px;background:{bg};border:2px solid {bd};overflow:hidden;display:flex;flex-direction:column;">
+  <div style="height:6px;background:{bd};"></div>
+  <div style="padding:16px;text-align:center;display:flex;flex-direction:column;justify-content:center;flex:1;">
+    <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">{c_title}</div>
+    <div style="font-size:26px;font-weight:800;color:{bd};font-family:'Outfit',sans-serif;margin-bottom:8px;">{c_amount}</div>
+    <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;">{c_desc}</div>
+  </div>
+</div>"""
+
+    cond_html = f'<div style="margin-top:12px;background:#215E80;color:#fff;border-radius:6px;padding:10px 16px;font-size:12px;font-weight:700;text-align:center;">■ {cond_txt}</div>' if cond_txt else ""
+
+    return f"""
+<div class="slide">
+  {_BRAND_MARK}
+  <div style="margin-bottom:8px;margin-top:12px;">
+    <span class="badge {badge_cls}">{tag}</span>
+  </div>
+  <div class="heading-1" style="margin-bottom:6px;">{title}</div>
+  <div class="body-sm" style="color:var(--text-secondary);margin-bottom:14px;">{subtitle}</div>
+  <div style="display:flex;gap:16px;flex:1;align-items:stretch;">
+    <div style="flex:0 0 60%;overflow:hidden;">
+      {tbl_html}
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px;">
+      {p_cards_html}
+    </div>
+  </div>
+  {cond_html}
+  <div class="page-number">{page}</div>
+</div>
+"""
+
+
 # ─── Layout Dispatch ─────────────────────────────────────────────────────────
 
 def _render_slide(slide: dict, image_list: list = None) -> str:
@@ -660,10 +871,14 @@ def _render_slide(slide: dict, image_list: list = None) -> str:
         "split_v":          lambda s: _render_split_v(s, image_list),
         "split_h":          lambda s: _render_split_v(s, image_list),
         "full_text":        _render_full_text,
-        # B2B 신규 레이아웃
+        # B2B 기존 레이아웃
         "catalog_grid":     _render_catalog_grid,
         "curriculum_table": _render_curriculum_table,
         "supply_pricing":   _render_supply_pricing,
+        # B2B 프리미엄 신규 3종
+        "timeline_process":     _render_timeline_process,
+        "split_table_images":   _render_split_table_images,
+        "pricing_table_cards":  _render_pricing_table_cards,
         # 구버전 호환
         "content":          _render_full_text,
         "two_column":       _render_card_grid,

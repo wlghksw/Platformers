@@ -177,6 +177,12 @@ def build_presentation(
             _render_supply_pricing(slide, slide_info, W, H, palette)
         elif l_type == "comparison":
             _render_comparison(slide, slide_info, W, H, palette)
+        elif l_type == "timeline_process":
+            _render_timeline_process(slide, slide_info, W, H, palette)
+        elif l_type == "split_table_images":
+            _render_split_table_images(slide, slide_info, W, H, palette, images, i)
+        elif l_type == "pricing_table_cards":
+            _render_pricing_table_cards(slide, slide_info, W, H, palette)
         else:
             # full_text or default
             _render_content(slide, slide_info, W, H, palette, current_img)
@@ -1208,3 +1214,488 @@ def _render_comparison(slide, slide_info: dict, W, H, palette: dict):
             p.font.size = Pt(11)
             p.font.color.rgb = palette["body_text"]
             p.font.name = "Malgun Gothic"
+
+
+# ─── B2B 프리미엄 레이아웃 3종 ───────────────────────────────────────────────────
+
+# 단계 카드 컬러 팔레트 (레퍼런스 PPTX 추출값)
+_STAGE_COLORS = [
+    ("#EAF4FB", "#1E6EA8"),   # STAGE 1 - 라이트 블루 배경 / 블루 강조선
+    ("#FFF1E8", "#E07B39"),   # STAGE 2 - 파스텔 오렌지 배경 / 오렌지 강조선
+    ("#EFF8E8", "#4DAA3E"),   # STAGE 3 - 파스텔 그린 배경 / 그린 강조선
+]
+
+# 프로세스 배지 고정 컬러 (Blue -> Orange -> Teal -> Green)
+_BADGE_COLORS = [
+    "#1E6EA8",
+    "#E07B39",
+    "#2F8FAD",
+    "#4DAA3E",
+]
+
+
+def _render_timeline_process(slide, slide_info: dict, W, H, palette: dict):
+    """
+    [PREMIUM] 가로형 3단 스테이지 카드 + 화살표 + 하단 프로세스 배지 라인
+
+    content 필드:
+      - timeline_steps: list[{stage_num, title, desc}]  (3항목)
+      - process_badges: list[str]  (4항목, 선택)
+      - table_headers / table_rows: 선택적 운영 표 (process_badges 없을 때)
+    """
+    page_idx = slide_info.get("page", 1)
+    _add_title_block(
+        slide,
+        slide_info.get("title", ""),
+        slide_info.get("subtitle", ""),
+        W, palette, page_idx=page_idx
+    )
+
+    content = slide_info.get("content", {})
+    steps   = content.get("timeline_steps", [])
+    badges  = content.get("process_badges", [])
+
+    card_area_top = Inches(1.75)
+    card_area_h   = Inches(2.85) if badges else Inches(4.2)
+    margin        = Inches(0.5)
+    gap           = Inches(0.2)
+    num_cards     = max(len(steps), 1)
+    total_w       = W - margin * 2
+    card_w        = (total_w - gap * (num_cards - 1)) / num_cards
+
+    for idx, step in enumerate(steps[:3]):
+        bg_hex, border_hex = _STAGE_COLORS[idx % len(_STAGE_COLORS)]
+        card_left = margin + idx * (card_w + gap)
+
+        card_shape = slide.shapes.add_shape(
+            1, int(card_left), int(card_area_top), int(card_w), int(card_area_h)
+        )
+        card_shape.fill.solid()
+        card_shape.fill.fore_color.rgb = hex_to_rgb(bg_hex)
+        card_shape.line.color.rgb = hex_to_rgb(border_hex)
+        card_shape.line.width = Pt(1.2)
+
+        top_bar = slide.shapes.add_shape(
+            1, int(card_left), int(card_area_top), int(card_w), int(Inches(0.07))
+        )
+        top_bar.fill.solid()
+        top_bar.fill.fore_color.rgb = hex_to_rgb(border_hex)
+        top_bar.line.fill.background()
+
+        stage_label = remove_emoji("STAGE " + str(step.get("stage_num", idx + 1)))
+        tx_stage = slide.shapes.add_textbox(
+            int(card_left + Inches(0.15)), int(card_area_top + Inches(0.12)),
+            int(card_w - Inches(0.3)), int(Inches(0.35))
+        )
+        tf_s = tx_stage.text_frame
+        p_s = tf_s.paragraphs[0]
+        p_s.text = stage_label
+        p_s.font.size = Pt(10)
+        p_s.font.bold = True
+        p_s.font.color.rgb = hex_to_rgb(border_hex)
+        p_s.font.name = "Malgun Gothic"
+
+        step_title = remove_emoji(step.get("title", ""))
+        tx_title = slide.shapes.add_textbox(
+            int(card_left + Inches(0.15)), int(card_area_top + Inches(0.5)),
+            int(card_w - Inches(0.3)), int(Inches(0.65))
+        )
+        tf_t = tx_title.text_frame
+        tf_t.word_wrap = True
+        p_t = tf_t.paragraphs[0]
+        p_t.text = step_title
+        p_t.font.size = Pt(14)
+        p_t.font.bold = True
+        p_t.font.color.rgb = palette["title_text"]
+        p_t.font.name = "Malgun Gothic"
+
+        step_desc = remove_emoji(step.get("desc", ""))
+        tx_desc = slide.shapes.add_textbox(
+            int(card_left + Inches(0.15)), int(card_area_top + Inches(1.2)),
+            int(card_w - Inches(0.3)), int(card_area_h - Inches(1.35))
+        )
+        tf_d = tx_desc.text_frame
+        tf_d.word_wrap = True
+        p_d = tf_d.paragraphs[0]
+        p_d.text = step_desc
+        p_d.font.size = Pt(10.5)
+        p_d.font.color.rgb = palette["body_text"]
+        p_d.font.name = "Malgun Gothic"
+
+        if idx < num_cards - 1:
+            arrow_cx = int(card_left + card_w + gap / 2)
+            arrow_cy = int(card_area_top + card_area_h / 2)
+            arrow_w  = int(Inches(0.18))
+            arrow_h  = int(Inches(0.3))
+            arrow = slide.shapes.add_shape(
+                1,
+                arrow_cx - arrow_w // 2,
+                arrow_cy - arrow_h // 2,
+                arrow_w, arrow_h
+            )
+            arrow.fill.solid()
+            arrow.fill.fore_color.rgb = RGBColor(0xBB, 0xBB, 0xBB)
+            arrow.line.fill.background()
+
+    if badges:
+        axis_top = int(card_area_top + card_area_h + Inches(0.35))
+        axis_line = slide.shapes.add_shape(
+            1, int(margin), axis_top, int(W - margin * 2), int(Emu(28000))
+        )
+        axis_line.fill.solid()
+        axis_line.fill.fore_color.rgb = RGBColor(0xCC, 0xCC, 0xCC)
+        axis_line.line.fill.background()
+
+        badge_count = len(badges[:4])
+        badge_w     = int((W - margin * 2 - gap * (badge_count - 1)) / badge_count)
+        badge_h     = int(Inches(0.52))
+        badge_top   = axis_top - badge_h // 2 + int(Emu(14000))
+
+        for b_idx, badge_text in enumerate(badges[:4]):
+            b_left = int(margin + b_idx * (badge_w + gap))
+            b_color = _BADGE_COLORS[b_idx % len(_BADGE_COLORS)]
+
+            badge_shape = slide.shapes.add_shape(1, b_left, badge_top, badge_w, badge_h)
+            badge_shape.fill.solid()
+            badge_shape.fill.fore_color.rgb = hex_to_rgb(b_color)
+            badge_shape.line.fill.background()
+
+            tx_b = slide.shapes.add_textbox(
+                b_left + int(Inches(0.08)), badge_top,
+                badge_w - int(Inches(0.16)), badge_h
+            )
+            tf_b = tx_b.text_frame
+            tf_b.word_wrap = False
+            p_b = tf_b.paragraphs[0]
+            p_b.text = remove_emoji(str(badge_text))
+            p_b.alignment = PP_ALIGN.CENTER
+            p_b.font.size = Pt(11)
+            p_b.font.bold = True
+            p_b.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+            p_b.font.name = "Malgun Gothic"
+            from pptx.oxml.ns import qn
+            txBody = tf_b._txBody
+            bodyPr = txBody.find(qn("a:bodyPr"))
+            if bodyPr is not None:
+                bodyPr.set("anchor", "ctr")
+    else:
+        tbl_headers = content.get("table_headers", [])
+        tbl_rows    = content.get("table_rows", [])
+        if tbl_headers and tbl_rows:
+            tbl_top = int(card_area_top + card_area_h + Inches(0.25))
+            tbl_h   = int(H - tbl_top - Inches(0.65))
+            num_r   = 1 + len(tbl_rows)
+            num_c   = len(tbl_headers)
+            tbl_shape = slide.shapes.add_table(
+                num_r, num_c, int(margin), tbl_top, int(W - margin * 2), tbl_h
+            )
+            tbl = tbl_shape.table
+            for ci, hdr in enumerate(tbl_headers):
+                cell = tbl.cell(0, ci)
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = palette["primary"]
+                p_h = cell.text_frame.paragraphs[0]
+                p_h.text = hdr
+                p_h.alignment = PP_ALIGN.CENTER
+                p_h.font.size = Pt(11)
+                p_h.font.bold = True
+                p_h.font.color.rgb = RGBColor(255, 255, 255)
+                p_h.font.name = "Malgun Gothic"
+            for ri, row in enumerate(tbl_rows):
+                cells_val = row if isinstance(row, list) else [row]
+                row_bg = RGBColor(0xFA, 0xF8, 0xED) if ri % 2 == 0 else RGBColor(0xFF, 0xFF, 0xFF)
+                for ci2, val in enumerate(cells_val[:num_c]):
+                    cell2 = tbl.cell(ri + 1, ci2)
+                    cell2.fill.solid()
+                    cell2.fill.fore_color.rgb = row_bg
+                    p_c = cell2.text_frame.paragraphs[0]
+                    p_c.text = remove_emoji(str(val))
+                    p_c.alignment = PP_ALIGN.CENTER if ci2 == 0 else PP_ALIGN.LEFT
+                    p_c.font.size = Pt(10)
+                    p_c.font.color.rgb = palette["body_text"]
+                    p_c.font.name = "Malgun Gothic"
+
+
+def _render_split_table_images(
+    slide, slide_info: dict, W, H, palette: dict,
+    images: list = None, slide_idx: int = 0
+):
+    """
+    [PREMIUM] 좌측 65% 커리큘럼 표 + 우측 35% 이미지 적층 + 하단 패키지 노트
+
+    content 필드:
+      - curriculum: list[{period, topic, targets, features}]
+      - package_note: str (선택)
+    """
+    page_idx = slide_info.get("page", 1)
+    _add_title_block(
+        slide,
+        slide_info.get("title", ""),
+        slide_info.get("subtitle", ""),
+        W, palette, page_idx=page_idx
+    )
+
+    content    = slide_info.get("content", {})
+    curriculum = content.get("curriculum", [])
+    note_text  = content.get("package_note", content.get("condition", ""))
+
+    margin     = Inches(0.5)
+    top        = Inches(1.75)
+    bottom_gap = Inches(0.7) if note_text else Inches(0.15)
+    content_h  = H - top - bottom_gap
+    total_w    = W - margin * 2
+
+    left_w  = int(total_w * 0.65)
+    right_w = int(total_w * 0.35 - Inches(0.25))
+    right_l = int(margin + left_w + Inches(0.25))
+
+    if curriculum:
+        num_rows = 1 + len(curriculum)
+        num_cols = 4
+        tbl_shape = slide.shapes.add_table(
+            num_rows, num_cols,
+            int(margin), int(top), left_w, int(content_h)
+        )
+        tbl = tbl_shape.table
+
+        col_widths = [
+            int(left_w * 0.10),
+            int(left_w * 0.28),
+            int(left_w * 0.25),
+            int(left_w * 0.37),
+        ]
+        for ci, cw in enumerate(col_widths):
+            tbl.columns[ci].width = cw
+
+        hdr_list = ["차시", "주제", "대상", "교육 특징"]
+        for ci, h_text in enumerate(hdr_list):
+            cell = tbl.cell(0, ci)
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = RGBColor(0x1E, 0x6E, 0xA8)
+            p = cell.text_frame.paragraphs[0]
+            p.text = h_text
+            p.alignment = PP_ALIGN.CENTER
+            p.font.size = Pt(10.5)
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(255, 255, 255)
+            p.font.name = "Malgun Gothic"
+
+        for ri, c in enumerate(curriculum):
+            period   = str(c.get("period", ri + 1))
+            topic    = c.get("topic", "")
+            targets  = c.get("targets", c.get("method", ""))
+            features = c.get("features", c.get("detail", c.get("kit", "")))
+
+            row_bg = RGBColor(0xEA, 0xF4, 0xFB) if ri % 2 == 0 else RGBColor(0xFF, 0xFF, 0xFF)
+            data_row = [period, topic, targets, features]
+            for ci2, val in enumerate(data_row):
+                cell2 = tbl.cell(ri + 1, ci2)
+                cell2.fill.solid()
+                cell2.fill.fore_color.rgb = row_bg
+                cell2.text_frame.word_wrap = True
+                p2 = cell2.text_frame.paragraphs[0]
+                p2.text = remove_emoji(str(val))
+                p2.alignment = PP_ALIGN.CENTER if ci2 == 0 else PP_ALIGN.LEFT
+                p2.font.size = Pt(9.5)
+                p2.font.color.rgb = palette["body_text"]
+                p2.font.name = "Malgun Gothic"
+
+    img_h_each = int(content_h / 2 - Inches(0.1))
+    img_positions = [
+        (right_l, int(top)),
+        (right_l, int(top + img_h_each + Inches(0.2))),
+    ]
+    if images:
+        for pos_idx, (img_left, img_top_pos) in enumerate(img_positions):
+            img_info = images[(slide_idx + pos_idx) % len(images)]
+            _insert_image(slide, img_info, img_left, img_top_pos, right_w, img_h_each)
+    else:
+        for _, (img_left, img_top_pos) in enumerate(img_positions):
+            ph = slide.shapes.add_shape(1, img_left, img_top_pos, right_w, img_h_each)
+            ph.fill.solid()
+            ph.fill.fore_color.rgb = RGBColor(0xEA, 0xF4, 0xFB)
+            ph.line.color.rgb = RGBColor(0x1E, 0x6E, 0xA8)
+            ph.line.width = Pt(0.75)
+
+    if note_text:
+        note_top = int(H - Inches(0.65))
+        note_h   = int(Inches(0.48))
+        note_shape = slide.shapes.add_shape(
+            1, int(margin), note_top, int(W - margin * 2), note_h
+        )
+        note_shape.fill.solid()
+        note_shape.fill.fore_color.rgb = RGBColor(0xFF, 0xFB, 0xE8)
+        note_shape.line.color.rgb = RGBColor(0xFF, 0xC0, 0x00)
+        note_shape.line.width = Pt(1)
+
+        tx_note = slide.shapes.add_textbox(
+            int(margin + Inches(0.15)), note_top,
+            int(W - margin * 2 - Inches(0.3)), note_h
+        )
+        tf_note = tx_note.text_frame
+        tf_note.word_wrap = True
+        p_note = tf_note.paragraphs[0]
+        p_note.text = "* " + remove_emoji(note_text)
+        p_note.font.size = Pt(11)
+        p_note.font.bold = True
+        p_note.font.color.rgb = palette["primary"]
+        p_note.font.name = "Malgun Gothic"
+        from pptx.oxml.ns import qn
+        txBody = tf_note._txBody
+        bodyPr = txBody.find(qn("a:bodyPr"))
+        if bodyPr is not None:
+            bodyPr.set("anchor", "ctr")
+
+
+def _render_pricing_table_cards(slide, slide_info: dict, W, H, palette: dict):
+    """
+    [PREMIUM] 좌측 60% 견적 테이블 + 우측 40% 단가 혜택 카드 + 최하단 조건 바
+
+    content 필드:
+      - table_headers: list[str]
+      - table_rows: list[list]
+      - pricing_cards: list[{title, amount, desc}]  (2항목 권장)
+      - condition: str
+    """
+    page_idx = slide_info.get("page", 1)
+    _add_title_block(
+        slide,
+        slide_info.get("title", ""),
+        slide_info.get("subtitle", ""),
+        W, palette, page_idx=page_idx
+    )
+
+    content  = slide_info.get("content", {})
+    headers  = content.get("table_headers", [])
+    rows     = content.get("table_rows", [])
+    p_cards  = content.get("pricing_cards", [])
+    cond_txt = content.get("condition", "")
+
+    margin    = Inches(0.5)
+    top       = Inches(1.75)
+    fn_h      = Inches(0.52) if cond_txt else 0
+    content_h = int(H - top - fn_h - Inches(0.72))
+
+    left_w  = int((W - margin * 2) * 0.60)
+    right_w = int((W - margin * 2) * 0.40 - Inches(0.25))
+    right_l = int(margin + left_w + Inches(0.25))
+
+    if headers and rows:
+        num_r = 1 + len(rows)
+        num_c = len(headers)
+        tbl_shape = slide.shapes.add_table(
+            num_r, num_c,
+            int(margin), int(top), left_w, content_h
+        )
+        tbl = tbl_shape.table
+
+        for ci, h_text in enumerate(headers):
+            cell = tbl.cell(0, ci)
+            cell.fill.solid()
+            cell.fill.fore_color.rgb = palette["primary"]
+            p = cell.text_frame.paragraphs[0]
+            p.text = h_text
+            p.alignment = PP_ALIGN.CENTER
+            p.font.size = Pt(11)
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(255, 255, 255)
+            p.font.name = "Malgun Gothic"
+
+        for ri, row in enumerate(rows):
+            cells_val = row if isinstance(row, list) else [row]
+            row_bg = RGBColor(0xFA, 0xF8, 0xED) if ri % 2 == 0 else RGBColor(0xFF, 0xFF, 0xFF)
+            for ci2, val in enumerate(cells_val[:num_c]):
+                cell2 = tbl.cell(ri + 1, ci2)
+                cell2.fill.solid()
+                cell2.fill.fore_color.rgb = row_bg
+                cell2.text_frame.word_wrap = True
+                p2 = cell2.text_frame.paragraphs[0]
+                p2.text = remove_emoji(str(val))
+                p2.alignment = PP_ALIGN.CENTER if ci2 in (0, num_c - 1) else PP_ALIGN.LEFT
+                p2.font.size = Pt(10)
+                p2.font.color.rgb = palette["body_text"]
+                p2.font.name = "Malgun Gothic"
+
+    num_pcards = min(len(p_cards), 2)
+    if num_pcards > 0:
+        card_gap   = int(Inches(0.18))
+        p_card_h   = int((content_h - card_gap * (num_pcards - 1)) / num_pcards)
+        p_card_styles = [
+            ("#EAF4FB", "#1E6EA8"),
+            ("#FFFBE8", "#FFC000"),
+        ]
+
+        for pi, pc in enumerate(p_cards[:num_pcards]):
+            p_top  = int(top) + pi * (p_card_h + card_gap)
+            bg_hex, bd_hex = p_card_styles[pi % len(p_card_styles)]
+
+            pc_shape = slide.shapes.add_shape(1, right_l, p_top, right_w, p_card_h)
+            pc_shape.fill.solid()
+            pc_shape.fill.fore_color.rgb = hex_to_rgb(bg_hex)
+            pc_shape.line.color.rgb = hex_to_rgb(bd_hex)
+            pc_shape.line.width = Pt(1.5)
+
+            top_bar = slide.shapes.add_shape(1, right_l, p_top, right_w, int(Inches(0.07)))
+            top_bar.fill.solid()
+            top_bar.fill.fore_color.rgb = hex_to_rgb(bd_hex)
+            top_bar.line.fill.background()
+
+            tx = slide.shapes.add_textbox(
+                right_l + int(Inches(0.15)), p_top + int(Inches(0.12)),
+                right_w - int(Inches(0.3)), p_card_h - int(Inches(0.24))
+            )
+            tf = tx.text_frame
+            tf.word_wrap = True
+
+            p0 = tf.paragraphs[0]
+            p0.text = remove_emoji(pc.get("title", ""))
+            p0.font.size = Pt(11)
+            p0.font.bold = True
+            p0.font.color.rgb = palette["title_text"]
+            p0.font.name = "Malgun Gothic"
+            p0.alignment = PP_ALIGN.CENTER
+            p0.space_after = Pt(6)
+
+            p1 = tf.add_paragraph()
+            p1.text = remove_emoji(pc.get("amount", ""))
+            p1.font.size = Pt(22)
+            p1.font.bold = True
+            p1.font.color.rgb = hex_to_rgb(bd_hex)
+            p1.font.name = "Outfit"
+            p1.alignment = PP_ALIGN.CENTER
+            p1.space_after = Pt(6)
+
+            p2 = tf.add_paragraph()
+            p2.text = remove_emoji(pc.get("desc", ""))
+            p2.font.size = Pt(9.5)
+            p2.font.color.rgb = palette["body_text"]
+            p2.font.name = "Malgun Gothic"
+            p2.alignment = PP_ALIGN.CENTER
+
+    if cond_txt:
+        fn_top = int(H - fn_h - Inches(0.15))
+        fn_w   = int(W - margin * 2)
+
+        fn_shape = slide.shapes.add_shape(1, int(margin), fn_top, fn_w, int(fn_h))
+        fn_shape.fill.solid()
+        fn_shape.fill.fore_color.rgb = RGBColor(0x21, 0x5E, 0x80)
+        fn_shape.line.fill.background()
+
+        tx_fn = slide.shapes.add_textbox(
+            int(margin + Inches(0.2)), fn_top,
+            fn_w - int(Inches(0.4)), int(fn_h)
+        )
+        tf_fn = tx_fn.text_frame
+        tf_fn.word_wrap = True
+        p_fn = tf_fn.paragraphs[0]
+        p_fn.text = "■ " + remove_emoji(cond_txt)
+        p_fn.font.size = Pt(11)
+        p_fn.font.bold = True
+        p_fn.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+        p_fn.font.name = "Malgun Gothic"
+        p_fn.alignment = PP_ALIGN.CENTER
+        from pptx.oxml.ns import qn
+        txBody = tf_fn._txBody
+        bodyPr = txBody.find(qn("a:bodyPr"))
+        if bodyPr is not None:
+            bodyPr.set("anchor", "ctr")
